@@ -6,4 +6,4 @@ It is written with CoffeeScript/Stylus and compiled to JavaScript/CSS.
 
 ## Instalation
 
-Installation on a SAGE2 server simply includes uploading the TopViewer folder to the `/public/uploads/apps` folder. You might need to delete your `assets.json` and `fileRegistry.json` from `SAGE2_Media/assets` in your user account's documents folder.
+Installation on a SAGE2 server simply includes cloning this repository to the `/public/uploads/apps/top_viewer` folder. You might need to delete your `assets.json` and `fileRegistry.json` from `SAGE2_Media/assets` in your user account's documents folder.
