@@ -1,0 +1,113 @@
+.rendering-controls {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  opacity: 0.5;
+  transition: all 0.2s;
+  background: rgba(47,48,55,0.9);
+  cursor: default;
+}
+.rendering-controls.hover,
+.rendering-controls.scrubbing {
+  opacity: 1;
+}
+.rendering-controls button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #fff;
+  opacity: 0.7;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: inherit;
+}
+.rendering-controls button::before {
+  font-size: 3em;
+}
+.rendering-controls button.hover {
+  opacity: 0.9;
+}
+.rendering-controls button:focus {
+  outline: none;
+}
+.rendering-controls .displacement-factor {
+  font-family: "Ubuntu Condensed", sans-serif;
+  color: rgba(200,200,225,0.5);
+  padding: 0.5em;
+}
+.rendering-controls .displacement-factor .value {
+  display: inline-block;
+  font-size: 1.6em;
+}
+.rendering-controls .displacement-factor .slider {
+  display: inline-block;
+  position: relative;
+  width: 10em;
+  height: 1.5em;
+  opacity: 1;
+  transition: all 0.2s;
+}
+.rendering-controls .displacement-factor .slider .track {
+  position: relative;
+  height: 0.5em;
+  margin: 0.5em;
+  background: rgba(210,210,225,0.5);
+  border-radius: 0.5em;
+  border: none;
+  box-shadow: 0 0 0.3em rgba(200,200,225,0.5);
+}
+.rendering-controls .displacement-factor .slider .track .thumb {
+  position: absolute;
+  left: 0;
+  top: 50%;
+}
+.rendering-controls .displacement-factor .slider .track .thumb::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1.1em;
+  height: 1.1em;
+  transform: translate(-50%, -55%) scale(0.7);
+  border-radius: 100%;
+  background: rgba(255,255,255,0.5);
+  transition: all 0.2s;
+}
+.rendering-controls .displacement-factor .slider.hover .track .thumb::before {
+  transform: translate(-50%, -55%);
+  background: rgba(255,255,255,0.7);
+  box-shadow: 0 0 0.2em rgba(0,0,0,0.3);
+}
+.rendering-controls .displacement-factor.hover .slider {
+  opacity: 1;
+}
+.rendering-controls .checkbox-control {
+  font-family: "Ubuntu Condensed", sans-serif;
+  color: rgba(200,200,225,0.5);
+  font-size: 1.6em;
+}
+.rendering-controls .checkbox-control .value {
+  border: 0.15em solid rgba(200,200,225,0.5);
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  margin: 0.3em;
+  vertical-align: middle;
+}
+.rendering-controls .checkbox-control .value.true {
+  background: rgba(200,200,225,0.5);
+}
+.rendering-controls .checkbox-control .name {
+  display: inline-block;
+  vertical-align: middle;
+}
+.rendering-controls .gradient-curve {
+  width: 10em;
+  height: 10em;
+  padding: 0.5em;
+}
+.rendering-controls .gradient-curve canvas {
+  width: 100%;
+  height: 100%;
+}

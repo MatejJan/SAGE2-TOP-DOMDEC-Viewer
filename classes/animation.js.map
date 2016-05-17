@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "animation.js",
+  "sourceRoot": "",
+  "sources": [
+    "animation.coffee"
+  ],
+  "names": [],
+  "mappings": ";AAAA;EAAA;EAEM,SAAS,CAAC;IACD,mBAAA;MACX,IAAC,CAAA,UAAD,GAAc;IADH;;wBAGb,YAAA,GAAc,SAAC,IAAD;aACZ,IAAC,CAAA,aAAD,CAAe,CAAC,IAAD,CAAf;IADY;;wBAGd,aAAA,GAAe,SAAC,KAAD;MACb,IAAC,CAAA,UAAD,GAAc,CAAC,CAAC,KAAF,CAAQ,IAAC,CAAA,UAAT,EAAqB,KAArB;aAEd,IAAC,CAAA,UAAU,CAAC,IAAZ,CAAiB,SAAC,CAAD,EAAI,CAAJ;eACf,CAAA,GAAI;MADW,CAAjB;IAHa;;;;;AATjB"
+}

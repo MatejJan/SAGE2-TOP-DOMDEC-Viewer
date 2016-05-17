@@ -1,0 +1,195 @@
+.sage-item
+  position relative
+
+.playback-controls
+  position fixed
+  bottom -4em
+  left 0
+  right 0
+  height 10em
+  z-index 1
+  opacity 0.5
+  transition all 0.2s
+  background linear-gradient(to bottom, rgba(0,0,0,0) 0%, hsla(234, 8%, 20%, 0.9) 100%)
+
+  &.hover
+  &.scrubbing
+    opacity 1
+    bottom 0
+    height 6em
+
+  button
+    background none
+    border none
+    padding 0
+    color white
+    opacity 0.7
+    cursor pointer
+    transition all 0.2s
+    font-size inherit
+
+    &::before
+      font-size 3em
+
+    &.hover
+      opacity 0.9
+
+    &:focus
+      outline none
+
+  .scrubber
+    position absolute
+    left 1em
+    right 1em
+    bottom 4em
+    height 2em
+    cursor pointer
+
+    .timeline
+      position absolute
+      left 0
+      right 0
+      bottom 0.5em
+      height 0.5em
+      border-radius 0.5em
+      background rgba(255, 255, 255, 0.1)
+
+      .ready-range
+        position absolute
+        left 0
+        top 0
+        bottom 0
+        background rgba(200, 200, 225, 0.5)
+        -webkit-filter blur(0.3em)
+
+      .playhead
+        position absolute
+        left 0
+        top 50%
+
+        &::before
+          content ''
+          position absolute
+          top 0
+          left 0
+          width 1.1em
+          height 1.1em
+          transform translate(-50%, -55%) scale(0.7)
+          border-radius 100%
+          background rgba(255, 255, 255, 0.5)
+          transition all 0.2s
+
+      .frame
+        position absolute
+        height 100%
+        top 0
+
+        .progress
+          position absolute
+          left 0
+          top 0
+          bottom 0
+          background rgba(255, 255, 255, 0.1)
+
+  &.scrubbing .scrubber .timeline .playhead::before
+  .scrubber.hover .timeline .playhead::before
+    transform translate(-50%, -55%)
+    background rgba(255, 255, 255, 0.7)
+    box-shadow 0 0 2px rgba(0, 0, 0, 0.3)
+
+  .play-pause
+    position absolute
+    left 0
+    bottom 0
+
+    .button
+      width 6em
+      height 4em
+
+    .pause
+      display none
+
+  &.playing .play
+    display none
+
+  &.playing .pause
+    display block
+
+  .load-sleep
+    position absolute
+    right 0
+    bottom 0
+
+    .button
+      width 6em
+      height 4em
+
+      &::before
+        font-size 2em
+
+    .sleep
+      display none
+
+  &.loading .load
+  &.loaded .load
+    display none
+
+  &.loading .sleep
+    display block
+
+  .speed
+    position absolute
+    bottom 0.5em
+    left 7em
+    font-family "Ubuntu Condensed", sans-serif
+    color rgba(200, 200, 225, 0.5)
+    width 20em
+    padding 0.5em 0
+
+    .value
+      font-size 1.6em
+
+    .slider
+      position absolute
+      top 0.2em
+      left 4.5em
+      width 10em
+      opacity 0
+      transition all 0.2s
+
+      .track
+        position relative
+        height 0.5em
+        margin 1em 0.5em
+        background rgba(210, 210, 225, 0.5)
+        border-radius 0.5em
+        border none
+        box-shadow 0 0 0.3em rgba(200, 200, 225, 0.5)
+
+        .thumb
+          position absolute
+          left 0
+          top 50%
+
+          &::before
+            content: ''
+            position absolute
+            top 0
+            left 0
+            width 1.1em
+            height 1.1em
+            transform translate(-50%, -55%) scale(0.7)
+            border-radius 100%
+            background rgba(255, 255, 255, 0.5)
+            transition all 0.2s
+
+      &.hover
+        .track
+          .thumb::before
+            transform translate(-50%, -55%)
+            background rgba(255, 255, 255, 0.7)
+            box-shadow 0 0 0.2em rgba(0, 0, 0, 0.3)
+
+    &.hover
+      .slider
+        opacity 1

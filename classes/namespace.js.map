@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "namespace.js",
+  "sourceRoot": "",
+  "sources": [
+    "namespace.coffee"
+  ],
+  "names": [],
+  "mappings": ";AAAA;EAAM,MAAM,CAAC;;;;;;AAAb"
+}
