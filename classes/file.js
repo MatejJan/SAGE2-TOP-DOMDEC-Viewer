@@ -7,6 +7,8 @@
       top: new TopViewer.TopLoader
     };
 
+    File.loaders.xpost = File.loaders.top;
+
     function File(url) {
       this.url = url;
       this.extension = this.url.split('.').pop();
@@ -14,11 +16,22 @@
     }
 
     File.prototype.load = function(onCompleteHandler) {
+      if (!this.loader) {
+        setTimeout((function(_this) {
+          return function() {
+            _this.objects = {};
+            return onCompleteHandler();
+          };
+        })(this), 0);
+        return;
+      }
       return this.loader.load(this.url, (function(_this) {
         return function(objects) {
           _this.objects = objects;
           return onCompleteHandler();
         };
+      })(this), (function(_this) {
+        return function(loadPercentage) {};
       })(this));
     };
 

@@ -97,7 +97,7 @@
               this.engine.playbackControls.nextFrame();
               break;
             case 83:
-              this.engine.toggleShadows();
+              this.engine.toggleSurface();
               break;
             case 67:
               this.engine.activeControls = this.engine.cameraControls;

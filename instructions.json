@@ -20,6 +20,7 @@
     "classes/ui/uicontrol.js",
     "classes/ui/slidercontrol.js",
     "classes/ui/checkboxcontrol.js",
+    "classes/ui/togglecontainer.js",
     "classes/animation.js",
     "classes/animationset.js",
     "classes/animationsetframeprocessor.js",
@@ -28,6 +29,7 @@
     "classes/engine.js",
     "classes/file.js",
     "classes/filemanager.js",
+    "classes/model.js",
     "classes/mesh.js",
     "classes/playbackcontrols.js",
     "classes/renderingcontrols.js",
@@ -41,6 +43,6 @@
   "description": "A specialized 3D model viewer for the TOP/DOMDEC format.",
   "keywords": [ "three", "3d", "animation" ],
   "author": "Matej Jan <matej@stanford.edu>",
-  "fileTypes": ["top", "ply", "hive"],
+  "fileTypes": ["top", "xpost", "exo", "ply", "hive"],
   "directory": "top"
 }

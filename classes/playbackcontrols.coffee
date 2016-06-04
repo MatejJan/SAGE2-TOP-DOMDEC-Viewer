@@ -161,7 +161,7 @@ class TopViewer.PlaybackControls extends TopViewer.UIArea
     @onUpdateCurrentTime()
 
   update: (elapsedTime) ->
-    return unless @playing and not @_scrubbing
+    return unless @playing and not @_scrubbing and @animation.frameTimes.length
 
     @currentTime += elapsedTime * @framesPerSecond
     while @currentTime > @animation.frameTimes.length

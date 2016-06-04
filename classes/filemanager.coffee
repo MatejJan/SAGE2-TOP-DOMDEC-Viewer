@@ -30,21 +30,17 @@ class TopViewer.FileManager
 
     @scalarLimits = {}
 
-    @meshes = {}
+    @models = {}
 
     new TopViewer.ConcurrencyManager
       items: _.values @urls
       methodName: 'load'
       onProgress: (progress, item) =>
-        #console.log "Loaded #{progress * 100}% of files."
+        console.log "Loaded #{Math.floor progress * 100}% of files."
         @_addObjects item.objects
 
       onComplete: =>
-        #console.log "Loaded all the files!"
-
-        # Ideally at this point the objects file should be empty!
-        #console.log "Objects should be empty!", @objects
-        #console.log "Meshes should be plentiful!", @meshes
+        #console.log "Models created!", @models
 
   _addObjects: (objects) ->
     # Add nodes.
@@ -87,30 +83,30 @@ class TopViewer.FileManager
     @_processObjects()
 
   _processObjects: ->
-    # Create all the meshes from nodes.
+    # Create all the models from nodes.
     for nodesName, nodesInstance of @objects.nodes
-      @meshes[nodesName] = new TopViewer.Mesh
+      @models[nodesName] = new TopViewer.Model
         engine: @options.engine
+        nodes: nodesInstance.nodes
 
-      @meshes[nodesName].setNodes nodesInstance
       delete @objects.nodes[nodesName]
 
-    # Add element information to meshes
+    # Create meshes from elements.
     for elementsName, elementsInstance of @objects.elements
-      if @meshes[elementsInstance.nodesName]
-        @meshes[elementsInstance.nodesName].addElements elementsInstance
+      if @models[elementsInstance.nodesName]
+        @models[elementsInstance.nodesName].addElements elementsName, elementsInstance
         delete @objects.elements[elementsName]
 
     # Add all scalars.
     for scalarNodesName, scalars of @objects.scalars
-      if @meshes[scalarNodesName]
+      if @models[scalarNodesName]
         for scalarName, scalar of scalars
-          @meshes[scalarNodesName].addScalar scalarName, scalar
+          @models[scalarNodesName].addScalar scalarName, scalar
         delete @objects.scalars[scalarNodesName]
 
     # Add all vectors.
     for vectorNodesName, vectors of @objects.vectors
-      if @meshes[vectorNodesName]
+      if @models[vectorNodesName]
         for vectorName, vector of vectors
-          @meshes[vectorNodesName].addVector vectorName, vector
+          @models[vectorNodesName].addVector vectorName, vector
         delete @objects.vectors[vectorNodesName]

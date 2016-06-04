@@ -4,15 +4,16 @@ class TopViewer.SliderControl
     @options.maximumValue ?= 100
     @options.value ?= 0
     @options.decimals ?= 0
+    @options.power ?= 1
 
     @$element = $("""
       <div class="slider-control #{@options.class}">
-        <span class="value"><span class="number"></span></span>
         <div class="slider">
           <div class="track">
             <div class="thumb"></div>
           </div>
         </div>
+        <span class="value"><span class="number"></span></span>
       </div>
     """)
 
@@ -48,7 +49,12 @@ class TopViewer.SliderControl
     sliderX = mouseXBrowser - (@$slider.offset().left + 5)
     rangePercentage = sliderX / (@$slider.width() - 10)
 
-    unclampedValue = @options.minimumValue + (@options.maximumValue - @options.minimumValue) * rangePercentage
+    rangePercentage = Math.max 0, Math.min 1, rangePercentage
+
+    # value = minimum + range * rangePercentage ^ power
+
+    range = @options.maximumValue - @options.minimumValue
+    unclampedValue = @options.minimumValue + range * Math.pow(rangePercentage, @options.power)
     @changeSlider unclampedValue
 
   changeSlider: (value) ->
@@ -58,7 +64,10 @@ class TopViewer.SliderControl
     @$slider.value = @value
     @$number.text @value
 
-    thumbPercentage = 100.0 * (@value - @options.minimumValue) / (@options.maximumValue - @options.minimumValue)
+    # thumbPercentage = ((value - minimum) / range) ^ 1/power
+
+    range = @options.maximumValue - @options.minimumValue
+    thumbPercentage = 100.0 * Math.pow((@value - @options.minimumValue) / range, 1 / @options.power)
     @$sliderThumb.css
       left: "#{thumbPercentage}%"
 

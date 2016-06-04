@@ -31,12 +31,13 @@
         scalars: {}
       };
       this.scalarLimits = {};
-      this.meshes = {};
+      this.models = {};
       return new TopViewer.ConcurrencyManager({
         items: _.values(this.urls),
         methodName: 'load',
         onProgress: (function(_this) {
           return function(progress, item) {
+            console.log("Loaded " + (Math.floor(progress * 100)) + "% of files.");
             return _this._addObjects(item.objects);
           };
         })(this),
@@ -108,27 +109,27 @@
       ref = this.objects.nodes;
       for (nodesName in ref) {
         nodesInstance = ref[nodesName];
-        this.meshes[nodesName] = new TopViewer.Mesh({
-          engine: this.options.engine
+        this.models[nodesName] = new TopViewer.Model({
+          engine: this.options.engine,
+          nodes: nodesInstance.nodes
         });
-        this.meshes[nodesName].setNodes(nodesInstance);
         delete this.objects.nodes[nodesName];
       }
       ref1 = this.objects.elements;
       for (elementsName in ref1) {
         elementsInstance = ref1[elementsName];
-        if (this.meshes[elementsInstance.nodesName]) {
-          this.meshes[elementsInstance.nodesName].addElements(elementsInstance);
+        if (this.models[elementsInstance.nodesName]) {
+          this.models[elementsInstance.nodesName].addElements(elementsName, elementsInstance);
           delete this.objects.elements[elementsName];
         }
       }
       ref2 = this.objects.scalars;
       for (scalarNodesName in ref2) {
         scalars = ref2[scalarNodesName];
-        if (this.meshes[scalarNodesName]) {
+        if (this.models[scalarNodesName]) {
           for (scalarName in scalars) {
             scalar = scalars[scalarName];
-            this.meshes[scalarNodesName].addScalar(scalarName, scalar);
+            this.models[scalarNodesName].addScalar(scalarName, scalar);
           }
           delete this.objects.scalars[scalarNodesName];
         }
@@ -137,10 +138,10 @@
       results = [];
       for (vectorNodesName in ref3) {
         vectors = ref3[vectorNodesName];
-        if (this.meshes[vectorNodesName]) {
+        if (this.models[vectorNodesName]) {
           for (vectorName in vectors) {
             vector = vectors[vectorName];
-            this.meshes[vectorNodesName].addVector(vectorName, vector);
+            this.models[vectorNodesName].addVector(vectorName, vector);
           }
           results.push(delete this.objects.vectors[vectorNodesName]);
         } else {

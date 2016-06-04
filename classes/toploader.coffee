@@ -10,8 +10,9 @@ class TopViewer.TopLoader
           onProgress message.data.loadPercentage if onProgress
 
         when 'result'
-          #console.log "Received", url
           objects = message.data.objects
+          # console.log "Received", url, objects
+
           onLoad objects
 
     worker.postMessage

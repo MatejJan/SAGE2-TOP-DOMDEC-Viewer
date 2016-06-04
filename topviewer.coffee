@@ -102,7 +102,7 @@ window.topviewer = SAGE2_App.extend
             @engine.playbackControls.nextFrame()
 
           when 83 # S
-            @engine.toggleShadows()
+            @engine.toggleSurface()
 
           when 67 # C
             @engine.activeControls = @engine.cameraControls

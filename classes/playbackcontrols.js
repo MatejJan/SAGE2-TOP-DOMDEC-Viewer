@@ -165,7 +165,7 @@
     };
 
     PlaybackControls.prototype.update = function(elapsedTime) {
-      if (!(this.playing && !this._scrubbing)) {
+      if (!(this.playing && !this._scrubbing && this.animation.frameTimes.length)) {
         return;
       }
       this.currentTime += elapsedTime * this.framesPerSecond;

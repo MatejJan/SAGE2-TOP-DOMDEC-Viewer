@@ -13,14 +13,14 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
 
     @rootControl = new TopViewer.UIControl @, @$controls
 
-    new TopViewer.SliderControl @,
+    @displacementFactor = new TopViewer.SliderControl @,
       $parent: @$controls
       class: 'displacement-factor'
-      minimumValue: 1
+      minimumValue: 0
       maximumValue: 100
+      power: 4
       value: 1
-      onChange: (value) =>
-        @displacementFactor = value
+      decimals: -2
 
     @$controls.append("""
       <div class='gradient-curve'>
@@ -30,12 +30,70 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
 
     @gradientCurve = new ColorCurve @$controls.find('.gradient-curve canvas')[0]
 
+    @surfaceControl = new TopViewer.CheckboxControl @,
+      $parent: @$controls
+      name: 'surface'
+      value: true
+
     @wireframeControl = new TopViewer.CheckboxControl @,
       $parent: @$controls
       name: 'wireframe'
       value: false
-      onChange: (value) =>
-        @scene.update()
+
+    @$controls.append("<hr/>")
+
+    @$meshes = $("<ul class='meshes'></ul>")
+    @$controls.append(@$meshes)
+
+    @$controls.append("<hr/>")
+
+    @$vectors = $("<ul class='vectors'></ul>")
+    @$controls.append(@$vectors)
+
+  addMesh: (name, mesh) ->
+    $mesh = $("<li class='mesh'></li>")
+    @$meshes.append($mesh)
+
+    $contents = $("<div>")
+
+    mesh.renderingControls =
+      surface: new TopViewer.CheckboxControl @,
+        $parent: $contents
+        name: 'surface'
+        value: true
+
+      wireframe: new TopViewer.CheckboxControl @,
+        $parent: $contents
+        name: 'wireframe'
+        value: false
+
+    new TopViewer.ToggleContainer @,
+      $parent: $mesh
+      text: name
+      visible: false
+      $contents: $contents
+
+  addVector: (name, vector) ->
+    $vector = $("<li class='vector'></li>")
+    @$vectors.append($vector)
+
+    $contents = $("<div>")
+
+    vector.renderingControls =
+      displacementFactor: new TopViewer.SliderControl @,
+        $parent: $contents
+        class: 'displacement-factor'
+        minimumValue: 0
+        maximumValue: 100
+        power: 4
+        value: 1
+        decimals: -2
+
+    new TopViewer.ToggleContainer @,
+      $parent: $vector
+      text: name
+      visible: false
+      $contents: $contents
 
   onMouseDown: (position, button) ->
     super

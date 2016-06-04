@@ -38,7 +38,7 @@
       this.rotateControls.rotateSpeed = 1;
       this.rotateControls.autoRotate = false;
       this.rotateControls.autoRotateSpeed = 2.0;
-      this.meshesRotation = new THREE.Matrix4;
+      this.objectRotation = new THREE.Matrix4;
       this.activeControls = this.cameraControls;
       this.shadows = true;
       this.vertexColors = true;
@@ -112,6 +112,10 @@
       return this.scene.update();
     };
 
+    Engine.prototype.toggleSurface = function() {
+      return this.renderingControls.surfaceControl.setValue(!this.renderingControls.surfaceControl.value);
+    };
+
     Engine.prototype.toggleWireframe = function() {
       return this.renderingControls.wireframeControl.setValue(!this.renderingControls.wireframeControl.value);
     };
@@ -124,7 +128,7 @@
     };
 
     Engine.prototype.draw = function(elapsedTime) {
-      var azimuthal, euler, frameIndex, frameTime, j, k, len, len1, mesh, polar, ref, ref1, ref2, uiArea;
+      var azimuthal, euler, frameIndex, frameTime, j, k, len, len1, model, polar, ref, ref1, ref2, uiArea;
       this.uiControlsActive = false;
       ref = this.uiAreas;
       for (j = 0, len = ref.length; j < len; j++) {
@@ -138,7 +142,7 @@
         azimuthal = this.rotateControls.getAzimuthalAngle();
         polar = -this.rotateControls.getPolarAngle();
         euler = new THREE.Euler(polar, azimuthal, 0, 'XYZ');
-        this.meshesRotation = new THREE.Matrix4().makeRotationFromEuler(euler);
+        this.objectRotation = new THREE.Matrix4().makeRotationFromEuler(euler);
         this.scene.updateRotation();
       } else if (this.activeControls === this.cameraControls) {
         this.cameraControls.update();
@@ -148,9 +152,9 @@
       frameTime = (ref1 = this.animation.frameTimes[frameIndex]) != null ? ref1 : -1;
       ref2 = this.scene.children;
       for (k = 0, len1 = ref2.length; k < len1; k++) {
-        mesh = ref2[k];
-        if (mesh instanceof TopViewer.Mesh) {
-          mesh.showFrame(frameTime);
+        model = ref2[k];
+        if (model instanceof TopViewer.Model) {
+          model.showFrame(frameTime);
         }
       }
       this.renderer.render(this.scene, this.camera);

@@ -2,7 +2,7 @@
 (function() {
   TopViewer.SliderControl = (function() {
     function SliderControl(uiArea, options) {
-      var base, base1, base2, base3, sliderControl;
+      var base, base1, base2, base3, base4, sliderControl;
       this.uiArea = uiArea;
       this.options = options;
       if ((base = this.options).minimumValue == null) {
@@ -17,7 +17,10 @@
       if ((base3 = this.options).decimals == null) {
         base3.decimals = 0;
       }
-      this.$element = $("<div class=\"slider-control " + this.options["class"] + "\">\n  <span class=\"value\"><span class=\"number\"></span></span>\n  <div class=\"slider\">\n    <div class=\"track\">\n      <div class=\"thumb\"></div>\n    </div>\n  </div>\n</div>");
+      if ((base4 = this.options).power == null) {
+        base4.power = 1;
+      }
+      this.$element = $("<div class=\"slider-control " + this.options["class"] + "\">\n  <div class=\"slider\">\n    <div class=\"track\">\n      <div class=\"thumb\"></div>\n    </div>\n  </div>\n  <span class=\"value\"><span class=\"number\"></span></span>\n</div>");
       this.$value = this.$element.find('.value');
       this.$number = this.$value.find('.number');
       this.$slider = this.$element.find('.slider');
@@ -50,20 +53,23 @@
     }
 
     SliderControl.prototype.handleSlider = function(position) {
-      var mouseXBrowser, rangePercentage, sliderX, unclampedValue;
+      var mouseXBrowser, range, rangePercentage, sliderX, unclampedValue;
       mouseXBrowser = this.uiArea.$appWindow.offset().left + position.x;
       sliderX = mouseXBrowser - (this.$slider.offset().left + 5);
       rangePercentage = sliderX / (this.$slider.width() - 10);
-      unclampedValue = this.options.minimumValue + (this.options.maximumValue - this.options.minimumValue) * rangePercentage;
+      rangePercentage = Math.max(0, Math.min(1, rangePercentage));
+      range = this.options.maximumValue - this.options.minimumValue;
+      unclampedValue = this.options.minimumValue + range * Math.pow(rangePercentage, this.options.power);
       return this.changeSlider(unclampedValue);
     };
 
     SliderControl.prototype.changeSlider = function(value) {
-      var base, thumbPercentage;
+      var base, range, thumbPercentage;
       this.value = Math.max(this.options.minimumValue, Math.min(Math.round10(value, this.options.decimals), Math.max(this.options.maximumValue)));
       this.$slider.value = this.value;
       this.$number.text(this.value);
-      thumbPercentage = 100.0 * (this.value - this.options.minimumValue) / (this.options.maximumValue - this.options.minimumValue);
+      range = this.options.maximumValue - this.options.minimumValue;
+      thumbPercentage = 100.0 * Math.pow((this.value - this.options.minimumValue) / range, 1 / this.options.power);
       this.$sliderThumb.css({
         left: thumbPercentage + "%"
       });

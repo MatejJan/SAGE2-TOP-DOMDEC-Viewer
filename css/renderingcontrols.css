@@ -7,6 +7,8 @@
   transition: all 0.2s;
   background: rgba(47,48,55,0.9);
   cursor: default;
+  font-family: "Ubuntu Condensed", sans-serif;
+  color: rgba(200,200,225,0.5);
 }
 .rendering-controls.hover,
 .rendering-controls.scrubbing {
@@ -83,11 +85,10 @@
   opacity: 1;
 }
 .rendering-controls .checkbox-control {
-  font-family: "Ubuntu Condensed", sans-serif;
-  color: rgba(200,200,225,0.5);
   font-size: 1.6em;
 }
 .rendering-controls .checkbox-control .value {
+  position: relative;
   border: 0.15em solid rgba(200,200,225,0.5);
   display: inline-block;
   width: 0.7em;
@@ -95,8 +96,12 @@
   margin: 0.3em;
   vertical-align: middle;
 }
-.rendering-controls .checkbox-control .value.true {
-  background: rgba(200,200,225,0.5);
+.rendering-controls .checkbox-control .value.true::after {
+  content: "✔";
+  position: absolute;
+  left: 0.2em;
+  top: 0;
+  font-size: 0.6em;
 }
 .rendering-controls .checkbox-control .name {
   display: inline-block;
@@ -110,4 +115,30 @@
 .rendering-controls .gradient-curve canvas {
   width: 100%;
   height: 100%;
+}
+.rendering-controls ul {
+  list-style: none;
+  padding-left: 0;
+}
+.rendering-controls ul .toggle-container .contents {
+  margin-left: 1em;
+}
+.rendering-controls .toggle-container .toggle .checkbox-control .value {
+  border: none;
+}
+.rendering-controls .toggle-container .toggle .checkbox-control .value::after {
+  content: "▶";
+  position: absolute;
+  left: 0.2em;
+  top: 0;
+  font-size: 0.6em;
+}
+.rendering-controls .toggle-container .toggle .checkbox-control .value.true::after {
+  content: "▼";
+}
+.rendering-controls .toggle-container .contents {
+  display: none;
+}
+.rendering-controls .toggle-container .contents.visible {
+  display: block;
 }

@@ -5,73 +5,19 @@
     hasProp = {}.hasOwnProperty;
 
   TopViewer.Mesh = (function(superClass) {
-    var count;
-
     extend(Mesh, superClass);
 
     function Mesh(options) {
       this.options = options;
       Mesh.__super__.constructor.call(this, new THREE.BufferGeometry(), this.options.engine.scene.modelMaterial);
-      this.matrixAutoUpdate = false;
-      this.nodes = null;
-      this.indices = null;
-      this.positions = null;
-      this.colors = null;
-      this.scalars = {};
-      this.vectors = {};
-      this.frames = [
-        {
-          frameTime: -1
-        }
-      ];
+      this.geometry.addAttribute('position', this.options.positionAttribute);
+      this.geometry.addAttribute('color', this.options.colorAttribute);
+      this.geometry.setIndex(new THREE.BufferAttribute(this.options.elements, 1));
+      this._updateGeometry();
+      this.options.model.add(this);
+      this.options.engine.scene.addMesh(this);
+      this.options.engine.renderingControls.addMesh(this.options.name, this);
     }
-
-    Mesh.prototype.setNodes = function(nodesInstance) {
-      this.nodes = nodesInstance.nodes;
-      this.positions = this.nodes.slice();
-      this.geometry.addAttribute('position', new THREE.BufferAttribute(this.positions, 3));
-      this._updateGeometry();
-      if (this.positions.length) {
-        this.options.engine.scene.addMesh(this);
-      }
-      this.colors = new Float32Array(this.positions.length);
-      this.geometry.addAttribute('color', new THREE.BufferAttribute(this.colors, 3));
-      this._updateGeometry();
-      return this._updateFrames();
-    };
-
-    count = 0;
-
-    Mesh.prototype.addElements = function(elementsInstance) {
-      var i, j, k, oldIndices, ref, ref1;
-      count++;
-      if (this.indices) {
-        oldIndices = this.indices;
-        this.indices = new Uint32Array(oldIndices.length + elementsInstance.elements.length);
-        for (i = j = 0, ref = oldIndices.length; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
-          this.indices[i] = oldIndices[i];
-        }
-        for (i = k = 0, ref1 = elementsInstance.elements.length; 0 <= ref1 ? k < ref1 : k > ref1; i = 0 <= ref1 ? ++k : --k) {
-          this.indices[oldIndices.length + i] = elementsInstance.elements[i];
-        }
-      } else {
-        this.indices = elementsInstance.elements;
-      }
-      this.geometry.setIndex(new THREE.BufferAttribute(this.indices, 1));
-      this.geometry.clearGroups();
-      this._updateGeometry();
-      return this._updateFrames();
-    };
-
-    Mesh.prototype.addScalar = function(scalarName, scalar) {
-      this.scalars[scalarName] = scalar;
-      return this._updateFrames();
-    };
-
-    Mesh.prototype.addVector = function(vectorName, vector) {
-      this.vectors[vectorName] = vector;
-      return this._updateFrames();
-    };
 
     Mesh.prototype._updateGeometry = function() {
       this.geometry.computeVertexNormals();
@@ -80,156 +26,19 @@
       return this.options.engine.scene.acommodateMeshBounds(this);
     };
 
-    Mesh.prototype._updateFrames = function() {
-      var frame, frameTime, frameTimes, i, j, k, l, len, len1, len2, len3, m, n, newFrame, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, results, scalar, scalarFrame, scalarName, vector, vectorFrame, vectorName;
-      frameTimes = [];
-      ref = this.scalars;
-      for (scalarName in ref) {
-        scalar = ref[scalarName];
-        ref1 = scalar.frames;
-        for (j = 0, len = ref1.length; j < len; j++) {
-          frame = ref1[j];
-          frameTimes = _.union(frameTimes, [parseFloat(frame.time)]);
-        }
-      }
-      ref2 = this.vectors;
-      for (vectorName in ref2) {
-        vector = ref2[vectorName];
-        ref3 = vector.frames;
-        for (k = 0, len1 = ref3.length; k < len1; k++) {
-          frame = ref3[k];
-          frameTimes = _.union(frameTimes, [parseFloat(frame.time)]);
-        }
-      }
-      frameTimes.sort(function(a, b) {
-        return a - b;
-      });
-      this.options.engine.animation.addFrameTimes(frameTimes);
-      if (!frameTimes.length) {
-        frameTimes.push(-1);
-      }
-      this.frames = [];
-      results = [];
-      for (l = 0, len2 = frameTimes.length; l < len2; l++) {
-        frameTime = frameTimes[l];
-        newFrame = {
-          time: frameTime
-        };
-        ref4 = this.scalars;
-        for (scalarName in ref4) {
-          scalar = ref4[scalarName];
-          for (i = m = 0, ref5 = scalar.frames.length; 0 <= ref5 ? m < ref5 : m > ref5; i = 0 <= ref5 ? ++m : --m) {
-            scalarFrame = scalar.frames[i];
-            if (frameTime !== scalarFrame.time) {
-              continue;
-            }
-            newFrame.scalarName = scalarName;
-            newFrame.scalarFrame = scalarFrame;
-          }
-        }
-        ref6 = this.vectors;
-        for (vectorName in ref6) {
-          vector = ref6[vectorName];
-          ref7 = vector.frames;
-          for (n = 0, len3 = ref7.length; n < len3; n++) {
-            vectorFrame = ref7[n];
-            if (frameTime !== vectorFrame.time) {
-              continue;
-            }
-            newFrame.vectorName = vectorName;
-            newFrame.vectorFrame = vectorFrame;
-          }
-        }
-        results.push(this.frames.push(newFrame));
-      }
-      return results;
-    };
-
-    Mesh.prototype.showFrame = function(frameTime) {
-      var displacementFactor, frame, frameIndex, gradientData, gradientIndex, i, j, k, l, m, mustRepaint, n, normalizeFactor, normalizedValue, o, offset, range, ref, ref1, ref2, ref3, ref4, ref5, ref6, renderingControls, scalar, testFrame, time, value, wireframe;
-      frame = null;
-      for (frameIndex = j = 0, ref = this.frames.length; 0 <= ref ? j < ref : j > ref; frameIndex = 0 <= ref ? ++j : --j) {
-        testFrame = this.frames[frameIndex];
-        time = testFrame.time;
-        if (time === frameTime || time === -1) {
-          frame = testFrame;
-        }
-      }
-      if (!(frame && this.nodes.length)) {
-        this.visible = false;
-        if ((ref1 = this.wireframeMesh) != null) {
-          ref1.visible = false;
-        }
-        return;
-      }
-      wireframe = this.options.engine.renderingControls.wireframeControl.value;
-      if (wireframe && !this.wireframeMesh) {
+    Mesh.prototype.showFrame = function() {
+      var ref, showSurface, showWireframe;
+      showSurface = this.renderingControls.surface.value;
+      showWireframe = this.renderingControls.wireframe.value;
+      if (showWireframe && !this.wireframeMesh) {
         this.wireframeMesh = new THREE.Mesh(this.geometry, this.options.engine.scene.wireframeMaterial);
-        this.wireframeMesh.matrixAutoUpdate = false;
-        this.wireframeMesh.matrix = this.matrix;
-        this.options.engine.scene.add(this.wireframeMesh);
+        this.options.model.add(this.wireframeMesh);
       }
-      this.visible = true;
-      if ((ref2 = this.wireframeMesh) != null) {
-        ref2.visible = wireframe;
+      this.visible = showSurface;
+      if ((ref = this.wireframeMesh) != null) {
+        ref.visible = showWireframe;
       }
-      renderingControls = this.options.engine.renderingControls;
-      if (frame.scalarFrame && this.options.engine.gradientData) {
-        mustRepaint = this._paintedWhite || this._currentScalarFrame !== frame.scalarFrame;
-        if (this._gradientMapLastUpdate !== renderingControls.gradientCurve.lastUpdated) {
-          this._gradientMapLastUpdate = renderingControls.gradientCurve.lastUpdated;
-          mustRepaint = true;
-        }
-        scalar = this.scalars[frame.scalarName];
-        if (scalar._limitsVersion !== scalar.limits.version) {
-          mustRepaint = true;
-        }
-        if (mustRepaint) {
-          range = scalar.limits.maxValue - scalar.limits.minValue;
-          normalizeFactor = range ? 1 / range : 1;
-          gradientData = this.options.engine.gradientData;
-          for (i = k = 0, ref3 = frame.scalarFrame.scalars.length; 0 <= ref3 ? k < ref3 : k > ref3; i = 0 <= ref3 ? ++k : --k) {
-            value = frame.scalarFrame.scalars[i];
-            normalizedValue = (value - scalar.limits.minValue) * normalizeFactor;
-            normalizedValue = renderingControls.gradientCurve.getY(normalizedValue);
-            gradientIndex = Math.floor((gradientData.length / 4 - 1) * normalizedValue) * 4;
-            for (offset = l = 0; l <= 2; offset = ++l) {
-              this.colors[i * 3 + offset] = gradientData[gradientIndex + offset];
-            }
-          }
-          this._paintedWhite = false;
-          this._currentScalarFrame = frame.scalarFrame;
-          scalar._limitsVersion = scalar.limits.version;
-          this.geometry.attributes.color.needsUpdate = true;
-        }
-      } else {
-        if (!this._paintedWhite) {
-          for (i = m = 0, ref4 = this.colors.length; 0 <= ref4 ? m < ref4 : m > ref4; i = 0 <= ref4 ? ++m : --m) {
-            this.colors[i] = 1;
-          }
-          this._paintedWhite = true;
-          this.geometry.attributes.color.needsUpdate = true;
-        }
-      }
-      if (frame.vectorFrame) {
-        displacementFactor = renderingControls.displacementFactor;
-        if (!(this._currentDisplacementFactor === displacementFactor && this._currentVectorFrame === frame.vectorFrame)) {
-          this._currentVectorFrame = frame.vectorFrame;
-          this._currentDisplacementFactor = displacementFactor;
-          for (i = n = 0, ref5 = this.nodes.length; 0 <= ref5 ? n < ref5 : n > ref5; i = 0 <= ref5 ? ++n : --n) {
-            this.positions[i] = this.nodes[i] + frame.vectorFrame.vectors[i] * displacementFactor;
-          }
-        }
-      } else {
-        if (this._currentVectorFrame !== frame.vectorFrame) {
-          this._currentVectorFrame = frame.vectorFrame;
-          for (i = o = 0, ref6 = this.positions.length; 0 <= ref6 ? o < ref6 : o > ref6; i = 0 <= ref6 ? ++o : --o) {
-            this.positions[i] = this.nodes[i];
-          }
-        }
-      }
-      this.geometry.computeVertexNormals();
-      return this.geometry.attributes.position.needsUpdate = true;
+      return this.geometry.computeVertexNormals();
     };
 
     return Mesh;

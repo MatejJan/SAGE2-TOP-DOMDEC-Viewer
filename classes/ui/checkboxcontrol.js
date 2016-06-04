@@ -6,11 +6,10 @@
       this.uiArea = uiArea;
       this.options = options;
       this.value = this.options.value;
-      this.$element = $("<div class=\"checkbox-control " + this.options["class"] + "\">\n  <span class=\"value\"></span> <span class=\"name\">" + this.options.name + "</span>\n</div>");
+      this.$element = $("<div class=\"checkbox-control " + this.options["class"] + "\">\n  <span class=\"value " + (this.value ? 'true' : '') + "\"></span> <span class=\"name\">" + this.options.name + "</span>\n</div>");
       this.$value = this.$element.find('.value');
       this.options.$parent.append(this.$element);
-      new TopViewer.UIControl(this.uiArea, this.$element);
-      valueControl = new TopViewer.UIControl(this.uiArea, this.$value);
+      valueControl = new TopViewer.UIControl(this.uiArea, this.$element);
       valueControl.mousedown((function(_this) {
         return function(position) {
           return _this.setValue(!_this.value);

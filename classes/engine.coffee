@@ -41,7 +41,7 @@ class TopViewer.Engine
     @rotateControls.autoRotate = false
     @rotateControls.autoRotateSpeed = 2.0
 
-    @meshesRotation = new THREE.Matrix4
+    @objectRotation = new THREE.Matrix4
 
     @activeControls = @cameraControls
 
@@ -103,6 +103,9 @@ class TopViewer.Engine
     @ambientLight = not @ambientLight
     @scene.update()
 
+  toggleSurface: ->
+    @renderingControls.surfaceControl.setValue not @renderingControls.surfaceControl.value
+
   toggleWireframe: ->
     @renderingControls.wireframeControl.setValue not @renderingControls.wireframeControl.value
 
@@ -123,7 +126,7 @@ class TopViewer.Engine
       azimuthal = @rotateControls.getAzimuthalAngle()
       polar = -@rotateControls.getPolarAngle()
       euler = new THREE.Euler polar, azimuthal, 0, 'XYZ'
-      @meshesRotation = new THREE.Matrix4().makeRotationFromEuler euler
+      @objectRotation = new THREE.Matrix4().makeRotationFromEuler euler
       @scene.updateRotation()
 
     else if @activeControls is @cameraControls
@@ -133,8 +136,8 @@ class TopViewer.Engine
     frameIndex = @playbackControls.currentFrameIndex
     frameTime = @animation.frameTimes[frameIndex] ? -1
 
-    for mesh in @scene.children when mesh instanceof TopViewer.Mesh
-      mesh.showFrame frameTime
+    for model in @scene.children when model instanceof TopViewer.Model
+      model.showFrame frameTime
 
     @renderer.render @scene, @camera
 

@@ -34,7 +34,7 @@
     function TopWorker() {}
 
     TopWorker.prototype.parse = function(data, url) {
-      var buffer, currentElements, currentElementsName, currentFrame, currentFrameNodeIndex, currentFrameNodesCount, currentFrameTime, currentMode, currentNodes, currentNodesName, currentScalar, currentScalarName, currentScalarNodesName, currentVector, currentVectorName, currentVectorNodesName, element, elementIndex, elementType, elements, elementsInstance, elementsName, i, j, k, l, len, length, line, lines, m, modes, n, nodes, nodesInstance, nodesName, parts, ref, ref1, scalars, value, vectors, vertex, vertexIndex;
+      var buffer, currentElements, currentElementsName, currentFrame, currentFrameNodeIndex, currentFrameNodesCount, currentFrameTime, currentMode, currentNodes, currentNodesName, currentScalar, currentScalarName, currentScalarNodesName, currentVector, currentVectorName, currentVectorNodesName, element, elementIndex, elementType, elements, elementsInstance, elementsName, i, j, k, l, len, len1, length, line, lines, m, modes, n, newElements, nodes, nodesInstance, nodesName, o, parts, ref, ref1, scalars, value, vectors, vertex, vertexIndex;
       lines = data.match(/[^\r\n]+/g);
       this._totalLines = lines.length;
       this._percentageChangeAt = Math.floor(this._totalLines / 100);
@@ -70,7 +70,7 @@
       currentMode = null;
       for (k = 0, len = lines.length; k < len; k++) {
         line = lines[k];
-        parts = line.split(/[ ,]+/);
+        parts = line.match(/\S+/g);
         switch (parts[0]) {
           case 'Nodes':
             currentMode = modes.Nodes;
@@ -133,12 +133,18 @@
             elementType = parseInt(parts[1]);
             switch (elementType) {
               case 4:
-                element = [parseInt(parts[2]), parseInt(parts[3]), parseInt(parts[4])];
+                newElements = [[parseInt(parts[2]), parseInt(parts[3]), parseInt(parts[4])]];
+                break;
+              case 5:
+                newElements = [[parseInt(parts[3]), parseInt(parts[2]), parseInt(parts[4])], [parseInt(parts[3]), parseInt(parts[4]), parseInt(parts[5])], [parseInt(parts[4]), parseInt(parts[2]), parseInt(parts[5])], [parseInt(parts[2]), parseInt(parts[3]), parseInt(parts[5])]];
                 break;
               default:
                 console.error("UNKNOWN ELEMENT TYPE", elementType);
             }
-            currentElements.elements.push(element);
+            for (l = 0, len1 = newElements.length; l < len1; l++) {
+              element = newElements[l];
+              currentElements.elements.push(element);
+            }
             break;
           case modes.VectorCount:
             currentFrameNodesCount = parseInt(parts[0]);
@@ -199,7 +205,7 @@
         nodesInstance = nodes[nodesName];
         length = Math.max(0, nodesInstance.nodes.length - 1);
         buffer = new Float32Array(length * 3);
-        for (i = l = 0, ref = length; 0 <= ref ? l < ref : l > ref; i = 0 <= ref ? ++l : --l) {
+        for (i = m = 0, ref = length; 0 <= ref ? m < ref : m > ref; i = 0 <= ref ? ++m : --m) {
           buffer[i * 3] = nodesInstance.nodes[i + 1].x;
           buffer[i * 3 + 1] = nodesInstance.nodes[i + 1].y;
           buffer[i * 3 + 2] = nodesInstance.nodes[i + 1].z;
@@ -209,8 +215,8 @@
       for (elementsName in elements) {
         elementsInstance = elements[elementsName];
         buffer = new Uint32Array(elementsInstance.elements.length * 3);
-        for (i = m = 0, ref1 = elementsInstance.elements.length; 0 <= ref1 ? m < ref1 : m > ref1; i = 0 <= ref1 ? ++m : --m) {
-          for (j = n = 0; n <= 2; j = ++n) {
+        for (i = n = 0, ref1 = elementsInstance.elements.length; 0 <= ref1 ? n < ref1 : n > ref1; i = 0 <= ref1 ? ++n : --n) {
+          for (j = o = 0; o <= 2; j = ++o) {
             buffer[i * 3 + j] = elementsInstance.elements[i][j] - 1;
           }
         }

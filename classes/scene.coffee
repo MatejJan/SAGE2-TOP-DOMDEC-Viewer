@@ -106,15 +106,18 @@ class TopViewer.Scene extends THREE.Scene
     @updateScale()
     @updateTranslation()
 
+  addModel: (model) ->
+    model.matrix = @normalizationMatrix
+    @add model
+    @update()
+
   addMesh: (mesh) ->
-    mesh.matrix = @normalizationMatrix
-    mesh.wireframeMesh?.matrix = @normalizationMatrix
-    @add mesh
     @update()
 
   update: ->
-    for mesh in @children when mesh instanceof TopViewer.Mesh
-      mesh.castShadow = @engine.shadows
+    for model in @children when model instanceof TopViewer.Model
+      for mesh in model.meshes
+        mesh.castShadow = @engine.shadows
 
     @directionalLight.visible = @engine.directionalLight
     @whiteLight.visible = not @engine.ambientLight
@@ -147,7 +150,7 @@ class TopViewer.Scene extends THREE.Scene
     @_updateFloor()
 
   updateRotation: ->
-    @rotationMatrix.copy @engine.meshesRotation
+    @rotationMatrix.copy @engine.objectRotation
     @_recomputeNormalizationMatrix()
 
   updateTranslation: ->

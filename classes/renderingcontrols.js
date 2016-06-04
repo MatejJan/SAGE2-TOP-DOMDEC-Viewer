@@ -15,31 +15,83 @@
       this.$controls = $("<div class='rendering-controls'>");
       this.$appWindow.append(this.$controls);
       this.rootControl = new TopViewer.UIControl(this, this.$controls);
-      new TopViewer.SliderControl(this, {
+      this.displacementFactor = new TopViewer.SliderControl(this, {
         $parent: this.$controls,
         "class": 'displacement-factor',
-        minimumValue: 1,
+        minimumValue: 0,
         maximumValue: 100,
+        power: 4,
         value: 1,
-        onChange: (function(_this) {
-          return function(value) {
-            return _this.displacementFactor = value;
-          };
-        })(this)
+        decimals: -2
       });
       this.$controls.append("<div class='gradient-curve'>\n  <canvas height='256' width='256'></canvas>\n</div>");
       this.gradientCurve = new ColorCurve(this.$controls.find('.gradient-curve canvas')[0]);
+      this.surfaceControl = new TopViewer.CheckboxControl(this, {
+        $parent: this.$controls,
+        name: 'surface',
+        value: true
+      });
       this.wireframeControl = new TopViewer.CheckboxControl(this, {
         $parent: this.$controls,
         name: 'wireframe',
-        value: false,
-        onChange: (function(_this) {
-          return function(value) {
-            return _this.scene.update();
-          };
-        })(this)
+        value: false
       });
+      this.$controls.append("<hr/>");
+      this.$meshes = $("<ul class='meshes'></ul>");
+      this.$controls.append(this.$meshes);
+      this.$controls.append("<hr/>");
+      this.$vectors = $("<ul class='vectors'></ul>");
+      this.$controls.append(this.$vectors);
     }
+
+    RenderingControls.prototype.addMesh = function(name, mesh) {
+      var $contents, $mesh;
+      $mesh = $("<li class='mesh'></li>");
+      this.$meshes.append($mesh);
+      $contents = $("<div>");
+      mesh.renderingControls = {
+        surface: new TopViewer.CheckboxControl(this, {
+          $parent: $contents,
+          name: 'surface',
+          value: true
+        }),
+        wireframe: new TopViewer.CheckboxControl(this, {
+          $parent: $contents,
+          name: 'wireframe',
+          value: false
+        })
+      };
+      return new TopViewer.ToggleContainer(this, {
+        $parent: $mesh,
+        text: name,
+        visible: false,
+        $contents: $contents
+      });
+    };
+
+    RenderingControls.prototype.addVector = function(name, vector) {
+      var $contents, $vector;
+      $vector = $("<li class='vector'></li>");
+      this.$vectors.append($vector);
+      $contents = $("<div>");
+      vector.renderingControls = {
+        displacementFactor: new TopViewer.SliderControl(this, {
+          $parent: $contents,
+          "class": 'displacement-factor',
+          minimumValue: 0,
+          maximumValue: 100,
+          power: 4,
+          value: 1,
+          decimals: -2
+        })
+      };
+      return new TopViewer.ToggleContainer(this, {
+        $parent: $vector,
+        text: name,
+        visible: false,
+        $contents: $contents
+      });
+    };
 
     RenderingControls.prototype.onMouseDown = function(position, button) {
       RenderingControls.__super__.onMouseDown.apply(this, arguments);

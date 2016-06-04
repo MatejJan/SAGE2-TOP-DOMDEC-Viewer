@@ -110,23 +110,27 @@
       return this.updateTranslation();
     };
 
+    Scene.prototype.addModel = function(model) {
+      model.matrix = this.normalizationMatrix;
+      this.add(model);
+      return this.update();
+    };
+
     Scene.prototype.addMesh = function(mesh) {
-      var ref;
-      mesh.matrix = this.normalizationMatrix;
-      if ((ref = mesh.wireframeMesh) != null) {
-        ref.matrix = this.normalizationMatrix;
-      }
-      this.add(mesh);
       return this.update();
     };
 
     Scene.prototype.update = function() {
-      var i, len, materialNeedsUpdate, mesh, ref;
+      var i, j, len, len1, materialNeedsUpdate, mesh, model, ref, ref1;
       ref = this.children;
       for (i = 0, len = ref.length; i < len; i++) {
-        mesh = ref[i];
-        if (mesh instanceof TopViewer.Mesh) {
-          mesh.castShadow = this.engine.shadows;
+        model = ref[i];
+        if (model instanceof TopViewer.Model) {
+          ref1 = model.meshes;
+          for (j = 0, len1 = ref1.length; j < len1; j++) {
+            mesh = ref1[j];
+            mesh.castShadow = this.engine.shadows;
+          }
         }
       }
       this.directionalLight.visible = this.engine.directionalLight;
@@ -160,7 +164,7 @@
     };
 
     Scene.prototype.updateRotation = function() {
-      this.rotationMatrix.copy(this.engine.meshesRotation);
+      this.rotationMatrix.copy(this.engine.objectRotation);
       return this._recomputeNormalizationMatrix();
     };
 

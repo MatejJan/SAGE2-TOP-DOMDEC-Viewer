@@ -4,7 +4,7 @@ class TopViewer.CheckboxControl
 
     @$element = $("""
       <div class="checkbox-control #{@options.class}">
-        <span class="value"></span> <span class="name">#{@options.name}</span>
+        <span class="value #{if @value then 'true' else ''}"></span> <span class="name">#{@options.name}</span>
       </div>
     """)
 
@@ -12,11 +12,8 @@ class TopViewer.CheckboxControl
 
     @options.$parent.append(@$element)
 
-    # Create the top UI control for hovering purposes.
-    new TopViewer.UIControl @uiArea, @$element
-
-    valueControl = new TopViewer.UIControl @uiArea, @$value
-
+    valueControl = new TopViewer.UIControl @uiArea, @$element
+    
     valueControl.mousedown (position) =>
       @setValue not @value
 

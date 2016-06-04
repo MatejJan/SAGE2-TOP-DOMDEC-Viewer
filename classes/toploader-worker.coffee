@@ -72,7 +72,8 @@ class TopWorker
     currentMode = null
 
     for line in lines
-      parts = line.split /[ ,]+/
+      # Split by whitespace.
+      parts = line.match /\S+/g
 
       # Detect modes.
       switch parts[0]
@@ -146,19 +147,45 @@ class TopWorker
           elementIndex = parseInt parts[0]
           elementType = parseInt parts[1]
 
+          # Note: Vertex indices (1-4) based on TOP/DOMDEC User's Manual.
           switch elementType
             when 4
-              # Triangle
-              element = [
-                parseInt parts[2]
-                parseInt parts[3]
-                parseInt parts[4]
+              # Triangle (Tri_3)
+              newElements = [
+                [
+                  parseInt parts[2] # 1
+                  parseInt parts[3] # 2
+                  parseInt parts[4] # 3
+                ]
               ]
-
+            when 5
+              # Tetrahedron (Tetra_4)
+              newElements = [
+                [
+                  parseInt parts[3] # 2
+                  parseInt parts[2] # 1
+                  parseInt parts[4] # 3
+                ],
+                [
+                  parseInt parts[3] # 2
+                  parseInt parts[4] # 3
+                  parseInt parts[5] # 4
+                ],
+                [
+                  parseInt parts[4] # 3
+                  parseInt parts[2] # 1
+                  parseInt parts[5] # 4
+                ],
+                [
+                  parseInt parts[2] # 1
+                  parseInt parts[3] # 2
+                  parseInt parts[5] # 4
+                ]
+              ]
             else
               console.error "UNKNOWN ELEMENT TYPE", elementType
 
-          currentElements.elements.push element
+          currentElements.elements.push element for element in newElements
 
         when modes.VectorCount
           # Read number of nodes.
