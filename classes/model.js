@@ -8,14 +8,11 @@
     extend(Model, superClass);
 
     function Model(options) {
+      var height, i, j, k, l, ref;
       this.options = options;
       Model.__super__.constructor.apply(this, arguments);
       this.matrixAutoUpdate = false;
       this.nodes = this.options.nodes;
-      this.positions = null;
-      this.colors = null;
-      this.positionAttribute = null;
-      this.colorAttribute = null;
       this.meshes = {};
       this.scalars = {};
       this.vectors = {};
@@ -24,21 +21,44 @@
           frameTime: -1
         }
       ];
-      this.positions = this.nodes.slice();
-      this.positionAttribute = new THREE.BufferAttribute(this.positions, 3);
-      this.colors = new Float32Array(this.positions.length);
-      this.colorAttribute = new THREE.BufferAttribute(this.colors, 3);
-      if (this.positions.length) {
+      this.boundingBox = new THREE.Box3;
+      height = 1;
+      while (this.nodes.length / 3 > 4096 * height) {
+        height *= 2;
+      }
+      this.basePositions = new Float32Array(4096 * height * 3);
+      for (i = k = 0, ref = this.nodes.length / 3; 0 <= ref ? k < ref : k > ref; i = 0 <= ref ? ++k : --k) {
+        for (j = l = 0; l <= 2; j = ++l) {
+          this.basePositions[i * 3 + j] = this.nodes[i * 3 + j];
+        }
+        this.boundingBox.expandByPoint(new THREE.Vector3(this.nodes[i * 3], this.nodes[i * 3 + 1], this.nodes[i * 3 + 2]));
+      }
+      this.boundingSphere = this.boundingBox.getBoundingSphere();
+      this.basePositionsTexture = new THREE.DataTexture(this.basePositions, 4096, height, THREE.RGBFormat, THREE.FloatType);
+      this.basePositionsTexture.needsUpdate = true;
+      this.scalarsTexture = new THREE.DataTexture(new Float32Array(4096 * 4096 * 3), 4096, 4096, THREE.AlphaFormat, THREE.FloatType);
+      this.scalarsTexture.needsUpdate = true;
+      this.displacementsTexture = new THREE.DataTexture(new Float32Array(4096 * 4096 * 3), 4096, 4096, THREE.RGBFormat, THREE.FloatType);
+      this.displacementsTexture.needsUpdate = true;
+      this.material = new TopViewer.ModelMaterial(this);
+      this.wireframeMaterial = new TopViewer.ModelMaterial(this);
+      this.wireframeMaterial.uniforms.opacity.value = 0.3;
+      this.wireframeMaterial.transparent = true;
+      this.isolineMaterial = new TopViewer.IsolineMaterial(this);
+      this.isolineMaterial.uniforms.opacity.value = 0.9;
+      this.isolineMaterial.transparent = true;
+      this.displacementVector = null;
+      this.colorScalar = null;
+      if (this.nodes.length) {
         this.options.engine.scene.addModel(this);
       }
       this._updateFrames();
+      this._currentVectorFrames = {};
     }
 
     Model.prototype.addElements = function(elementsName, elementsInstance) {
       return this.meshes[elementsName] = new TopViewer.Mesh({
         name: elementsName,
-        positionAttribute: this.positionAttribute,
-        colorAttribute: this.colorAttribute,
         elements: elementsInstance.elements,
         model: this,
         engine: this.options.engine
@@ -46,25 +66,57 @@
     };
 
     Model.prototype.addScalar = function(scalarName, scalar) {
+      var array, frame, height, i, k, l, len, ref, ref1;
       this.scalars[scalarName] = scalar;
-      return this._updateFrames();
+      this._updateFrames();
+      ref = scalar.frames;
+      for (k = 0, len = ref.length; k < len; k++) {
+        frame = ref[k];
+        height = 1;
+        while (frame.scalars.length > 4096 * height) {
+          height *= 2;
+        }
+        array = new Float32Array(4096 * height);
+        for (i = l = 0, ref1 = frame.scalars.length; 0 <= ref1 ? l < ref1 : l > ref1; i = 0 <= ref1 ? ++l : --l) {
+          array[i] = frame.scalars[i];
+        }
+        frame.texture = new THREE.DataTexture(array, 4096, height, THREE.AlphaFormat, THREE.FloatType);
+        frame.texture.needsUpdate = true;
+      }
+      return this.colorScalar != null ? this.colorScalar : this.colorScalar = scalar;
     };
 
     Model.prototype.addVector = function(vectorName, vector) {
+      var array, frame, height, i, k, l, len, ref, ref1;
       this.vectors[vectorName] = vector;
       this._updateFrames();
-      return this.options.engine.renderingControls.addVector(vectorName, vector);
+      ref = vector.frames;
+      for (k = 0, len = ref.length; k < len; k++) {
+        frame = ref[k];
+        height = 1;
+        while (frame.vectors.length / 3 > 4096 * height) {
+          height *= 2;
+        }
+        array = new Float32Array(4096 * height * 3);
+        for (i = l = 0, ref1 = frame.vectors.length; 0 <= ref1 ? l < ref1 : l > ref1; i = 0 <= ref1 ? ++l : --l) {
+          array[i] = frame.vectors[i];
+        }
+        frame.texture = new THREE.DataTexture(array, 4096, height, THREE.RGBFormat, THREE.FloatType);
+        frame.texture.needsUpdate = true;
+      }
+      this.options.engine.renderingControls.addVector(vectorName, vector);
+      return this.displacementVector != null ? this.displacementVector : this.displacementVector = vector;
     };
 
     Model.prototype._updateFrames = function() {
-      var frame, frameTime, frameTimes, i, j, k, l, len, len1, len2, len3, m, n, newFrame, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, results, scalar, scalarFrame, scalarName, vector, vectorFrame, vectorName;
+      var frame, frameTime, frameTimes, i, k, l, len, len1, len2, len3, m, n, newFrame, o, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, results, scalar, scalarFrame, scalarName, vector, vectorFrame, vectorName;
       frameTimes = [];
       ref = this.scalars;
       for (scalarName in ref) {
         scalar = ref[scalarName];
         ref1 = scalar.frames;
-        for (j = 0, len = ref1.length; j < len; j++) {
-          frame = ref1[j];
+        for (k = 0, len = ref1.length; k < len; k++) {
+          frame = ref1[k];
           frameTimes = _.union(frameTimes, [parseFloat(frame.time)]);
         }
       }
@@ -72,8 +124,8 @@
       for (vectorName in ref2) {
         vector = ref2[vectorName];
         ref3 = vector.frames;
-        for (k = 0, len1 = ref3.length; k < len1; k++) {
-          frame = ref3[k];
+        for (l = 0, len1 = ref3.length; l < len1; l++) {
+          frame = ref3[l];
           frameTimes = _.union(frameTimes, [parseFloat(frame.time)]);
         }
       }
@@ -86,30 +138,33 @@
       }
       this.frames = [];
       results = [];
-      for (l = 0, len2 = frameTimes.length; l < len2; l++) {
-        frameTime = frameTimes[l];
+      for (m = 0, len2 = frameTimes.length; m < len2; m++) {
+        frameTime = frameTimes[m];
         newFrame = {
           time: frameTime,
+          scalars: [],
           vectors: []
         };
         ref4 = this.scalars;
         for (scalarName in ref4) {
           scalar = ref4[scalarName];
-          for (i = m = 0, ref5 = scalar.frames.length; 0 <= ref5 ? m < ref5 : m > ref5; i = 0 <= ref5 ? ++m : --m) {
+          for (i = n = 0, ref5 = scalar.frames.length; 0 <= ref5 ? n < ref5 : n > ref5; i = 0 <= ref5 ? ++n : --n) {
             scalarFrame = scalar.frames[i];
             if (frameTime !== scalarFrame.time) {
               continue;
             }
-            newFrame.scalarName = scalarName;
-            newFrame.scalarFrame = scalarFrame;
+            newFrame.scalars.push({
+              scalarName: scalarName,
+              scalarFrame: scalarFrame
+            });
           }
         }
         ref6 = this.vectors;
         for (vectorName in ref6) {
           vector = ref6[vectorName];
           ref7 = vector.frames;
-          for (n = 0, len3 = ref7.length; n < len3; n++) {
-            vectorFrame = ref7[n];
+          for (o = 0, len3 = ref7.length; o < len3; o++) {
+            vectorFrame = ref7[o];
             if (frameTime !== vectorFrame.time) {
               continue;
             }
@@ -125,9 +180,9 @@
     };
 
     Model.prototype.showFrame = function(frameTime) {
-      var displacementFactor, frame, frameIndex, gradientData, gradientIndex, i, j, k, l, len, m, mesh, meshName, mustRepaint, n, normalizeFactor, normalizedValue, o, offset, p, range, ref, ref1, ref2, ref3, ref4, ref5, ref6, renderingControls, results, scalar, testFrame, time, value, vector;
+      var frame, frameIndex, k, l, len, len1, m, mesh, meshName, ref, ref1, ref2, ref3, renderingControls, results, scalar, scalarData, testFrame, time, vector;
       frame = null;
-      for (frameIndex = j = 0, ref = this.frames.length; 0 <= ref ? j < ref : j > ref; frameIndex = 0 <= ref ? ++j : --j) {
+      for (frameIndex = k = 0, ref = this.frames.length; 0 <= ref ? k < ref : k > ref; frameIndex = 0 <= ref ? ++k : --k) {
         testFrame = this.frames[frameIndex];
         time = testFrame.time;
         if (time === frameTime || time === -1) {
@@ -139,66 +194,39 @@
         return;
       }
       renderingControls = this.options.engine.renderingControls;
-      if (frame.scalarFrame && this.options.engine.gradientData) {
-        mustRepaint = this._paintedWhite || this._currentScalarFrame !== frame.scalarFrame;
-        if (this._gradientMapLastUpdate !== renderingControls.gradientCurve.lastUpdated) {
-          this._gradientMapLastUpdate = renderingControls.gradientCurve.lastUpdated;
-          mustRepaint = true;
-        }
-        scalar = this.scalars[frame.scalarName];
-        if (scalar._limitsVersion !== scalar.limits.version) {
-          mustRepaint = true;
-        }
-        if (mustRepaint) {
-          range = scalar.limits.maxValue - scalar.limits.minValue;
-          normalizeFactor = range ? 1 / range : 1;
-          gradientData = this.options.engine.gradientData;
-          for (i = k = 0, ref1 = frame.scalarFrame.scalars.length; 0 <= ref1 ? k < ref1 : k > ref1; i = 0 <= ref1 ? ++k : --k) {
-            value = frame.scalarFrame.scalars[i];
-            normalizedValue = (value - scalar.limits.minValue) * normalizeFactor;
-            normalizedValue = renderingControls.gradientCurve.getY(normalizedValue);
-            gradientIndex = Math.floor((gradientData.length / 4 - 1) * normalizedValue) * 4;
-            for (offset = l = 0; l <= 2; offset = ++l) {
-              this.colors[i * 3 + offset] = gradientData[gradientIndex + offset];
-            }
-          }
-          this._paintedWhite = false;
-          this._currentScalarFrame = frame.scalarFrame;
-          scalar._limitsVersion = scalar.limits.version;
-          this.colorAttribute.needsUpdate = true;
-        }
-      } else {
-        if (!this._paintedWhite) {
-          for (i = m = 0, ref2 = this.colors.length; 0 <= ref2 ? m < ref2 : m > ref2; i = 0 <= ref2 ? ++m : --m) {
-            this.colors[i] = 1;
-          }
-          this._paintedWhite = true;
-          this.colorAttribute.needsUpdate = true;
+      ref1 = frame.scalars;
+      for (l = 0, len = ref1.length; l < len; l++) {
+        scalar = ref1[l];
+        scalarData = this.scalars[scalar.scalarName];
+        if (scalarData === this.colorScalar) {
+          this.material.uniforms.scalarsTexture.value = scalar.scalarFrame.texture;
+          this.material.uniforms.scalarsMin.value = scalarData.limits.minValue;
+          this.material.uniforms.scalarsRange.value = scalarData.limits.maxValue - scalarData.limits.minValue;
+          this.isolineMaterial.uniforms.scalarsTexture.value = scalar.scalarFrame.texture;
+          this.isolineMaterial.uniforms.scalarsMin.value = scalarData.limits.minValue;
+          this.isolineMaterial.uniforms.scalarsRange.value = scalarData.limits.maxValue - scalarData.limits.minValue;
         }
       }
-      for (i = n = 0, ref3 = this.positions.length; 0 <= ref3 ? n < ref3 : n > ref3; i = 0 <= ref3 ? ++n : --n) {
-        this.positions[i] = this.nodes[i];
-      }
-      this.positionAttribute.needsUpdate = true;
-      ref4 = frame.vectors;
-      for (o = 0, len = ref4.length; o < len; o++) {
-        vector = ref4[o];
-        if (vector.vectorFrame) {
-          displacementFactor = this.vectors[vector.vectorName].renderingControls.displacementFactor.value;
-          if (!(this._currentDisplacementFactor === displacementFactor && this._currentVectorFrame === frame.vectorFrame)) {
-            this._currentVectorFrame = vector.vectorFrame;
-            this._currentDisplacementFactor = displacementFactor;
-            for (i = p = 0, ref5 = this.nodes.length; 0 <= ref5 ? p < ref5 : p > ref5; i = 0 <= ref5 ? ++p : --p) {
-              this.positions[i] += vector.vectorFrame.vectors[i] * displacementFactor;
-            }
-            this.positionAttribute.needsUpdate = true;
-          }
+      ref2 = frame.vectors;
+      for (m = 0, len1 = ref2.length; m < len1; m++) {
+        vector = ref2[m];
+        if (this.vectors[vector.vectorName] === this.displacementVector) {
+          this.material.uniforms.displacementFactor.value = renderingControls.displacementFactor.value;
+          this.material.uniforms.displacementsTexture.value = vector.vectorFrame.texture;
+          this.wireframeMaterial.uniforms.displacementFactor.value = renderingControls.displacementFactor.value;
+          this.wireframeMaterial.uniforms.displacementsTexture.value = vector.vectorFrame.texture;
+          this.isolineMaterial.uniforms.displacementFactor.value = renderingControls.displacementFactor.value;
+          this.isolineMaterial.uniforms.displacementsTexture.value = vector.vectorFrame.texture;
         }
       }
-      ref6 = this.meshes;
+      time = performance.now() / 1000;
+      this.material.uniforms.time.value = time;
+      this.wireframeMaterial.uniforms.time.value = time;
+      this.isolineMaterial.uniforms.time.value = time;
+      ref3 = this.meshes;
       results = [];
-      for (meshName in ref6) {
-        mesh = ref6[meshName];
+      for (meshName in ref3) {
+        mesh = ref3[meshName];
         results.push(mesh.showFrame());
       }
       return results;

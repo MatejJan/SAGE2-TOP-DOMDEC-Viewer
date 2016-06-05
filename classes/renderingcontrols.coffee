@@ -60,12 +60,17 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
       surface: new TopViewer.CheckboxControl @,
         $parent: $contents
         name: 'surface'
-        value: true
+        value: false
 
       wireframe: new TopViewer.CheckboxControl @,
         $parent: $contents
         name: 'wireframe'
-        value: false
+        value: true
+
+      isolines: new TopViewer.CheckboxControl @,
+        $parent: $contents
+        name: 'isolines'
+        value: true
 
     new TopViewer.ToggleContainer @,
       $parent: $mesh
@@ -78,16 +83,6 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
     @$vectors.append($vector)
 
     $contents = $("<div>")
-
-    vector.renderingControls =
-      displacementFactor: new TopViewer.SliderControl @,
-        $parent: $contents
-        class: 'displacement-factor'
-        minimumValue: 0
-        maximumValue: 100
-        power: 4
-        value: 1
-        decimals: -2
 
     new TopViewer.ToggleContainer @,
       $parent: $vector

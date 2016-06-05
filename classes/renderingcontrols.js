@@ -53,12 +53,17 @@
         surface: new TopViewer.CheckboxControl(this, {
           $parent: $contents,
           name: 'surface',
-          value: true
+          value: false
         }),
         wireframe: new TopViewer.CheckboxControl(this, {
           $parent: $contents,
           name: 'wireframe',
-          value: false
+          value: true
+        }),
+        isolines: new TopViewer.CheckboxControl(this, {
+          $parent: $contents,
+          name: 'isolines',
+          value: true
         })
       };
       return new TopViewer.ToggleContainer(this, {
@@ -74,17 +79,6 @@
       $vector = $("<li class='vector'></li>");
       this.$vectors.append($vector);
       $contents = $("<div>");
-      vector.renderingControls = {
-        displacementFactor: new TopViewer.SliderControl(this, {
-          $parent: $contents,
-          "class": 'displacement-factor',
-          minimumValue: 0,
-          maximumValue: 100,
-          power: 4,
-          value: 1,
-          decimals: -2
-        })
-      };
       return new TopViewer.ToggleContainer(this, {
         $parent: $vector,
         text: name,

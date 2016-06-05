@@ -8,11 +8,6 @@ class TopViewer.Model extends THREE.Object3D
 
     @nodes = @options.nodes
 
-    @positions = null
-    @colors = null
-    @positionAttribute = null
-    @colorAttribute = null
-
     @meshes = {}
     @scalars = {}
     @vectors = {}
@@ -21,24 +16,41 @@ class TopViewer.Model extends THREE.Object3D
       frameTime: -1
     ]
 
-    # Create positions.
-    @positions = @nodes.slice()
-    @positionAttribute = new THREE.BufferAttribute @positions, 3
+    @boundingBox = new THREE.Box3
 
-    # Create colors
-    @colors = new Float32Array @positions.length
-    @colorAttribute = new THREE.BufferAttribute @colors, 3
+    height = 1
+    while @nodes.length / 3 > 4096 * height
+      height *= 2
 
-    # Add the model to the scene. Parent must be explicitly set to null.
-    @options.engine.scene.addModel @ if @positions.length
+    @basePositions = new Float32Array 4096 * height * 3
+    for i in [0...@nodes.length/3]
+      for j in [0..2]
+        @basePositions[i * 3 + j] = @nodes[i * 3 + j]
+
+      @boundingBox.expandByPoint new THREE.Vector3 @nodes[i * 3], @nodes[i * 3 + 1], @nodes[i * 3 + 2]
+
+    @boundingSphere = @boundingBox.getBoundingSphere()
+
+    @basePositionsTexture = new THREE.DataTexture @basePositions, 4096, height, THREE.RGBFormat, THREE.FloatType
+    @basePositionsTexture.needsUpdate = true
+
+    # Create an empty scalar texture if there are no scalars.
+    @scalarsTexture = new THREE.DataTexture new Float32Array(4096 * 4096 * 3), 4096, 4096, THREE.AlphaFormat, THREE.FloatType
+    @scalarsTexture.needsUpdate = true
+
+    # Create an empty displacement texture if there are no vectors.
+    @displacementsTexture = new THREE.DataTexture new Float32Array(4096 * 4096 * 3), 4096, 4096, THREE.RGBFormat, THREE.FloatType
+    @displacementsTexture.needsUpdate = true
+
+    @material = new TopViewer.ModelMaterial @
+
+
 
     @_updateFrames()
 
   addElements: (elementsName, elementsInstance) ->
     @meshes[elementsName] = new TopViewer.Mesh
       name: elementsName
-      positionAttribute: @positionAttribute
-      colorAttribute: @colorAttribute
       elements: elementsInstance.elements
       model: @
       engine: @options.engine
@@ -86,16 +98,9 @@ class TopViewer.Model extends THREE.Object3D
           scalarFrame = scalar.frames[i]
           continue unless frameTime is scalarFrame.time
 
-          newFrame.scalarName = scalarName
-          newFrame.scalarFrame = scalarFrame
-
       for vectorName, vector of @vectors
         for vectorFrame in vector.frames
           continue unless frameTime is vectorFrame.time
-
-          newFrame.vectors.push
-            vectorName: vectorName
-            vectorFrame: vectorFrame
 
       @frames.push newFrame
 
@@ -116,71 +121,11 @@ class TopViewer.Model extends THREE.Object3D
     renderingControls = @options.engine.renderingControls
 
     # Create colors.
-    if frame.scalarFrame and @options.engine.gradientData
-
-      # We must repaint if we're white (no colors) or if colors come from another frame.
-      mustRepaint = @_paintedWhite or @_currentScalarFrame isnt frame.scalarFrame
-
       # Repaint the colors if the gradient map has changed.
-      unless @_gradientMapLastUpdate is renderingControls.gradientCurve.lastUpdated
-        @_gradientMapLastUpdate = renderingControls.gradientCurve.lastUpdated
-        mustRepaint = true
-
-      # Repaint when limits have changed.
-      scalar = @scalars[frame.scalarName]
-
-      mustRepaint = true unless scalar._limitsVersion is scalar.limits.version
-
-      if mustRepaint
-        range = scalar.limits.maxValue - scalar.limits.minValue
-        normalizeFactor = if range then 1 / range else 1
-        gradientData = @options.engine.gradientData
-
-        for i in [0...frame.scalarFrame.scalars.length]
-          value = frame.scalarFrame.scalars[i]
-          normalizedValue = (value - scalar.limits.minValue) * normalizeFactor
-
-          # Remap the value based on the gradient curve.
-          normalizedValue = renderingControls.gradientCurve.getY normalizedValue
-
-          # Set the gradient index into the map.
-          gradientIndex = Math.floor((gradientData.length / 4 - 1) * normalizedValue) * 4
-
-          @colors[i * 3 + offset] = gradientData[gradientIndex + offset] for offset in [0..2]
-
-        @_paintedWhite = false
-        @_currentScalarFrame = frame.scalarFrame
-        scalar._limitsVersion = scalar.limits.version
-        @colorAttribute.needsUpdate = true
-
-    else
-      # If there're no scalar values, make the model white (unless it's already white).
-      unless @_paintedWhite
-        for i in [0...@colors.length]
-          @colors[i] = 1
-
-        @_paintedWhite = true
-        @colorAttribute.needsUpdate = true
-
-    # Displace positions, first copy the original positions.
-    for i in [0...@positions.length]
-      @positions[i] = @nodes[i]
-
-    @positionAttribute.needsUpdate = true
-
     for vector in frame.vectors
-      if vector.vectorFrame
-        displacementFactor = @vectors[vector.vectorName].renderingControls.displacementFactor.value
 
-        unless @_currentDisplacementFactor is displacementFactor and @_currentVectorFrame is frame.vectorFrame
-          @_currentVectorFrame = vector.vectorFrame
-          @_currentDisplacementFactor = displacementFactor
 
-          for i in [0...@nodes.length]
-            @positions[i] += vector.vectorFrame.vectors[i] * displacementFactor
 
-          @positionAttribute.needsUpdate = true
 
     for meshName, mesh of @meshes
       mesh.showFrame()
-

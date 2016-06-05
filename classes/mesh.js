@@ -8,37 +8,101 @@
     extend(Mesh, superClass);
 
     function Mesh(options) {
+      var a, addLine, b, connectivity, faceCount, height, i, indexArray, indexAttribute, isolinesGeometry, isolinesIndexArray, isolinesIndexAttribute, isolinesTypeArray, isolinesTypeAttribute, j, k, l, lineVertexIndex, linesCount, m, n, o, p, ref, ref1, ref2, ref3, ref4, setVertexIndexCoordinates, wireframeGeometry, wireframeIndexArray, wireframeIndexAttribute;
       this.options = options;
-      Mesh.__super__.constructor.call(this, new THREE.BufferGeometry(), this.options.engine.scene.modelMaterial);
-      this.geometry.addAttribute('position', this.options.positionAttribute);
-      this.geometry.addAttribute('color', this.options.colorAttribute);
-      this.geometry.setIndex(new THREE.BufferAttribute(this.options.elements, 1));
+      Mesh.__super__.constructor.call(this, new THREE.BufferGeometry(), this.options.model.material);
+      indexArray = new Float32Array(this.options.elements.length * 2);
+      indexAttribute = new THREE.BufferAttribute(indexArray, 2);
+      height = this.options.model.basePositionsTexture.image.height;
+      setVertexIndexCoordinates = function(attribute, i, index) {
+        attribute.setX(i, index % 4096 / 4096);
+        return attribute.setY(i, Math.floor(index / 4096) / height);
+      };
+      for (i = k = 0, ref = this.options.elements.length; 0 <= ref ? k < ref : k > ref; i = 0 <= ref ? ++k : --k) {
+        setVertexIndexCoordinates(indexAttribute, i, this.options.elements[i]);
+      }
+      this.geometry.addAttribute('vertexIndex', indexAttribute);
+      this.geometry.drawRange.count = this.options.elements.length;
+      connectivity = [];
+      linesCount = 0;
+      addLine = function(a, b) {
+        var ref1;
+        if (a > b) {
+          ref1 = [b, a], a = ref1[0], b = ref1[1];
+        }
+        if (connectivity[a] == null) {
+          connectivity[a] = {};
+        }
+        if (!connectivity[a][b]) {
+          connectivity[a][b] = true;
+          return linesCount++;
+        }
+      };
+      for (i = l = 0, ref1 = this.options.elements.length / 3; 0 <= ref1 ? l < ref1 : l > ref1; i = 0 <= ref1 ? ++l : --l) {
+        addLine(this.options.elements[i * 3], this.options.elements[i * 3 + 1]);
+        addLine(this.options.elements[i * 3 + 1], this.options.elements[i * 3 + 2]);
+        addLine(this.options.elements[i * 3 + 2], this.options.elements[i * 3]);
+      }
+      wireframeGeometry = new THREE.BufferGeometry();
+      this.wireframeMesh = new THREE.LineSegments(wireframeGeometry, this.options.model.wireframeMaterial);
+      wireframeIndexArray = new Float32Array(linesCount * 4);
+      wireframeIndexAttribute = new THREE.BufferAttribute(wireframeIndexArray, 2);
+      lineVertexIndex = 0;
+      for (a = m = 0, ref2 = connectivity.length; 0 <= ref2 ? m < ref2 : m > ref2; a = 0 <= ref2 ? ++m : --m) {
+        if (!connectivity[a]) {
+          continue;
+        }
+        for (b in connectivity[a]) {
+          setVertexIndexCoordinates(wireframeIndexAttribute, lineVertexIndex, a);
+          setVertexIndexCoordinates(wireframeIndexAttribute, lineVertexIndex + 1, b);
+          lineVertexIndex += 2;
+        }
+      }
+      wireframeGeometry.addAttribute('vertexIndex', wireframeIndexAttribute);
+      wireframeGeometry.drawRange.count = linesCount * 2;
+      isolinesGeometry = new THREE.BufferGeometry();
+      this.isolinesMesh = new THREE.LineSegments(isolinesGeometry, this.options.model.isolineMaterial);
+      faceCount = this.options.elements.length / 3;
+      for (i = n = 0; n <= 2; i = ++n) {
+        isolinesIndexArray = new Float32Array(faceCount * 4);
+        isolinesIndexAttribute = new THREE.BufferAttribute(isolinesIndexArray, 2);
+        for (j = o = 0, ref3 = faceCount; 0 <= ref3 ? o < ref3 : o > ref3; j = 0 <= ref3 ? ++o : --o) {
+          setVertexIndexCoordinates(isolinesIndexAttribute, j * 2, this.options.elements[j * 3 + i]);
+          setVertexIndexCoordinates(isolinesIndexAttribute, j * 2 + 1, this.options.elements[j * 3 + i]);
+        }
+        isolinesGeometry.addAttribute("vertex" + (i + 1) + "Index", isolinesIndexAttribute);
+      }
+      isolinesTypeArray = new Float32Array(faceCount * 2);
+      isolinesTypeAttribute = new THREE.BufferAttribute(isolinesTypeArray, 1);
+      for (i = p = 0, ref4 = faceCount; 0 <= ref4 ? p < ref4 : p > ref4; i = 0 <= ref4 ? ++p : --p) {
+        isolinesTypeArray[i * 2 + 1] = 1.0;
+      }
+      isolinesGeometry.addAttribute("vertexType", isolinesTypeAttribute);
+      isolinesGeometry.drawRange.count = faceCount * 2;
       this._updateGeometry();
       this.options.model.add(this);
+      this.options.model.add(this.wireframeMesh);
+      this.options.model.add(this.isolinesMesh);
       this.options.engine.scene.addMesh(this);
       this.options.engine.renderingControls.addMesh(this.options.name, this);
     }
 
     Mesh.prototype._updateGeometry = function() {
-      this.geometry.computeVertexNormals();
-      this.geometry.computeBoundingSphere();
-      this.geometry.computeBoundingBox();
-      return this.options.engine.scene.acommodateMeshBounds(this);
+      this._updateBounds(this, this.options.model);
+      this._updateBounds(this.wireframeMesh, this.options.model);
+      this._updateBounds(this.isolinesMesh, this.options.model);
+      return this.options.engine.scene.accommodateMeshBounds(this);
+    };
+
+    Mesh.prototype._updateBounds = function(mesh, model) {
+      mesh.geometry.boundingBox = this.options.model.boundingBox;
+      return mesh.geometry.boundingSphere = this.options.model.boundingSphere;
     };
 
     Mesh.prototype.showFrame = function() {
-      var ref, showSurface, showWireframe;
-      showSurface = this.renderingControls.surface.value;
-      showWireframe = this.renderingControls.wireframe.value;
-      if (showWireframe && !this.wireframeMesh) {
-        this.wireframeMesh = new THREE.Mesh(this.geometry, this.options.engine.scene.wireframeMaterial);
-        this.options.model.add(this.wireframeMesh);
-      }
-      this.visible = showSurface;
-      if ((ref = this.wireframeMesh) != null) {
-        ref.visible = showWireframe;
-      }
-      return this.geometry.computeVertexNormals();
+      this.visible = this.renderingControls.surface.value;
+      this.wireframeMesh.visible = this.renderingControls.wireframe.value;
+      return this.isolinesMesh.visible = this.renderingControls.isolines.value;
     };
 
     return Mesh;

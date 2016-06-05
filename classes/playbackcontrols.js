@@ -35,7 +35,7 @@
         unit: 'FPS',
         minimumValue: 1,
         maximumValue: 60,
-        value: 10,
+        value: 30,
         onChange: (function(_this) {
           return function(value) {
             return _this.framesPerSecond = value;

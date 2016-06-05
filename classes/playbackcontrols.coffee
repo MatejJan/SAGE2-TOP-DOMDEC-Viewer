@@ -55,7 +55,7 @@ class TopViewer.PlaybackControls extends TopViewer.UIArea
       unit: 'FPS'
       minimumValue: 1
       maximumValue: 60
-      value: 10
+      value: 30
       onChange: (value) =>
         @framesPerSecond = value
 

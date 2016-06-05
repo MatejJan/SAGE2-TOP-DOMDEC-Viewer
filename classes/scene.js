@@ -104,7 +104,7 @@
       return this.update();
     };
 
-    Scene.prototype.acommodateMeshBounds = function(mesh) {
+    Scene.prototype.accommodateMeshBounds = function(mesh) {
       this.sceneBoundingBox = this.sceneBoundingBox.union(mesh.geometry.boundingBox);
       this.updateScale();
       return this.updateTranslation();

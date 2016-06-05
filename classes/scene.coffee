@@ -101,7 +101,7 @@ class TopViewer.Scene extends THREE.Scene
 
     @update()
 
-  acommodateMeshBounds: (mesh) ->
+  accommodateMeshBounds: (mesh) ->
     @sceneBoundingBox = @sceneBoundingBox.union mesh.geometry.boundingBox
     @updateScale()
     @updateTranslation()

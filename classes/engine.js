@@ -41,7 +41,7 @@
       this.objectRotation = new THREE.Matrix4;
       this.activeControls = this.cameraControls;
       this.shadows = true;
-      this.vertexColors = true;
+      this.vertexColors = false;
       this.reflections = true;
       this.directionalLight = true;
       this.ambientLight = true;
@@ -57,7 +57,11 @@
       this.uiAreas.push(this.renderingControls);
       this._frameTime = 0;
       this._frameCount = 0;
+      this.gradientData = new Uint8Array(1024 * 4);
+      this.gradientTexture = new THREE.DataTexture(this.gradientData, 1024, 1, THREE.RGBAFormat, THREE.UnsignedByteType);
       this.loadGradient(this.options.resourcesPath + 'gradients/xpost.png');
+      this.gradientCurveData = new Float32Array(4096);
+      this.gradientCurveTexture = new THREE.DataTexture(this.gradientCurveData, 4096, 1, THREE.AlphaFormat, THREE.FloatType, THREE.UVMapping, THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter);
     }
 
     Engine.prototype.loadGradient = function(url) {
@@ -65,18 +69,16 @@
       image = new Image();
       image.onload = (function(_this) {
         return function() {
-          var canvas, i, j, ref, results, uintData;
+          var canvas, i, j, ref, uintData;
           canvas = document.createElement('canvas');
-          canvas.width = image.width;
+          canvas.width = 1024;
           canvas.height = 1;
-          canvas.getContext('2d').drawImage(image, 0, 0, image.width, 1);
-          uintData = canvas.getContext('2d').getImageData(0, 0, image.width, 1).data;
-          _this.gradientData = new Float32Array(uintData.length);
-          results = [];
+          canvas.getContext('2d').drawImage(image, 0, 0, 1024, 1);
+          uintData = canvas.getContext('2d').getImageData(0, 0, 1024, 1).data;
           for (i = j = 0, ref = uintData.length; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
-            results.push(_this.gradientData[i] = uintData[i] / 255);
+            _this.gradientData[i] = uintData[i];
           }
-          return results;
+          return _this.gradientTexture.needsUpdate = true;
         };
       })(this);
       return image.src = url;
@@ -128,7 +130,7 @@
     };
 
     Engine.prototype.draw = function(elapsedTime) {
-      var azimuthal, euler, frameIndex, frameTime, j, k, len, len1, model, polar, ref, ref1, ref2, uiArea;
+      var azimuthal, euler, frameIndex, frameTime, i, j, k, l, len, len1, model, polar, ref, ref1, ref2, uiArea;
       this.uiControlsActive = false;
       ref = this.uiAreas;
       for (j = 0, len = ref.length; j < len; j++) {
@@ -147,12 +149,19 @@
       } else if (this.activeControls === this.cameraControls) {
         this.cameraControls.update();
       }
+      if (this._gradientMapLastUpdate !== this.renderingControls.gradientCurve.lastUpdated) {
+        this._gradientMapLastUpdate = this.renderingControls.gradientCurve.lastUpdated;
+        for (i = k = 0; k < 4096; i = ++k) {
+          this.gradientCurveData[i] = this.renderingControls.gradientCurve.getY(i / 4096);
+        }
+        this.gradientCurveTexture.needsUpdate = true;
+      }
       this.playbackControls.update(elapsedTime);
       frameIndex = this.playbackControls.currentFrameIndex;
       frameTime = (ref1 = this.animation.frameTimes[frameIndex]) != null ? ref1 : -1;
       ref2 = this.scene.children;
-      for (k = 0, len1 = ref2.length; k < len1; k++) {
-        model = ref2[k];
+      for (l = 0, len1 = ref2.length; l < len1; l++) {
+        model = ref2[l];
         if (model instanceof TopViewer.Model) {
           model.showFrame(frameTime);
         }

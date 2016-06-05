@@ -31,6 +31,8 @@
     "classes/filemanager.js",
     "classes/model.js",
     "classes/mesh.js",
+    "classes/modelmaterial.js",
+    "classes/isolinematerial.js",
     "classes/playbackcontrols.js",
     "classes/renderingcontrols.js",
     "classes/scene.js"

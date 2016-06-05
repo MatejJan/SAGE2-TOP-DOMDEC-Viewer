@@ -46,7 +46,7 @@ class TopViewer.Engine
     @activeControls = @cameraControls
 
     @shadows = true
-    @vertexColors = true
+    @vertexColors = false
     @reflections = true
     @directionalLight = true
     @ambientLight = true
@@ -63,18 +63,23 @@ class TopViewer.Engine
     @_frameTime = 0
     @_frameCount = 0
 
+    @gradientData = new Uint8Array 1024 * 4
+    @gradientTexture = new THREE.DataTexture @gradientData, 1024, 1, THREE.RGBAFormat, THREE.UnsignedByteType
     @loadGradient @options.resourcesPath + 'gradients/xpost.png'
+
+    @gradientCurveData = new Float32Array 4096
+    @gradientCurveTexture = new THREE.DataTexture @gradientCurveData, 4096, 1, THREE.AlphaFormat, THREE.FloatType, THREE.UVMapping, THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter
 
   loadGradient: (url) ->
     image = new Image()
     image.onload = =>
       canvas = document.createElement('canvas')
-      canvas.width = image.width
+      canvas.width = 1024
       canvas.height = 1
-      canvas.getContext('2d').drawImage image, 0, 0, image.width, 1
-      uintData = canvas.getContext('2d').getImageData(0, 0, image.width, 1).data
-      @gradientData = new Float32Array uintData.length
-      @gradientData[i] = uintData[i] / 255 for i in [0...uintData.length]
+      canvas.getContext('2d').drawImage image, 0, 0, 1024, 1
+      uintData = canvas.getContext('2d').getImageData(0, 0, 1024, 1).data
+      @gradientData[i] = uintData[i] for i in [0...uintData.length]
+      @gradientTexture.needsUpdate = true
 
     # Initiate loading.
     image.src = url
@@ -131,6 +136,12 @@ class TopViewer.Engine
 
     else if @activeControls is @cameraControls
       @cameraControls.update()
+
+    # Update gradient curve data.
+    unless @_gradientMapLastUpdate is @renderingControls.gradientCurve.lastUpdated
+      @_gradientMapLastUpdate = @renderingControls.gradientCurve.lastUpdated
+      @gradientCurveData[i] = @renderingControls.gradientCurve.getY(i/4096) for i in [0...4096]
+      @gradientCurveTexture.needsUpdate = true
 
     @playbackControls.update elapsedTime
     frameIndex = @playbackControls.currentFrameIndex
