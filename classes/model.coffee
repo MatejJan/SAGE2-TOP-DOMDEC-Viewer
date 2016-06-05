@@ -44,9 +44,23 @@ class TopViewer.Model extends THREE.Object3D
 
     @material = new TopViewer.ModelMaterial @
 
+    @wireframeMaterial = new TopViewer.ModelMaterial @
+    @wireframeMaterial.uniforms.opacity.value = 0.3
+    @wireframeMaterial.transparent = true
 
+    @isolineMaterial = new TopViewer.IsolineMaterial @
+    @isolineMaterial.uniforms.opacity.value = 0.9
+    @isolineMaterial.transparent = true
+
+    @displacementVector = null
+    @colorScalar = null
+
+    # Add the model to the scene.
+    @options.engine.scene.addModel @ if @nodes.length
 
     @_updateFrames()
+
+    @_currentVectorFrames = {}
 
   addElements: (elementsName, elementsInstance) ->
     @meshes[elementsName] = new TopViewer.Mesh
@@ -58,12 +72,36 @@ class TopViewer.Model extends THREE.Object3D
   addScalar: (scalarName, scalar) ->
     @scalars[scalarName] = scalar
     @_updateFrames()
+    
+    for frame in scalar.frames
+      height = 1
+      while frame.scalars.length > 4096 * height
+        height *= 2
+
+      array = new Float32Array 4096 * height
+      array[i] = frame.scalars[i] for i in [0...frame.scalars.length]
+      frame.texture = new THREE.DataTexture array, 4096, height, THREE.AlphaFormat, THREE.FloatType
+      frame.texture.needsUpdate = true
+
+    @colorScalar ?= scalar
 
   addVector: (vectorName, vector) ->
     @vectors[vectorName] = vector
     @_updateFrames()
 
+    for frame in vector.frames
+      height = 1
+      while frame.vectors.length / 3 > 4096 * height
+        height *= 2
+
+      array = new Float32Array 4096 * height * 3
+      array[i] = frame.vectors[i] for i in [0...frame.vectors.length]
+      frame.texture = new THREE.DataTexture array, 4096, height, THREE.RGBFormat, THREE.FloatType
+      frame.texture.needsUpdate = true
+
     @options.engine.renderingControls.addVector vectorName, vector
+
+    @displacementVector ?= vector
 
   _updateFrames: ->
     # Determine time frames.
@@ -91,16 +129,19 @@ class TopViewer.Model extends THREE.Object3D
     for frameTime in frameTimes
       newFrame =
         time: frameTime
+        scalars: []
         vectors: []
 
       for scalarName, scalar of @scalars
         for i in [0...scalar.frames.length]
           scalarFrame = scalar.frames[i]
           continue unless frameTime is scalarFrame.time
+          newFrame.scalars.push {scalarName, scalarFrame}
 
       for vectorName, vector of @vectors
         for vectorFrame in vector.frames
           continue unless frameTime is vectorFrame.time
+          newFrame.vectors.push {vectorName, vectorFrame}
 
       @frames.push newFrame
 
@@ -121,11 +162,33 @@ class TopViewer.Model extends THREE.Object3D
     renderingControls = @options.engine.renderingControls
 
     # Create colors.
-      # Repaint the colors if the gradient map has changed.
+    for scalar in frame.scalars
+      scalarData = @scalars[scalar.scalarName]
+      if scalarData is @colorScalar
+        @material.uniforms.scalarsTexture.value = scalar.scalarFrame.texture
+        @material.uniforms.scalarsMin.value = scalarData.limits.minValue
+        @material.uniforms.scalarsRange.value = scalarData.limits.maxValue - scalarData.limits.minValue
+
+        @isolineMaterial.uniforms.scalarsTexture.value = scalar.scalarFrame.texture
+        @isolineMaterial.uniforms.scalarsMin.value = scalarData.limits.minValue
+        @isolineMaterial.uniforms.scalarsRange.value = scalarData.limits.maxValue - scalarData.limits.minValue
+
+    # Displace positions
     for vector in frame.vectors
+      if @vectors[vector.vectorName] is @displacementVector
+        @material.uniforms.displacementFactor.value = renderingControls.displacementFactor.value
+        @material.uniforms.displacementsTexture.value = vector.vectorFrame.texture
 
+        @wireframeMaterial.uniforms.displacementFactor.value = renderingControls.displacementFactor.value
+        @wireframeMaterial.uniforms.displacementsTexture.value = vector.vectorFrame.texture
 
+        @isolineMaterial.uniforms.displacementFactor.value = renderingControls.displacementFactor.value
+        @isolineMaterial.uniforms.displacementsTexture.value = vector.vectorFrame.texture
 
+    time = performance.now() / 1000
+    @material.uniforms.time.value = time
+    @wireframeMaterial.uniforms.time.value = time
+    @isolineMaterial.uniforms.time.value = time
 
     for meshName, mesh of @meshes
       mesh.showFrame()
