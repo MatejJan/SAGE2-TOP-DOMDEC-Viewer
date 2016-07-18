@@ -31,14 +31,21 @@
     "classes/filemanager.js",
     "classes/model.js",
     "classes/mesh.js",
+    "classes/volume.js",
     "classes/modelmaterial.js",
     "classes/isolinematerial.js",
+    "classes/isosurfacematerial.js",
     "classes/playbackcontrols.js",
     "classes/renderingcontrols.js",
     "classes/scene.js"
   ],
   "load": {
-    "file": ""
+    "file": "",
+    "camera": {
+      "position": {"x":0, "y":0, "z":3},
+      "rotation": {"_x":0, "_y":0, "_z":0, "_order":"XYZ"},
+      "scale": {"x":1, "y":1, "z":1}
+    }
   },
   "title": "TOP/DOMDEC Viewer",
   "version": "1.0.0",

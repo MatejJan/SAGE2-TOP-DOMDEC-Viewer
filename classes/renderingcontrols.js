@@ -63,6 +63,31 @@
         isolines: new TopViewer.CheckboxControl(this, {
           $parent: $contents,
           name: 'isolines',
+          value: false
+        })
+      };
+      return new TopViewer.ToggleContainer(this, {
+        $parent: $mesh,
+        text: name,
+        visible: false,
+        $contents: $contents
+      });
+    };
+
+    RenderingControls.prototype.addVolume = function(name, mesh) {
+      var $contents, $mesh;
+      $mesh = $("<li class='mesh'></li>");
+      this.$meshes.append($mesh);
+      $contents = $("<div>");
+      mesh.renderingControls = {
+        wireframe: new TopViewer.CheckboxControl(this, {
+          $parent: $contents,
+          name: 'wireframe',
+          value: false
+        }),
+        isosurfaces: new TopViewer.CheckboxControl(this, {
+          $parent: $contents,
+          name: 'isosurfaces',
           value: true
         })
       };

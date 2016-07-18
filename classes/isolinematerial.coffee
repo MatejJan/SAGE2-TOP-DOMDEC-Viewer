@@ -92,12 +92,6 @@ void main()	{
       vertex3Position += texture2D(displacementsTexture, vertex3Index).xyz * displacementFactor;
     }
 
-    if (vertexType == 0.0) {
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(vertex1Position, 1.0);
-    } else {
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(vertex2Position, 1.0);
-    }
-
     float scalar1 = clamp((texture2D(scalarsTexture, vertex1Index).a - scalarsMin) / scalarsRange, 0.01, 0.99);
     float scalar2 = clamp((texture2D(scalarsTexture, vertex2Index).a - scalarsMin) / scalarsRange, 0.01, 0.99);
     float scalar3 = clamp((texture2D(scalarsTexture, vertex3Index).a - scalarsMin) / scalarsRange, 0.01, 0.99);

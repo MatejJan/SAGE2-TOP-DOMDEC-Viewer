@@ -104,16 +104,13 @@
       return this.update();
     };
 
-    Scene.prototype.accommodateMeshBounds = function(mesh) {
-      this.sceneBoundingBox = this.sceneBoundingBox.union(mesh.geometry.boundingBox);
-      this.updateScale();
-      return this.updateTranslation();
-    };
-
     Scene.prototype.addModel = function(model) {
       model.matrix = this.normalizationMatrix;
       this.add(model);
-      return this.update();
+      this.update();
+      this.sceneBoundingBox = this.sceneBoundingBox.union(model.boundingBox);
+      this.updateScale();
+      return this.updateTranslation();
     };
 
     Scene.prototype.addMesh = function(mesh) {

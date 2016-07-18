@@ -3,7 +3,7 @@
   'use strict';
   TopViewer.Engine = (function() {
     function Engine(options) {
-      var proxyCube;
+      var proxyCube, saved;
       this.options = options;
       this.scene = new TopViewer.Scene({
         engine: this,
@@ -11,6 +11,12 @@
       });
       this.camera = new THREE.PerspectiveCamera(45, this.options.width / this.options.height, 0.001, 100);
       this.camera.position.z = 3;
+      if (this.options.app.state.camera) {
+        saved = this.options.app.state.camera;
+        this.camera.position.set(saved.position.x, saved.position.y, saved.position.z);
+        this.camera.rotation.set(saved.rotation._x, saved.rotation._y, saved.rotation._z, saved.rotation._order);
+        this.camera.scale.set(saved.scale.x, saved.scale.y, saved.scale.z);
+      }
       this.renderer = new THREE.WebGLRenderer({
         antialias: true
       });
@@ -180,6 +186,7 @@
       if (!this.uiControlsActive) {
         this.activeControls.mouseDown(position.x, position.y, this.buttonIndexFromString(button));
       }
+      this._updateState();
       ref = this.uiAreas;
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
@@ -194,6 +201,7 @@
       if (!this.uiControlsActive) {
         this.activeControls.mouseMove(position.x, position.y);
       }
+      this._updateState();
       ref = this.uiAreas;
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
@@ -208,6 +216,7 @@
       if (!this.uiControlsActive) {
         this.activeControls.mouseUp(position.x, position.y, this.buttonIndexFromString(button));
       }
+      this._updateState();
       ref = this.uiAreas;
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
@@ -219,8 +228,9 @@
 
     Engine.prototype.onMouseScroll = function(delta) {
       if (!this.uiControlsActive) {
-        return this.activeControls.scale(delta);
+        this.activeControls.scale(delta);
       }
+      return this._updateState();
     };
 
     Engine.prototype.buttonIndexFromString = function(button) {
@@ -229,6 +239,10 @@
       } else {
         return 0;
       }
+    };
+
+    Engine.prototype._updateState = function() {
+      return this.options.app.state.camera = _.pick(this.camera, 'position', 'rotation', 'scale');
     };
 
     return Engine;

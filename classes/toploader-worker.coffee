@@ -94,7 +94,7 @@ class TopWorker
           # Parse elements header.
           currentElementsName = parts[1]
           currentElements =
-            elements: []
+            elements: {}
             nodesName: parts[3]
 
           elements[currentElementsName] = currentElements
@@ -146,46 +146,29 @@ class TopWorker
           # Parse element.
           elementIndex = parseInt parts[0]
           elementType = parseInt parts[1]
+          currentElements.elements[elementType] ?= []
 
           # Note: Vertex indices (1-4) based on TOP/DOMDEC User's Manual.
           switch elementType
             when 4
               # Triangle (Tri_3)
-              newElements = [
-                [
-                  parseInt parts[2] # 1
-                  parseInt parts[3] # 2
-                  parseInt parts[4] # 3
-                ]
+              newElement = [
+                parseInt parts[2]
+                parseInt parts[3]
+                parseInt parts[4]
               ]
             when 5
               # Tetrahedron (Tetra_4)
-              newElements = [
-                [
-                  parseInt parts[3] # 2
-                  parseInt parts[2] # 1
-                  parseInt parts[4] # 3
-                ],
-                [
-                  parseInt parts[3] # 2
-                  parseInt parts[4] # 3
-                  parseInt parts[5] # 4
-                ],
-                [
-                  parseInt parts[4] # 3
-                  parseInt parts[2] # 1
-                  parseInt parts[5] # 4
-                ],
-                [
-                  parseInt parts[2] # 1
-                  parseInt parts[3] # 2
-                  parseInt parts[5] # 4
-                ]
+              newElement = [
+                parseInt parts[2]
+                parseInt parts[3]
+                parseInt parts[4]
+                parseInt parts[5]
               ]
             else
               console.error "UNKNOWN ELEMENT TYPE", elementType
 
-          currentElements.elements.push element for element in newElements
+          currentElements.elements[elementType].push newElement
 
         when modes.VectorCount
           # Read number of nodes.
@@ -256,14 +239,20 @@ class TopWorker
 
       nodesInstance.nodes = buffer
 
-    for elementsName, elementsInstance of elements
-      buffer = new Uint32Array elementsInstance.elements.length * 3
-      for i in [0...elementsInstance.elements.length]
-        for j in [0..2]
-          # Convert to 0-based indices.
-          buffer[i*3+j] = elementsInstance.elements[i][j] - 1
+    nodesPerElement =
+      "4": 3
+      "5": 4
 
-      elementsInstance.elements = buffer
+    for elementsName, elementsInstance of elements
+      for elementsType, elementsList of elementsInstance.elements
+        elementSize = nodesPerElement[elementsType]
+        buffer = new Uint32Array elementsList.length * elementSize
+        for i in [0...elementsList.length]
+          for j in [0...elementSize]
+            # Convert to 0-based indices.
+            buffer[i*elementSize+j] = elementsList[i][j] - 1
+
+        elementsInstance.elements[elementsType] = buffer
 
     nodes: nodes
     elements: elements

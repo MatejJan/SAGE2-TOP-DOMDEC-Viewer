@@ -10,6 +10,12 @@ class TopViewer.Engine
     @camera = new THREE.PerspectiveCamera(45, @options.width / @options.height, 0.001, 100)
     @camera.position.z = 3
 
+    if @options.app.state.camera
+      saved = @options.app.state.camera
+      @camera.position.set saved.position.x, saved.position.y, saved.position.z
+      @camera.rotation.set saved.rotation._x, saved.rotation._y, saved.rotation._z, saved.rotation._order
+      @camera.scale.set saved.scale.x, saved.scale.y, saved.scale.z
+
     @renderer = new THREE.WebGLRenderer
       antialias: true
 
@@ -162,21 +168,28 @@ class TopViewer.Engine
 
   onMouseDown: (position, button) ->
     @activeControls.mouseDown position.x, position.y, @buttonIndexFromString button unless @uiControlsActive
+    @_updateState()
 
     uiArea.onMouseDown position, button for uiArea in @uiAreas
 
   onMouseMove: (position) ->
     @activeControls.mouseMove position.x, position.y unless @uiControlsActive
+    @_updateState()
 
     uiArea.onMouseMove position for uiArea in @uiAreas
 
   onMouseUp: (position, button) ->
     @activeControls.mouseUp position.x, position.y, @buttonIndexFromString button unless @uiControlsActive
+    @_updateState()
 
     uiArea.onMouseUp position, button for uiArea in @uiAreas
 
   onMouseScroll: (delta) ->
     @activeControls.scale delta unless @uiControlsActive
+    @_updateState()
 
   buttonIndexFromString: (button) ->
     if (button == 'right') then 2 else 0
+
+  _updateState: ->
+    @options.app.state.camera = _.pick @camera, 'position', 'rotation', 'scale'

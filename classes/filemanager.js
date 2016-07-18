@@ -105,7 +105,7 @@
     };
 
     FileManager.prototype._processObjects = function() {
-      var elementsInstance, elementsName, nodesInstance, nodesName, ref, ref1, ref2, ref3, results, scalar, scalarName, scalarNodesName, scalars, vector, vectorName, vectorNodesName, vectors;
+      var elements, elementsInstance, elementsName, elementsType, nodesInstance, nodesName, ref, ref1, ref2, ref3, ref4, results, scalar, scalarName, scalarNodesName, scalars, vector, vectorName, vectorNodesName, vectors;
       ref = this.objects.nodes;
       for (nodesName in ref) {
         nodesInstance = ref[nodesName];
@@ -119,13 +119,17 @@
       for (elementsName in ref1) {
         elementsInstance = ref1[elementsName];
         if (this.models[elementsInstance.nodesName]) {
-          this.models[elementsInstance.nodesName].addElements(elementsName, elementsInstance);
-          delete this.objects.elements[elementsName];
+          ref2 = elementsInstance.elements;
+          for (elementsType in ref2) {
+            elements = ref2[elementsType];
+            this.models[elementsInstance.nodesName].addElements(elementsName, parseInt(elementsType), elements);
+            delete this.objects.elements[elementsName];
+          }
         }
       }
-      ref2 = this.objects.scalars;
-      for (scalarNodesName in ref2) {
-        scalars = ref2[scalarNodesName];
+      ref3 = this.objects.scalars;
+      for (scalarNodesName in ref3) {
+        scalars = ref3[scalarNodesName];
         if (this.models[scalarNodesName]) {
           for (scalarName in scalars) {
             scalar = scalars[scalarName];
@@ -134,10 +138,10 @@
           delete this.objects.scalars[scalarNodesName];
         }
       }
-      ref3 = this.objects.vectors;
+      ref4 = this.objects.vectors;
       results = [];
-      for (vectorNodesName in ref3) {
-        vectors = ref3[vectorNodesName];
+      for (vectorNodesName in ref4) {
+        vectors = ref4[vectorNodesName];
         if (this.models[vectorNodesName]) {
           for (vectorName in vectors) {
             vector = vectors[vectorName];

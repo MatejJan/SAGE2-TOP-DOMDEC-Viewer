@@ -12,6 +12,7 @@
       $element = $(this.element);
       $element.append("<link href='https://fonts.googleapis.com/css?family=Ubuntu+Condensed' rel='stylesheet' type='text/css'>\n<link href=\"/uploads/apps/top_viewer/css/fontello.css\" rel=\"stylesheet\"/>\n<link href=\"/uploads/apps/top_viewer/css/animation.css\" rel=\"stylesheet\"/>\n<link rel=\"stylesheet\" type=\"text/css\" href=\"/uploads/apps/top_viewer/css/playbackcontrols.css\" />\n<link rel=\"stylesheet\" type=\"text/css\" href=\"/uploads/apps/top_viewer/css/renderingcontrols.css\" />");
       this.engine = new TopViewer.Engine({
+        app: this,
         width: this.width,
         height: this.height,
         $appWindow: $element,

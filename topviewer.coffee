@@ -21,6 +21,7 @@ window.topviewer = SAGE2_App.extend
     """
 
     @engine = new TopViewer.Engine
+      app: @
       width: @width
       height: @height
       $appWindow: $element
@@ -156,7 +157,6 @@ window.topviewer = SAGE2_App.extend
           return
 
       @refresh date
-
 
   move: (date) ->
     # this.sage2_width, this.sage2_height give width and height of app in global wall coordinates

@@ -101,15 +101,14 @@ class TopViewer.Scene extends THREE.Scene
 
     @update()
 
-  accommodateMeshBounds: (mesh) ->
-    @sceneBoundingBox = @sceneBoundingBox.union mesh.geometry.boundingBox
-    @updateScale()
-    @updateTranslation()
-
   addModel: (model) ->
     model.matrix = @normalizationMatrix
     @add model
     @update()
+
+    @sceneBoundingBox = @sceneBoundingBox.union model.boundingBox
+    @updateScale()
+    @updateTranslation()
 
   addMesh: (mesh) ->
     @update()

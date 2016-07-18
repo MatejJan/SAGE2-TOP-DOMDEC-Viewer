@@ -34,7 +34,7 @@
     function TopWorker() {}
 
     TopWorker.prototype.parse = function(data, url) {
-      var buffer, currentElements, currentElementsName, currentFrame, currentFrameNodeIndex, currentFrameNodesCount, currentFrameTime, currentMode, currentNodes, currentNodesName, currentScalar, currentScalarName, currentScalarNodesName, currentVector, currentVectorName, currentVectorNodesName, element, elementIndex, elementType, elements, elementsInstance, elementsName, i, j, k, l, len, len1, length, line, lines, m, modes, n, newElements, nodes, nodesInstance, nodesName, o, parts, ref, ref1, scalars, value, vectors, vertex, vertexIndex;
+      var base, buffer, currentElements, currentElementsName, currentFrame, currentFrameNodeIndex, currentFrameNodesCount, currentFrameTime, currentMode, currentNodes, currentNodesName, currentScalar, currentScalarName, currentScalarNodesName, currentVector, currentVectorName, currentVectorNodesName, elementIndex, elementSize, elementType, elements, elementsInstance, elementsList, elementsName, elementsType, i, j, k, l, len, length, line, lines, m, modes, n, newElement, nodes, nodesInstance, nodesName, nodesPerElement, parts, ref, ref1, ref2, ref3, scalars, value, vectors, vertex, vertexIndex;
       lines = data.match(/[^\r\n]+/g);
       this._totalLines = lines.length;
       this._percentageChangeAt = Math.floor(this._totalLines / 100);
@@ -84,7 +84,7 @@
             currentMode = modes.Elements;
             currentElementsName = parts[1];
             currentElements = {
-              elements: [],
+              elements: {},
               nodesName: parts[3]
             };
             elements[currentElementsName] = currentElements;
@@ -131,20 +131,20 @@
           case modes.Elements:
             elementIndex = parseInt(parts[0]);
             elementType = parseInt(parts[1]);
+            if ((base = currentElements.elements)[elementType] == null) {
+              base[elementType] = [];
+            }
             switch (elementType) {
               case 4:
-                newElements = [[parseInt(parts[2]), parseInt(parts[3]), parseInt(parts[4])]];
+                newElement = [parseInt(parts[2]), parseInt(parts[3]), parseInt(parts[4])];
                 break;
               case 5:
-                newElements = [[parseInt(parts[3]), parseInt(parts[2]), parseInt(parts[4])], [parseInt(parts[3]), parseInt(parts[4]), parseInt(parts[5])], [parseInt(parts[4]), parseInt(parts[2]), parseInt(parts[5])], [parseInt(parts[2]), parseInt(parts[3]), parseInt(parts[5])]];
+                newElement = [parseInt(parts[2]), parseInt(parts[3]), parseInt(parts[4]), parseInt(parts[5])];
                 break;
               default:
                 console.error("UNKNOWN ELEMENT TYPE", elementType);
             }
-            for (l = 0, len1 = newElements.length; l < len1; l++) {
-              element = newElements[l];
-              currentElements.elements.push(element);
-            }
+            currentElements.elements[elementType].push(newElement);
             break;
           case modes.VectorCount:
             currentFrameNodesCount = parseInt(parts[0]);
@@ -205,22 +205,31 @@
         nodesInstance = nodes[nodesName];
         length = Math.max(0, nodesInstance.nodes.length - 1);
         buffer = new Float32Array(length * 3);
-        for (i = m = 0, ref = length; 0 <= ref ? m < ref : m > ref; i = 0 <= ref ? ++m : --m) {
+        for (i = l = 0, ref = length; 0 <= ref ? l < ref : l > ref; i = 0 <= ref ? ++l : --l) {
           buffer[i * 3] = nodesInstance.nodes[i + 1].x;
           buffer[i * 3 + 1] = nodesInstance.nodes[i + 1].y;
           buffer[i * 3 + 2] = nodesInstance.nodes[i + 1].z;
         }
         nodesInstance.nodes = buffer;
       }
+      nodesPerElement = {
+        "4": 3,
+        "5": 4
+      };
       for (elementsName in elements) {
         elementsInstance = elements[elementsName];
-        buffer = new Uint32Array(elementsInstance.elements.length * 3);
-        for (i = n = 0, ref1 = elementsInstance.elements.length; 0 <= ref1 ? n < ref1 : n > ref1; i = 0 <= ref1 ? ++n : --n) {
-          for (j = o = 0; o <= 2; j = ++o) {
-            buffer[i * 3 + j] = elementsInstance.elements[i][j] - 1;
+        ref1 = elementsInstance.elements;
+        for (elementsType in ref1) {
+          elementsList = ref1[elementsType];
+          elementSize = nodesPerElement[elementsType];
+          buffer = new Uint32Array(elementsList.length * elementSize);
+          for (i = m = 0, ref2 = elementsList.length; 0 <= ref2 ? m < ref2 : m > ref2; i = 0 <= ref2 ? ++m : --m) {
+            for (j = n = 0, ref3 = elementSize; 0 <= ref3 ? n < ref3 : n > ref3; j = 0 <= ref3 ? ++n : --n) {
+              buffer[i * elementSize + j] = elementsList[i][j] - 1;
+            }
           }
+          elementsInstance.elements[elementsType] = buffer;
         }
-        elementsInstance.elements = buffer;
       }
       return {
         nodes: nodes,

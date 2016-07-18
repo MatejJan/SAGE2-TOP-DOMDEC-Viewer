@@ -68,8 +68,8 @@ class TopViewer.Mesh extends THREE.Mesh
 
       # Add each face vertex (first, second or third, depending on i) to the start and end isovertex.
       for j in [0...faceCount]
-        setVertexIndexCoordinates(isolinesIndexAttribute, j*2, @options.elements[j * 3 + i])
-        setVertexIndexCoordinates(isolinesIndexAttribute, j*2+1, @options.elements[j * 3 + i])
+        for k in [0...2]
+        setVertexIndexCoordinates(isolinesIndexAttribute, j*2+k, @options.elements[j * 3 + i])
 
       isolinesGeometry.addAttribute "vertex#{i+1}Index", isolinesIndexAttribute
 
@@ -102,8 +102,6 @@ class TopViewer.Mesh extends THREE.Mesh
     @_updateBounds @, @options.model
     @_updateBounds @wireframeMesh, @options.model
     @_updateBounds @isolinesMesh, @options.model
-
-    @options.engine.scene.accommodateMeshBounds @
 
   _updateBounds: (mesh, model) ->
     mesh.geometry.boundingBox = @options.model.boundingBox

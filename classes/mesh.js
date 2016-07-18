@@ -90,8 +90,7 @@
     Mesh.prototype._updateGeometry = function() {
       this._updateBounds(this, this.options.model);
       this._updateBounds(this.wireframeMesh, this.options.model);
-      this._updateBounds(this.isolinesMesh, this.options.model);
-      return this.options.engine.scene.accommodateMeshBounds(this);
+      return this._updateBounds(this.isolinesMesh, this.options.model);
     };
 
     Mesh.prototype._updateBounds = function(mesh, model) {

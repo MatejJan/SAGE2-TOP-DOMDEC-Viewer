@@ -70,6 +70,29 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
       isolines: new TopViewer.CheckboxControl @,
         $parent: $contents
         name: 'isolines'
+        value: false
+
+    new TopViewer.ToggleContainer @,
+      $parent: $mesh
+      text: name
+      visible: false
+      $contents: $contents
+
+  addVolume: (name, mesh) ->
+    $mesh = $("<li class='mesh'></li>")
+    @$meshes.append($mesh)
+
+    $contents = $("<div>")
+
+    mesh.renderingControls =
+      wireframe: new TopViewer.CheckboxControl @,
+        $parent: $contents
+        name: 'wireframe'
+        value: false
+
+      isosurfaces: new TopViewer.CheckboxControl @,
+        $parent: $contents
+        name: 'isosurfaces'
         value: true
 
     new TopViewer.ToggleContainer @,

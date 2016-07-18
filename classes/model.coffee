@@ -9,6 +9,7 @@ class TopViewer.Model extends THREE.Object3D
     @nodes = @options.nodes
 
     @meshes = {}
+    @volumes = {}
     @scalars = {}
     @vectors = {}
 
@@ -52,6 +53,10 @@ class TopViewer.Model extends THREE.Object3D
     @isolineMaterial.uniforms.opacity.value = 0.9
     @isolineMaterial.transparent = true
 
+    @isosurfaceMaterial = new TopViewer.IsosurfaceMaterial @
+    @isosurfaceMaterial.uniforms.opacity.value = 0.9
+    @isosurfaceMaterial.transparent = true
+
     @displacementVector = null
     @colorScalar = null
 
@@ -62,10 +67,25 @@ class TopViewer.Model extends THREE.Object3D
 
     @_currentVectorFrames = {}
 
-  addElements: (elementsName, elementsInstance) ->
-    @meshes[elementsName] = new TopViewer.Mesh
+  addElements: (elementsName, elementsType, elements) ->
+    switch elementsType
+      when 4
+        # Triangle (Tri_3)
+        collection = @meshes
+        constructor = TopViewer.Mesh
+
+      when 5
+        # Tetrahedron (Tetra_4)
+        collection = @volumes
+        constructor = TopViewer.Volume
+
+      else
+        console.error "UNKNOWN ELEMENT TYPE", elementsType
+        return
+
+    collection[elementsName] = new constructor
       name: elementsName
-      elements: elementsInstance.elements
+      elements: elements
       model: @
       engine: @options.engine
 
@@ -173,6 +193,10 @@ class TopViewer.Model extends THREE.Object3D
         @isolineMaterial.uniforms.scalarsMin.value = scalarData.limits.minValue
         @isolineMaterial.uniforms.scalarsRange.value = scalarData.limits.maxValue - scalarData.limits.minValue
 
+        @isosurfaceMaterial.uniforms.scalarsTexture.value = scalar.scalarFrame.texture
+        @isosurfaceMaterial.uniforms.scalarsMin.value = scalarData.limits.minValue
+        @isosurfaceMaterial.uniforms.scalarsRange.value = scalarData.limits.maxValue - scalarData.limits.minValue
+
     # Displace positions
     for vector in frame.vectors
       if @vectors[vector.vectorName] is @displacementVector
@@ -185,10 +209,14 @@ class TopViewer.Model extends THREE.Object3D
         @isolineMaterial.uniforms.displacementFactor.value = renderingControls.displacementFactor.value
         @isolineMaterial.uniforms.displacementsTexture.value = vector.vectorFrame.texture
 
+        @isosurfaceMaterial.uniforms.displacementFactor.value = renderingControls.displacementFactor.value
+        @isosurfaceMaterial.uniforms.displacementsTexture.value = vector.vectorFrame.texture
+
     time = performance.now() / 1000
     @material.uniforms.time.value = time
     @wireframeMaterial.uniforms.time.value = time
     @isolineMaterial.uniforms.time.value = time
 
-    for meshName, mesh of @meshes
-      mesh.showFrame()
+    for collection in [@meshes, @volumes]
+      for name, object of collection
+        object.showFrame()

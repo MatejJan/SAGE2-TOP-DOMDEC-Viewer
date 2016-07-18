@@ -91,11 +91,12 @@ class TopViewer.FileManager
 
       delete @objects.nodes[nodesName]
 
-    # Create meshes from elements.
+    # Create meshes and volumes from elements.
     for elementsName, elementsInstance of @objects.elements
       if @models[elementsInstance.nodesName]
-        @models[elementsInstance.nodesName].addElements elementsName, elementsInstance
-        delete @objects.elements[elementsName]
+        for elementsType, elements of elementsInstance.elements
+          @models[elementsInstance.nodesName].addElements elementsName, parseInt(elementsType), elements
+          delete @objects.elements[elementsName]
 
     # Add all scalars.
     for scalarNodesName, scalars of @objects.scalars

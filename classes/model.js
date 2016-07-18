@@ -14,6 +14,7 @@
       this.matrixAutoUpdate = false;
       this.nodes = this.options.nodes;
       this.meshes = {};
+      this.volumes = {};
       this.scalars = {};
       this.vectors = {};
       this.frames = [
@@ -47,6 +48,9 @@
       this.isolineMaterial = new TopViewer.IsolineMaterial(this);
       this.isolineMaterial.uniforms.opacity.value = 0.9;
       this.isolineMaterial.transparent = true;
+      this.isosurfaceMaterial = new TopViewer.IsosurfaceMaterial(this);
+      this.isosurfaceMaterial.uniforms.opacity.value = 0.9;
+      this.isosurfaceMaterial.transparent = true;
       this.displacementVector = null;
       this.colorScalar = null;
       if (this.nodes.length) {
@@ -56,10 +60,24 @@
       this._currentVectorFrames = {};
     }
 
-    Model.prototype.addElements = function(elementsName, elementsInstance) {
-      return this.meshes[elementsName] = new TopViewer.Mesh({
+    Model.prototype.addElements = function(elementsName, elementsType, elements) {
+      var collection, constructor;
+      switch (elementsType) {
+        case 4:
+          collection = this.meshes;
+          constructor = TopViewer.Mesh;
+          break;
+        case 5:
+          collection = this.volumes;
+          constructor = TopViewer.Volume;
+          break;
+        default:
+          console.error("UNKNOWN ELEMENT TYPE", elementsType);
+          return;
+      }
+      return collection[elementsName] = new constructor({
         name: elementsName,
-        elements: elementsInstance.elements,
+        elements: elements,
         model: this,
         engine: this.options.engine
       });
@@ -180,7 +198,7 @@
     };
 
     Model.prototype.showFrame = function(frameTime) {
-      var frame, frameIndex, k, l, len, len1, m, mesh, meshName, ref, ref1, ref2, ref3, renderingControls, results, scalar, scalarData, testFrame, time, vector;
+      var collection, frame, frameIndex, k, l, len, len1, len2, m, n, name, object, ref, ref1, ref2, ref3, renderingControls, results, scalar, scalarData, testFrame, time, vector;
       frame = null;
       for (frameIndex = k = 0, ref = this.frames.length; 0 <= ref ? k < ref : k > ref; frameIndex = 0 <= ref ? ++k : --k) {
         testFrame = this.frames[frameIndex];
@@ -205,6 +223,9 @@
           this.isolineMaterial.uniforms.scalarsTexture.value = scalar.scalarFrame.texture;
           this.isolineMaterial.uniforms.scalarsMin.value = scalarData.limits.minValue;
           this.isolineMaterial.uniforms.scalarsRange.value = scalarData.limits.maxValue - scalarData.limits.minValue;
+          this.isosurfaceMaterial.uniforms.scalarsTexture.value = scalar.scalarFrame.texture;
+          this.isosurfaceMaterial.uniforms.scalarsMin.value = scalarData.limits.minValue;
+          this.isosurfaceMaterial.uniforms.scalarsRange.value = scalarData.limits.maxValue - scalarData.limits.minValue;
         }
       }
       ref2 = frame.vectors;
@@ -217,17 +238,27 @@
           this.wireframeMaterial.uniforms.displacementsTexture.value = vector.vectorFrame.texture;
           this.isolineMaterial.uniforms.displacementFactor.value = renderingControls.displacementFactor.value;
           this.isolineMaterial.uniforms.displacementsTexture.value = vector.vectorFrame.texture;
+          this.isosurfaceMaterial.uniforms.displacementFactor.value = renderingControls.displacementFactor.value;
+          this.isosurfaceMaterial.uniforms.displacementsTexture.value = vector.vectorFrame.texture;
         }
       }
       time = performance.now() / 1000;
       this.material.uniforms.time.value = time;
       this.wireframeMaterial.uniforms.time.value = time;
       this.isolineMaterial.uniforms.time.value = time;
-      ref3 = this.meshes;
+      ref3 = [this.meshes, this.volumes];
       results = [];
-      for (meshName in ref3) {
-        mesh = ref3[meshName];
-        results.push(mesh.showFrame());
+      for (n = 0, len2 = ref3.length; n < len2; n++) {
+        collection = ref3[n];
+        results.push((function() {
+          var results1;
+          results1 = [];
+          for (name in collection) {
+            object = collection[name];
+            results1.push(object.showFrame());
+          }
+          return results1;
+        })());
       }
       return results;
     };
