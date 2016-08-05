@@ -33,6 +33,17 @@
 .rendering-controls button:focus {
   outline: none;
 }
+.rendering-controls .panel {
+  border: 1px solid rgba(200,200,225,0.5);
+  margin: 0.4em;
+  padding: 0.4em;
+}
+.rendering-controls .panel .title {
+  border-bottom: 1px solid rgba(200,200,225,0.5);
+  font-size: 1.2em;
+  text-transform: uppercase;
+  margin-bottom: 0.5em;
+}
 .rendering-controls .displacement-factor {
   font-family: "Ubuntu Condensed", sans-serif;
   color: rgba(200,200,225,0.5);
@@ -108,13 +119,11 @@
   vertical-align: middle;
 }
 .rendering-controls .gradient-curve {
-  width: 10em;
-  height: 10em;
   padding: 0.5em;
 }
 .rendering-controls .gradient-curve canvas {
-  width: 100%;
-  height: 100%;
+  width: 10em;
+  height: 10em;
 }
 .rendering-controls ul {
   list-style: none;
@@ -141,4 +150,29 @@
 }
 .rendering-controls .toggle-container .contents.visible {
   display: block;
+}
+.rendering-controls .dropdown-control .toggle-container {
+  position: relative;
+}
+.rendering-controls .dropdown-control .toggle-container .checkbox-control .value {
+  border: none;
+}
+.rendering-controls .dropdown-control .toggle-container .checkbox-control .value::after {
+  content: "▼";
+}
+.rendering-controls .dropdown-control .toggle-container .contents {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  border: 1px solid rgba(200,200,225,0.5);
+  background: rgba(47,48,55,0.9);
+  font-size: 1.6em;
+  z-index: 1;
+  box-shadow: 0 0.4em 0.5em rgba(0,0,0,0.3);
+}
+.rendering-controls .dropdown-control .toggle-container .contents .values .value {
+  padding: 0.4em;
+}
+.rendering-controls .dropdown-control .toggle-container .contents .values .value.hover {
+  background: rgba(200,200,225,0.1);
 }

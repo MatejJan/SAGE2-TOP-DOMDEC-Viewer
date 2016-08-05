@@ -17,6 +17,9 @@ class TopViewer.CheckboxControl
     valueControl.mousedown (position) =>
       @setValue not @value
 
+  setName: (name) ->
+    @$element.find('.name').text(name)
+
   setValue: (value) ->
     @value = value
 

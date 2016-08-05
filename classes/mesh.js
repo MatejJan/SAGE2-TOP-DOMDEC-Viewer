@@ -8,20 +8,33 @@
     extend(Mesh, superClass);
 
     function Mesh(options) {
-      var a, addLine, b, connectivity, faceCount, height, i, indexArray, indexAttribute, isolinesGeometry, isolinesIndexArray, isolinesIndexAttribute, isolinesTypeArray, isolinesTypeAttribute, j, k, l, lineVertexIndex, linesCount, m, n, o, p, ref, ref1, ref2, ref3, ref4, setVertexIndexCoordinates, wireframeGeometry, wireframeIndexArray, wireframeIndexAttribute;
+      var a, addLine, b, baseIndex, connectivity, faceCount, height, i, indexArrays, indexAttributes, indexInTriangle, isolinesGeometry, isolinesIndexArray, isolinesIndexAttribute, isolinesTypeArray, isolinesTypeAttribute, j, k, l, lineVertexIndex, linesCount, m, n, o, p, q, r, ref, ref1, ref2, ref3, ref4, s, setVertexIndexCoordinates, t, wireframeGeometry, wireframeIndexArray, wireframeIndexAttribute;
       this.options = options;
       Mesh.__super__.constructor.call(this, new THREE.BufferGeometry(), this.options.model.material);
-      indexArray = new Float32Array(this.options.elements.length * 2);
-      indexAttribute = new THREE.BufferAttribute(indexArray, 2);
+      indexArrays = [];
+      indexAttributes = [];
+      for (i = l = 0; l <= 3; i = ++l) {
+        indexArrays[i] = new Float32Array(this.options.elements.length * 2);
+        indexAttributes[i] = new THREE.BufferAttribute(indexArrays[i], 2);
+      }
       height = this.options.model.basePositionsTexture.image.height;
       setVertexIndexCoordinates = function(attribute, i, index) {
         attribute.setX(i, index % 4096 / 4096);
         return attribute.setY(i, Math.floor(index / 4096) / height);
       };
-      for (i = k = 0, ref = this.options.elements.length; 0 <= ref ? k < ref : k > ref; i = 0 <= ref ? ++k : --k) {
-        setVertexIndexCoordinates(indexAttribute, i, this.options.elements[i]);
+      for (i = m = 0, ref = this.options.elements.length; 0 <= ref ? m < ref : m > ref; i = 0 <= ref ? ++m : --m) {
+        setVertexIndexCoordinates(indexAttributes[0], i, this.options.elements[i]);
+        baseIndex = Math.floor(i / 3) * 3;
+        indexInTriangle = i % 3;
+        for (j = n = 0; n <= 2; j = ++n) {
+          setVertexIndexCoordinates(indexAttributes[indexInTriangle + 1], baseIndex + j, this.options.elements[i]);
+        }
       }
-      this.geometry.addAttribute('vertexIndex', indexAttribute);
+      this.geometry.addAttribute('vertexIndex', indexAttributes[0]);
+      this.geometry.addAttribute('vertexIndex2', indexAttributes[1]);
+      this.geometry.addAttribute('vertexIndex3', indexAttributes[2]);
+      this.geometry.addAttribute('vertexIndex4', indexAttributes[3]);
+      console.log(indexArrays);
       this.geometry.drawRange.count = this.options.elements.length;
       connectivity = [];
       linesCount = 0;
@@ -38,7 +51,7 @@
           return linesCount++;
         }
       };
-      for (i = l = 0, ref1 = this.options.elements.length / 3; 0 <= ref1 ? l < ref1 : l > ref1; i = 0 <= ref1 ? ++l : --l) {
+      for (i = o = 0, ref1 = this.options.elements.length / 3; 0 <= ref1 ? o < ref1 : o > ref1; i = 0 <= ref1 ? ++o : --o) {
         addLine(this.options.elements[i * 3], this.options.elements[i * 3 + 1]);
         addLine(this.options.elements[i * 3 + 1], this.options.elements[i * 3 + 2]);
         addLine(this.options.elements[i * 3 + 2], this.options.elements[i * 3]);
@@ -48,7 +61,7 @@
       wireframeIndexArray = new Float32Array(linesCount * 4);
       wireframeIndexAttribute = new THREE.BufferAttribute(wireframeIndexArray, 2);
       lineVertexIndex = 0;
-      for (a = m = 0, ref2 = connectivity.length; 0 <= ref2 ? m < ref2 : m > ref2; a = 0 <= ref2 ? ++m : --m) {
+      for (a = p = 0, ref2 = connectivity.length; 0 <= ref2 ? p < ref2 : p > ref2; a = 0 <= ref2 ? ++p : --p) {
         if (!connectivity[a]) {
           continue;
         }
@@ -63,18 +76,19 @@
       isolinesGeometry = new THREE.BufferGeometry();
       this.isolinesMesh = new THREE.LineSegments(isolinesGeometry, this.options.model.isolineMaterial);
       faceCount = this.options.elements.length / 3;
-      for (i = n = 0; n <= 2; i = ++n) {
+      for (i = q = 0; q <= 2; i = ++q) {
         isolinesIndexArray = new Float32Array(faceCount * 4);
         isolinesIndexAttribute = new THREE.BufferAttribute(isolinesIndexArray, 2);
-        for (j = o = 0, ref3 = faceCount; 0 <= ref3 ? o < ref3 : o > ref3; j = 0 <= ref3 ? ++o : --o) {
-          setVertexIndexCoordinates(isolinesIndexAttribute, j * 2, this.options.elements[j * 3 + i]);
-          setVertexIndexCoordinates(isolinesIndexAttribute, j * 2 + 1, this.options.elements[j * 3 + i]);
+        for (j = r = 0, ref3 = faceCount; 0 <= ref3 ? r < ref3 : r > ref3; j = 0 <= ref3 ? ++r : --r) {
+          for (k = s = 0; s < 2; k = ++s) {
+            setVertexIndexCoordinates(isolinesIndexAttribute, j * 2 + k, this.options.elements[j * 3 + i]);
+          }
         }
         isolinesGeometry.addAttribute("vertex" + (i + 1) + "Index", isolinesIndexAttribute);
       }
       isolinesTypeArray = new Float32Array(faceCount * 2);
       isolinesTypeAttribute = new THREE.BufferAttribute(isolinesTypeArray, 1);
-      for (i = p = 0, ref4 = faceCount; 0 <= ref4 ? p < ref4 : p > ref4; i = 0 <= ref4 ? ++p : --p) {
+      for (i = t = 0, ref4 = faceCount; 0 <= ref4 ? t < ref4 : t > ref4; i = 0 <= ref4 ? ++t : --t) {
         isolinesTypeArray[i * 2 + 1] = 1.0;
       }
       isolinesGeometry.addAttribute("vertexType", isolinesTypeAttribute);

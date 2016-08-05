@@ -17,6 +17,10 @@
       })(this));
     }
 
+    CheckboxControl.prototype.setName = function(name) {
+      return this.$element.find('.name').text(name);
+    };
+
     CheckboxControl.prototype.setValue = function(value) {
       var base;
       this.value = value;

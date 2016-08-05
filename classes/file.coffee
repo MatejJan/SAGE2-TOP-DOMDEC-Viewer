@@ -1,7 +1,5 @@
 class TopViewer.File
   @loaders =
-    ply: new TopViewer.PLYLoader
-    hive: new TopViewer.HiveLoader
     top: new TopViewer.TopLoader
 
   # Re-use top for alternative xpost extension.

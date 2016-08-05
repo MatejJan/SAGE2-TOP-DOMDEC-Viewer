@@ -37,10 +37,10 @@
       this.boundingSphere = this.boundingBox.getBoundingSphere();
       this.basePositionsTexture = new THREE.DataTexture(this.basePositions, 4096, height, THREE.RGBFormat, THREE.FloatType);
       this.basePositionsTexture.needsUpdate = true;
-      this.scalarsTexture = new THREE.DataTexture(new Float32Array(4096 * 4096 * 3), 4096, 4096, THREE.AlphaFormat, THREE.FloatType);
-      this.scalarsTexture.needsUpdate = true;
-      this.displacementsTexture = new THREE.DataTexture(new Float32Array(4096 * 4096 * 3), 4096, 4096, THREE.RGBFormat, THREE.FloatType);
-      this.displacementsTexture.needsUpdate = true;
+      this.noScalarsTexture = new THREE.DataTexture(new Float32Array(4096 * 4096 * 3), 4096, 4096, THREE.AlphaFormat, THREE.FloatType);
+      this.noScalarsTexture.needsUpdate = true;
+      this.noDisplacementsTexture = new THREE.DataTexture(new Float32Array(4096 * 4096 * 3), 4096, 4096, THREE.RGBFormat, THREE.FloatType);
+      this.noDisplacementsTexture.needsUpdate = true;
       this.material = new TopViewer.ModelMaterial(this);
       this.wireframeMaterial = new TopViewer.ModelMaterial(this);
       this.wireframeMaterial.uniforms.opacity.value = 0.3;
@@ -51,7 +51,6 @@
       this.isosurfaceMaterial = new TopViewer.IsosurfaceMaterial(this);
       this.isosurfaceMaterial.uniforms.opacity.value = 0.9;
       this.isosurfaceMaterial.transparent = true;
-      this.displacementVector = null;
       this.colorScalar = null;
       if (this.nodes.length) {
         this.options.engine.scene.addModel(this);
@@ -101,7 +100,7 @@
         frame.texture = new THREE.DataTexture(array, 4096, height, THREE.AlphaFormat, THREE.FloatType);
         frame.texture.needsUpdate = true;
       }
-      return this.colorScalar != null ? this.colorScalar : this.colorScalar = scalar;
+      return this.options.engine.renderingControls.addScalar(scalarName, scalar);
     };
 
     Model.prototype.addVector = function(vectorName, vector) {
@@ -122,8 +121,7 @@
         frame.texture = new THREE.DataTexture(array, 4096, height, THREE.RGBFormat, THREE.FloatType);
         frame.texture.needsUpdate = true;
       }
-      this.options.engine.renderingControls.addVector(vectorName, vector);
-      return this.displacementVector != null ? this.displacementVector : this.displacementVector = vector;
+      return this.options.engine.renderingControls.addVector(vectorName, vector);
     };
 
     Model.prototype._updateFrames = function() {
@@ -216,7 +214,7 @@
       for (l = 0, len = ref1.length; l < len; l++) {
         scalar = ref1[l];
         scalarData = this.scalars[scalar.scalarName];
-        if (scalarData === this.colorScalar) {
+        if (scalarData === renderingControls.mainGeometrySurfaceDropdown.value) {
           this.material.uniforms.scalarsTexture.value = scalar.scalarFrame.texture;
           this.material.uniforms.scalarsMin.value = scalarData.limits.minValue;
           this.material.uniforms.scalarsRange.value = scalarData.limits.maxValue - scalarData.limits.minValue;
@@ -228,10 +226,16 @@
           this.isosurfaceMaterial.uniforms.scalarsRange.value = scalarData.limits.maxValue - scalarData.limits.minValue;
         }
       }
+      if (!renderingControls.mainGeometrySurfaceDropdown.value) {
+        this.material.uniforms.scalarsTexture.value = this.noScalarsTexture;
+        this.material.uniforms.scalarsRange.value = 0;
+        this.isolineMaterial.uniforms.scalarsTexture.value = this.noScalarsTexture;
+        this.isosurfaceMaterial.uniforms.scalarsTexture.value = this.noScalarsTexture;
+      }
       ref2 = frame.vectors;
       for (m = 0, len1 = ref2.length; m < len1; m++) {
         vector = ref2[m];
-        if (this.vectors[vector.vectorName] === this.displacementVector) {
+        if (this.vectors[vector.vectorName] === renderingControls.displacementDropdown.value) {
           this.material.uniforms.displacementFactor.value = renderingControls.displacementFactor.value;
           this.material.uniforms.displacementsTexture.value = vector.vectorFrame.texture;
           this.wireframeMaterial.uniforms.displacementFactor.value = renderingControls.displacementFactor.value;
@@ -241,6 +245,12 @@
           this.isosurfaceMaterial.uniforms.displacementFactor.value = renderingControls.displacementFactor.value;
           this.isosurfaceMaterial.uniforms.displacementsTexture.value = vector.vectorFrame.texture;
         }
+      }
+      if (!renderingControls.displacementDropdown.value) {
+        this.material.uniforms.displacementsTexture.value = this.noDisplacementsTexture;
+        this.wireframeMaterial.uniforms.displacementsTexture.value = this.noDisplacementsTexture;
+        this.isolineMaterial.uniforms.displacementsTexture.value = this.noDisplacementsTexture;
+        this.isosurfaceMaterial.uniforms.displacementsTexture.value = this.noDisplacementsTexture;
       }
       time = performance.now() / 1000;
       this.material.uniforms.time.value = time;

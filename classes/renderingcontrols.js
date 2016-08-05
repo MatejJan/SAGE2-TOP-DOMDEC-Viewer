@@ -8,6 +8,7 @@
     extend(RenderingControls, superClass);
 
     function RenderingControls(options) {
+      var $displacementArea, $mainGeometryArea;
       this.options = options;
       RenderingControls.__super__.constructor.apply(this, arguments);
       this.$appWindow = this.options.engine.$appWindow;
@@ -15,8 +16,17 @@
       this.$controls = $("<div class='rendering-controls'>");
       this.$appWindow.append(this.$controls);
       this.rootControl = new TopViewer.UIControl(this, this.$controls);
+      $displacementArea = $("<div class='displacement-area panel'><div class='title'>Displacement</div></div>");
+      this.$controls.append($displacementArea);
+      this.displacementDropdown = new TopViewer.DropdownControl(this, {
+        $parent: $displacementArea,
+        "class": 'displacement-selector',
+        value: null,
+        text: 'None'
+      });
+      this.displacementDropdown.addValue('None', null);
       this.displacementFactor = new TopViewer.SliderControl(this, {
-        $parent: this.$controls,
+        $parent: $displacementArea,
         "class": 'displacement-factor',
         minimumValue: 0,
         maximumValue: 100,
@@ -24,15 +34,24 @@
         value: 1,
         decimals: -2
       });
-      this.$controls.append("<div class='gradient-curve'>\n  <canvas height='256' width='256'></canvas>\n</div>");
-      this.gradientCurve = new ColorCurve(this.$controls.find('.gradient-curve canvas')[0]);
-      this.surfaceControl = new TopViewer.CheckboxControl(this, {
-        $parent: this.$controls,
+      $mainGeometryArea = $("<div class='main-geometry-area panel'><div class='title'>Main Geometry</div></div>");
+      this.$controls.append($mainGeometryArea);
+      this.mainGeometrySurfaceControl = new TopViewer.CheckboxControl(this, {
+        $parent: $mainGeometryArea,
         name: 'surface',
         value: true
       });
-      this.wireframeControl = new TopViewer.CheckboxControl(this, {
-        $parent: this.$controls,
+      this.mainGeometrySurfaceDropdown = new TopViewer.DropdownControl(this, {
+        $parent: $mainGeometryArea,
+        "class": 'main-geometry-result-selector',
+        value: null,
+        text: 'None'
+      });
+      this.mainGeometrySurfaceDropdown.addValue('None', null);
+      $mainGeometryArea.append("<div class='gradient-curve'>\n  <canvas height='256' width='256'></canvas>\n</div>");
+      this.gradientCurve = new ColorCurve($mainGeometryArea.find('.gradient-curve canvas')[0]);
+      this.mainGeometrySurfaceWireframeControl = new TopViewer.CheckboxControl(this, {
+        $parent: $mainGeometryArea,
         name: 'wireframe',
         value: false
       });
@@ -99,17 +118,28 @@
       });
     };
 
+    RenderingControls.prototype.addScalar = function(name, scalar) {
+      this.mainGeometrySurfaceDropdown.addValue(name, scalar);
+      if (!this.mainGeometrySurfaceDropdown.value) {
+        return this.mainGeometrySurfaceDropdown.setValue(scalar);
+      }
+    };
+
     RenderingControls.prototype.addVector = function(name, vector) {
       var $contents, $vector;
       $vector = $("<li class='vector'></li>");
       this.$vectors.append($vector);
       $contents = $("<div>");
-      return new TopViewer.ToggleContainer(this, {
+      new TopViewer.ToggleContainer(this, {
         $parent: $vector,
         text: name,
         visible: false,
         $contents: $contents
       });
+      this.displacementDropdown.addValue(name, vector);
+      if (name.toLowerCase().indexOf('disp') > -1) {
+        return this.displacementDropdown.setValue(vector);
+      }
     };
 
     RenderingControls.prototype.onMouseDown = function(position, button) {

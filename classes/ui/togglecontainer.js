@@ -27,6 +27,11 @@
       new TopViewer.UIControl(this.uiArea, this.$element);
     }
 
+    ToggleContainer.prototype.setText = function(text) {
+      this.options.text = text;
+      return this.toggleControl.setName(text);
+    };
+
     return ToggleContainer;
 
   })();

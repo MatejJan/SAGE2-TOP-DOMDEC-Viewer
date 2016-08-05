@@ -13,14 +13,13 @@
     "libraries/decimaladjust.js",
     "libraries/colorcurve.js",
     "classes/namespace.js",
-    "classes/hiveloader.js",
-    "classes/plyloader.js",
     "classes/toploader.js",
     "classes/ui/uiarea.js",
     "classes/ui/uicontrol.js",
     "classes/ui/slidercontrol.js",
     "classes/ui/checkboxcontrol.js",
     "classes/ui/togglecontainer.js",
+    "classes/ui/dropdowncontrol.js",
     "classes/animation.js",
     "classes/animationset.js",
     "classes/animationsetframeprocessor.js",
@@ -52,6 +51,6 @@
   "description": "A specialized 3D model viewer for the TOP/DOMDEC format.",
   "keywords": [ "three", "3d", "animation" ],
   "author": "Matej Jan <matej@stanford.edu>",
-  "fileTypes": ["top", "xpost", "exo", "ply", "hive"],
+  "fileTypes": ["top", "xpost"],
   "directory": "top"
 }

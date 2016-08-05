@@ -2,8 +2,6 @@
 (function() {
   TopViewer.File = (function() {
     File.loaders = {
-      ply: new TopViewer.PLYLoader,
-      hive: new TopViewer.HiveLoader,
       top: new TopViewer.TopLoader
     };
 

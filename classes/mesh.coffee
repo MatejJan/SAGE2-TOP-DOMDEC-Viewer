@@ -4,9 +4,13 @@ class TopViewer.Mesh extends THREE.Mesh
   constructor: (@options) ->
     super new THREE.BufferGeometry(), @options.model.material
 
-    # Create the surface mesh
-    indexArray = new Float32Array @options.elements.length * 2
-    indexAttribute = new THREE.BufferAttribute indexArray, 2
+    # Create the surface mesh. We need 3 index arrays so each vertex knows
+    # who its two face neighbors are, to calculate normals in the shader.
+    indexArrays = []
+    indexAttributes = []
+    for i in [0..3]
+      indexArrays[i] = new Float32Array @options.elements.length * 2
+      indexAttributes[i] = new THREE.BufferAttribute indexArrays[i], 2
 
     height = @options.model.basePositionsTexture.image.height
 
@@ -15,9 +19,22 @@ class TopViewer.Mesh extends THREE.Mesh
       attribute.setY i, Math.floor(index / 4096) / height
 
     for i in [0...@options.elements.length]
-      setVertexIndexCoordinates(indexAttribute, i, @options.elements[i])
+      setVertexIndexCoordinates(indexAttributes[0], i, @options.elements[i])
 
-    @geometry.addAttribute 'vertexIndex', indexAttribute
+      # Create normal indices.
+      baseIndex = Math.floor(i/3) * 3
+      indexInTriangle = i % 3
+
+      for j in [0..2]
+        setVertexIndexCoordinates(indexAttributes[indexInTriangle+1], baseIndex + j, @options.elements[i])
+
+    @geometry.addAttribute 'vertexIndex', indexAttributes[0]
+    @geometry.addAttribute 'vertexIndex2', indexAttributes[1]
+    @geometry.addAttribute 'vertexIndex3', indexAttributes[2]
+    @geometry.addAttribute 'vertexIndex4', indexAttributes[3]
+
+    console.log indexArrays
+
     @geometry.drawRange.count = @options.elements.length
 
     # Create the wireframe mesh.
@@ -69,7 +86,7 @@ class TopViewer.Mesh extends THREE.Mesh
       # Add each face vertex (first, second or third, depending on i) to the start and end isovertex.
       for j in [0...faceCount]
         for k in [0...2]
-        setVertexIndexCoordinates(isolinesIndexAttribute, j*2+k, @options.elements[j * 3 + i])
+          setVertexIndexCoordinates(isolinesIndexAttribute, j*2+k, @options.elements[j * 3 + i])
 
       isolinesGeometry.addAttribute "vertex#{i+1}Index", isolinesIndexAttribute
 

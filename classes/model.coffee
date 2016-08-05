@@ -36,14 +36,15 @@ class TopViewer.Model extends THREE.Object3D
     @basePositionsTexture.needsUpdate = true
 
     # Create an empty scalar texture if there are no scalars.
-    @scalarsTexture = new THREE.DataTexture new Float32Array(4096 * 4096 * 3), 4096, 4096, THREE.AlphaFormat, THREE.FloatType
-    @scalarsTexture.needsUpdate = true
+    @noScalarsTexture = new THREE.DataTexture new Float32Array(4096 * 4096 * 3), 4096, 4096, THREE.AlphaFormat, THREE.FloatType
+    @noScalarsTexture.needsUpdate = true
 
     # Create an empty displacement texture if there are no vectors.
-    @displacementsTexture = new THREE.DataTexture new Float32Array(4096 * 4096 * 3), 4096, 4096, THREE.RGBFormat, THREE.FloatType
-    @displacementsTexture.needsUpdate = true
+    @noDisplacementsTexture = new THREE.DataTexture new Float32Array(4096 * 4096 * 3), 4096, 4096, THREE.RGBFormat, THREE.FloatType
+    @noDisplacementsTexture.needsUpdate = true
 
     @material = new TopViewer.ModelMaterial @
+    #@material.uniforms.ambientLevel.value = 0.5
 
     @wireframeMaterial = new TopViewer.ModelMaterial @
     @wireframeMaterial.uniforms.opacity.value = 0.3
@@ -57,7 +58,6 @@ class TopViewer.Model extends THREE.Object3D
     @isosurfaceMaterial.uniforms.opacity.value = 0.9
     @isosurfaceMaterial.transparent = true
 
-    @displacementVector = null
     @colorScalar = null
 
     # Add the model to the scene.
@@ -103,7 +103,7 @@ class TopViewer.Model extends THREE.Object3D
       frame.texture = new THREE.DataTexture array, 4096, height, THREE.AlphaFormat, THREE.FloatType
       frame.texture.needsUpdate = true
 
-    @colorScalar ?= scalar
+    @options.engine.renderingControls.addScalar scalarName, scalar
 
   addVector: (vectorName, vector) ->
     @vectors[vectorName] = vector
@@ -120,8 +120,6 @@ class TopViewer.Model extends THREE.Object3D
       frame.texture.needsUpdate = true
 
     @options.engine.renderingControls.addVector vectorName, vector
-
-    @displacementVector ?= vector
 
   _updateFrames: ->
     # Determine time frames.
@@ -184,7 +182,7 @@ class TopViewer.Model extends THREE.Object3D
     # Create colors.
     for scalar in frame.scalars
       scalarData = @scalars[scalar.scalarName]
-      if scalarData is @colorScalar
+      if scalarData is renderingControls.mainGeometrySurfaceDropdown.value
         @material.uniforms.scalarsTexture.value = scalar.scalarFrame.texture
         @material.uniforms.scalarsMin.value = scalarData.limits.minValue
         @material.uniforms.scalarsRange.value = scalarData.limits.maxValue - scalarData.limits.minValue
@@ -197,9 +195,16 @@ class TopViewer.Model extends THREE.Object3D
         @isosurfaceMaterial.uniforms.scalarsMin.value = scalarData.limits.minValue
         @isosurfaceMaterial.uniforms.scalarsRange.value = scalarData.limits.maxValue - scalarData.limits.minValue
 
+    unless renderingControls.mainGeometrySurfaceDropdown.value
+      # The colors are not used.
+      @material.uniforms.scalarsTexture.value = @noScalarsTexture
+      @material.uniforms.scalarsRange.value = 0
+      @isolineMaterial.uniforms.scalarsTexture.value = @noScalarsTexture
+      @isosurfaceMaterial.uniforms.scalarsTexture.value = @noScalarsTexture
+
     # Displace positions
     for vector in frame.vectors
-      if @vectors[vector.vectorName] is @displacementVector
+      if @vectors[vector.vectorName] is renderingControls.displacementDropdown.value
         @material.uniforms.displacementFactor.value = renderingControls.displacementFactor.value
         @material.uniforms.displacementsTexture.value = vector.vectorFrame.texture
 
@@ -211,6 +216,13 @@ class TopViewer.Model extends THREE.Object3D
 
         @isosurfaceMaterial.uniforms.displacementFactor.value = renderingControls.displacementFactor.value
         @isosurfaceMaterial.uniforms.displacementsTexture.value = vector.vectorFrame.texture
+
+    unless renderingControls.displacementDropdown.value
+      # The positions shouldn't be displaced.
+      @material.uniforms.displacementsTexture.value = @noDisplacementsTexture
+      @wireframeMaterial.uniforms.displacementsTexture.value = @noDisplacementsTexture
+      @isolineMaterial.uniforms.displacementsTexture.value = @noDisplacementsTexture
+      @isosurfaceMaterial.uniforms.displacementsTexture.value = @noDisplacementsTexture
 
     time = performance.now() / 1000
     @material.uniforms.time.value = time

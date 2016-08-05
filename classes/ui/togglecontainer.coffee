@@ -26,3 +26,7 @@ class TopViewer.ToggleContainer
 
     # Create the top UI control for hovering purposes.
     new TopViewer.UIControl @uiArea, @$element
+
+  setText: (text) ->
+    @options.text = text
+    @toggleControl.setName text
