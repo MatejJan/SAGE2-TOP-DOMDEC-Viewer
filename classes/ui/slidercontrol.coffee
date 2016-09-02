@@ -23,7 +23,7 @@ class TopViewer.SliderControl
     @$sliderThumb = @$slider.find('.thumb')
 
     if @options.unit
-      @$value.append(" <class ='unit'>#{@options.unit}</div>")
+      @$value.append("#{if @options.unitWithoutSpace then "" else " "}<class ='unit'>#{@options.unit}</div>")
 
     @options.$parent.append(@$element)
 
@@ -36,13 +36,14 @@ class TopViewer.SliderControl
       @_sliderChanging = true
       @handleSlider position
 
-    sliderControl.mousemove (position) =>
+    sliderControl.globalMousemove (position) =>
       @handleSlider position if @_sliderChanging
 
     sliderControl.globalMouseup =>
       @_sliderChanging = false
 
-    @changeSlider @options.value
+    # Set the value, but skip onChange handler since we're in initialization.
+    @setValue @options.value, true if @options.value?
 
   handleSlider: (position) ->
     mouseXBrowser = @uiArea.$appWindow.offset().left + position.x
@@ -55,9 +56,9 @@ class TopViewer.SliderControl
 
     range = @options.maximumValue - @options.minimumValue
     unclampedValue = @options.minimumValue + range * Math.pow(rangePercentage, @options.power)
-    @changeSlider unclampedValue
+    @setValue unclampedValue
 
-  changeSlider: (value) ->
+  setValue: (value, skipOnChange) ->
     # Clamp the value to minimum/maximum.
     @value = Math.max @options.minimumValue, Math.min Math.round10(value, @options.decimals), Math.max @options.maximumValue
 
@@ -71,4 +72,4 @@ class TopViewer.SliderControl
     @$sliderThumb.css
       left: "#{thumbPercentage}%"
 
-    @options.onChange?(@value)
+    @options.onChange? @value, @ unless skipOnChange

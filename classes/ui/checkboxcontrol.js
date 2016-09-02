@@ -29,7 +29,7 @@
       } else {
         this.$value.addClass('false').removeClass('true');
       }
-      return typeof (base = this.options).onChange === "function" ? base.onChange(this.value) : void 0;
+      return typeof (base = this.options).onChange === "function" ? base.onChange(this.value, this) : void 0;
     };
 
     return CheckboxControl;

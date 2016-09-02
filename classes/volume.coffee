@@ -29,7 +29,7 @@ class TopViewer.Volume
       addLine(@options.elements[i*4+2], @options.elements[i*4+3])
 
     wireframeGeometry = new THREE.BufferGeometry()
-    @wireframeMesh = new THREE.LineSegments wireframeGeometry, @options.model.wireframeMaterial
+    @wireframeMesh = new THREE.LineSegments wireframeGeometry, @options.model.volumeWireframeMaterial
 
     wireframeIndexArray = new Float32Array linesCount * 4
     wireframeIndexAttribute = new THREE.BufferAttribute wireframeIndexArray, 2
@@ -62,17 +62,17 @@ class TopViewer.Volume
         for k in [0...6]
           setVertexIndexCoordinates(isosurfacesIndexAttribute, j*6+k, @options.elements[j * 4 + i])
 
-      isosurfacesGeometry.addAttribute "vertex#{i+1}Index", isosurfacesIndexAttribute
+      isosurfacesGeometry.addAttribute "vertexIndexCorner#{i+1}", isosurfacesIndexAttribute
 
     # We also need to tell the vertices what their index is and if they are part of the main or additional face.
-    isosurfacesTypeArray = new Float32Array tetraCount * 6
-    isosurfacesTypeAttribute = new THREE.BufferAttribute isosurfacesTypeArray, 1
+    isosurfacesCornerIndexArray = new Float32Array tetraCount * 6
+    isosurfacesCornerIndexAttribute = new THREE.BufferAttribute isosurfacesCornerIndexArray, 1
 
     for i in [0...tetraCount]
       for k in [0...6]
-        isosurfacesTypeArray[i * 6 + k] = k * 0.1
+        isosurfacesCornerIndexArray[i * 6 + k] = k * 0.1
 
-    isosurfacesGeometry.addAttribute "vertexType", isosurfacesTypeAttribute
+    isosurfacesGeometry.addAttribute "cornerIndex", isosurfacesCornerIndexAttribute
 
     isosurfacesGeometry.drawRange.count = tetraCount * 6
 
@@ -95,5 +95,5 @@ class TopViewer.Volume
     mesh.geometry.boundingSphere = @options.model.boundingSphere
 
   showFrame: () ->
-    @wireframeMesh.visible = @renderingControls.wireframe.value
-    @isosurfacesMesh.visible = @renderingControls.isosurfaces.value
+    @wireframeMesh.visible = @options.engine.renderingControls.volumesShowWireframeControl.value
+    @isosurfacesMesh.visible = @options.engine.renderingControls.volumesShowIsosurfacesControl.value

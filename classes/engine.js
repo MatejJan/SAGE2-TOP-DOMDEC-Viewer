@@ -3,20 +3,18 @@
   'use strict';
   TopViewer.Engine = (function() {
     function Engine(options) {
-      var proxyCube, saved;
+      var cameraState, objectState;
       this.options = options;
       this.scene = new TopViewer.Scene({
         engine: this,
         resourcesPath: this.options.resourcesPath
       });
-      this.camera = new THREE.PerspectiveCamera(45, this.options.width / this.options.height, 0.001, 100);
-      this.camera.position.z = 3;
-      if (this.options.app.state.camera) {
-        saved = this.options.app.state.camera;
-        this.camera.position.set(saved.position.x, saved.position.y, saved.position.z);
-        this.camera.rotation.set(saved.rotation._x, saved.rotation._y, saved.rotation._z, saved.rotation._order);
-        this.camera.scale.set(saved.scale.x, saved.scale.y, saved.scale.z);
-      }
+      this.camera = new THREE.PerspectiveCamera(45, this.options.width / this.options.height, 0.01, 20);
+      cameraState = this.options.app.state.camera;
+      this.camera.position.copy(cameraState.position);
+      this.camera.rotation.set(cameraState.rotation._x, cameraState.rotation._y, cameraState.rotation._z, cameraState.rotation._order);
+      this.camera.scale.set(cameraState.scale.x, cameraState.scale.y, cameraState.scale.z);
+      console.log("loaded camera", cameraState, this.camera);
       this.renderer = new THREE.WebGLRenderer({
         antialias: true
       });
@@ -24,33 +22,30 @@
       this.renderer.setClearColor(0x444550);
       this.renderer.shadowMap.enabled = true;
       this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      this.renderer.shadowMap.renderSingleSided = false;
       this.$appWindow = this.options.$appWindow;
       this.$appWindow.append(this.renderer.domElement);
-      proxyCube = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshLambertMaterial({
-        color: 0xeeeeee
-      }));
+      this._proxyCamera = new THREE.PerspectiveCamera(45, this.options.width / this.options.height, 0.01, 20);
+      objectState = this.options.app.state.object;
+      this._proxyCamera.position.copy(objectState.position);
+      this._proxyCamera.rotation.set(objectState.rotation._x, objectState.rotation._y, objectState.rotation._z, objectState.rotation._order);
+      this._proxyCamera.scale.set(objectState.scale.x, objectState.scale.y, objectState.scale.z);
       this.cameraControls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
       this.cameraControls.minDistance = 0.05;
       this.cameraControls.maxDistance = 10;
       this.cameraControls.zoomSpeed = 0.5;
       this.cameraControls.rotateSpeed = 2;
       this.cameraControls.autoRotate = false;
-      this.cameraControls.autoRotateSpeed = 2.0;
-      this.rotateControls = new THREE.OrbitControls(proxyCube, this.renderer.domElement);
-      this.rotateControls.enableZoom = false;
-      this.rotateControls.enablePan = false;
-      this.rotateControls.minDistance = 0.05;
+      this.cameraControls.center.copy(cameraState.center);
+      this.rotateControls = new THREE.OrbitControls(this._proxyCamera, this.renderer.domElement);
+      this.rotateControls.minDistance = 0.01;
       this.rotateControls.maxDistance = 10;
       this.rotateControls.rotateSpeed = 1;
       this.rotateControls.autoRotate = false;
-      this.rotateControls.autoRotateSpeed = 2.0;
-      this.objectRotation = new THREE.Matrix4;
+      this.updateRotateControls();
       this.activeControls = this.cameraControls;
-      this.shadows = true;
-      this.vertexColors = false;
-      this.reflections = true;
-      this.directionalLight = true;
-      this.ambientLight = true;
+      this.lightingPresets = [new TopViewer.LightingSetup('Angled light', new THREE.Vector3(1, 1, 1).normalize()), new TopViewer.LightingSetup('Top light', new THREE.Vector3(0, 1, 0)), new TopViewer.LightingSetup('Front light', new THREE.Vector3(0, 0, 1)), new TopViewer.LightingSetup('Side light', new THREE.Vector3(1, 0, 0))];
+      this.gradients = [new TopViewer.Gradient("Spectrum", this.options.resourcesPath + "gradients/spectrum.png"), new TopViewer.Gradient("Monochrome", this.options.resourcesPath + "gradients/monochrome.png"), new TopViewer.Gradient("Dual", this.options.resourcesPath + "gradients/dual.png"), new TopViewer.Gradient("Fire", this.options.resourcesPath + "gradients/heat.png"), new TopViewer.Gradient("Classic", this.options.resourcesPath + "gradients/xpost.png")];
       this.uiAreas = [];
       this.animation = new TopViewer.Animation;
       this.playbackControls = new TopViewer.PlaybackControls({
@@ -63,32 +58,9 @@
       this.uiAreas.push(this.renderingControls);
       this._frameTime = 0;
       this._frameCount = 0;
-      this.gradientData = new Uint8Array(1024 * 4);
-      this.gradientTexture = new THREE.DataTexture(this.gradientData, 1024, 1, THREE.RGBAFormat, THREE.UnsignedByteType);
-      this.loadGradient(this.options.resourcesPath + 'gradients/xpost.png');
       this.gradientCurveData = new Float32Array(4096);
       this.gradientCurveTexture = new THREE.DataTexture(this.gradientCurveData, 4096, 1, THREE.AlphaFormat, THREE.FloatType, THREE.UVMapping, THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter);
     }
-
-    Engine.prototype.loadGradient = function(url) {
-      var image;
-      image = new Image();
-      image.onload = (function(_this) {
-        return function() {
-          var canvas, i, j, ref, uintData;
-          canvas = document.createElement('canvas');
-          canvas.width = 1024;
-          canvas.height = 1;
-          canvas.getContext('2d').drawImage(image, 0, 0, 1024, 1);
-          uintData = canvas.getContext('2d').getImageData(0, 0, 1024, 1).data;
-          for (i = j = 0, ref = uintData.length; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
-            _this.gradientData[i] = uintData[i];
-          }
-          return _this.gradientTexture.needsUpdate = true;
-        };
-      })(this);
-      return image.src = url;
-    };
 
     Engine.prototype.destroy = function() {
       this.scene.destroy();
@@ -136,8 +108,9 @@
     };
 
     Engine.prototype.draw = function(elapsedTime) {
-      var azimuthal, euler, frameIndex, frameTime, i, j, k, l, len, len1, model, polar, ref, ref1, ref2, uiArea;
+      var frameIndex, frameProgress, frameTime, i, j, k, l, len, len1, model, nextFrameIndex, nextFrameTime, ref, ref1, ref2, ref3, uiArea;
       this.uiControlsActive = false;
+      this.rotateControls.update();
       ref = this.uiAreas;
       for (j = 0, len = ref.length; j < len; j++) {
         uiArea = ref[j];
@@ -146,12 +119,7 @@
         }
       }
       if (this.activeControls === this.rotateControls) {
-        this.rotateControls.update();
-        azimuthal = this.rotateControls.getAzimuthalAngle();
-        polar = -this.rotateControls.getPolarAngle();
-        euler = new THREE.Euler(polar, azimuthal, 0, 'XYZ');
-        this.objectRotation = new THREE.Matrix4().makeRotationFromEuler(euler);
-        this.scene.updateRotation();
+        this.updateRotateControls();
       } else if (this.activeControls === this.cameraControls) {
         this.cameraControls.update();
       }
@@ -162,14 +130,19 @@
         }
         this.gradientCurveTexture.needsUpdate = true;
       }
+      this.scene.directionalLight.position.copy(this.renderingControls.lightingSetupControl.value.lightPosition);
+      this.scene.ambientLight.intensity = this.renderingControls.ambientLevelControl.value;
       this.playbackControls.update(elapsedTime);
       frameIndex = this.playbackControls.currentFrameIndex;
+      nextFrameIndex = this.playbackControls.currentFrameIndex + 1;
       frameTime = (ref1 = this.animation.frameTimes[frameIndex]) != null ? ref1 : -1;
-      ref2 = this.scene.children;
-      for (l = 0, len1 = ref2.length; l < len1; l++) {
-        model = ref2[l];
+      nextFrameTime = (ref2 = this.animation.frameTimes[nextFrameIndex]) != null ? ref2 : -1;
+      frameProgress = this.playbackControls.currentTime - this.playbackControls.currentFrameIndex;
+      ref3 = this.scene.children;
+      for (l = 0, len1 = ref3.length; l < len1; l++) {
+        model = ref3[l];
         if (model instanceof TopViewer.Model) {
-          model.showFrame(frameTime);
+          model.showFrame(frameTime, nextFrameTime, frameProgress);
         }
       }
       this.renderer.render(this.scene, this.camera);
@@ -181,12 +154,22 @@
       }
     };
 
+    Engine.prototype.updateRotateControls = function() {
+      var azimuthal, euler, polar;
+      this.rotateControls.update();
+      azimuthal = this.rotateControls.getAzimuthalAngle();
+      polar = -this.rotateControls.getPolarAngle();
+      euler = new THREE.Euler(polar, azimuthal, 0, 'XYZ');
+      this.objectRotation = new THREE.Matrix4().makeRotationFromEuler(euler);
+      return this.scene.updateRotation();
+    };
+
     Engine.prototype.onMouseDown = function(position, button) {
       var j, len, ref, results, uiArea;
       if (!this.uiControlsActive) {
         this.activeControls.mouseDown(position.x, position.y, this.buttonIndexFromString(button));
       }
-      this._updateState();
+      this._updateSaveState();
       ref = this.uiAreas;
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
@@ -201,7 +184,7 @@
       if (!this.uiControlsActive) {
         this.activeControls.mouseMove(position.x, position.y);
       }
-      this._updateState();
+      this._updateSaveState();
       ref = this.uiAreas;
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
@@ -216,7 +199,7 @@
       if (!this.uiControlsActive) {
         this.activeControls.mouseUp(position.x, position.y, this.buttonIndexFromString(button));
       }
-      this._updateState();
+      this._updateSaveState();
       ref = this.uiAreas;
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
@@ -227,10 +210,18 @@
     };
 
     Engine.prototype.onMouseScroll = function(delta) {
+      var j, len, ref, results, uiArea;
       if (!this.uiControlsActive) {
         this.activeControls.scale(delta);
       }
-      return this._updateState();
+      this._updateSaveState();
+      ref = this.uiAreas;
+      results = [];
+      for (j = 0, len = ref.length; j < len; j++) {
+        uiArea = ref[j];
+        results.push(uiArea.onMouseScroll(delta));
+      }
+      return results;
     };
 
     Engine.prototype.buttonIndexFromString = function(button) {
@@ -241,8 +232,10 @@
       }
     };
 
-    Engine.prototype._updateState = function() {
-      return this.options.app.state.camera = _.pick(this.camera, 'position', 'rotation', 'scale');
+    Engine.prototype._updateSaveState = function() {
+      this.options.app.state.camera = _.pick(this.camera, 'position', 'rotation', 'scale');
+      this.options.app.state.camera.center = this.cameraControls.center;
+      return this.options.app.state.object = _.pick(this._proxyCamera, 'position', 'rotation', 'scale');
     };
 
     return Engine;

@@ -26,7 +26,7 @@
       this.$slider = this.$element.find('.slider');
       this.$sliderThumb = this.$slider.find('.thumb');
       if (this.options.unit) {
-        this.$value.append(" <class ='unit'>" + this.options.unit + "</div>");
+        this.$value.append((this.options.unitWithoutSpace ? "" : " ") + "<class ='unit'>" + this.options.unit + "</div>");
       }
       this.options.$parent.append(this.$element);
       new TopViewer.UIControl(this.uiArea, this.$element);
@@ -37,7 +37,7 @@
           return _this.handleSlider(position);
         };
       })(this));
-      sliderControl.mousemove((function(_this) {
+      sliderControl.globalMousemove((function(_this) {
         return function(position) {
           if (_this._sliderChanging) {
             return _this.handleSlider(position);
@@ -49,7 +49,9 @@
           return _this._sliderChanging = false;
         };
       })(this));
-      this.changeSlider(this.options.value);
+      if (this.options.value != null) {
+        this.setValue(this.options.value, true);
+      }
     }
 
     SliderControl.prototype.handleSlider = function(position) {
@@ -60,10 +62,10 @@
       rangePercentage = Math.max(0, Math.min(1, rangePercentage));
       range = this.options.maximumValue - this.options.minimumValue;
       unclampedValue = this.options.minimumValue + range * Math.pow(rangePercentage, this.options.power);
-      return this.changeSlider(unclampedValue);
+      return this.setValue(unclampedValue);
     };
 
-    SliderControl.prototype.changeSlider = function(value) {
+    SliderControl.prototype.setValue = function(value, skipOnChange) {
       var base, range, thumbPercentage;
       this.value = Math.max(this.options.minimumValue, Math.min(Math.round10(value, this.options.decimals), Math.max(this.options.maximumValue)));
       this.$slider.value = this.value;
@@ -73,7 +75,9 @@
       this.$sliderThumb.css({
         left: thumbPercentage + "%"
       });
-      return typeof (base = this.options).onChange === "function" ? base.onChange(this.value) : void 0;
+      if (!skipOnChange) {
+        return typeof (base = this.options).onChange === "function" ? base.onChange(this.value, this) : void 0;
+      }
     };
 
     return SliderControl;

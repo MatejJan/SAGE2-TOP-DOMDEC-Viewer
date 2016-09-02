@@ -3,7 +3,7 @@
   'use strict';
   TopViewer.Volume = (function() {
     function Volume(options) {
-      var a, addLine, b, connectivity, height, i, isosurfacesGeometry, isosurfacesIndexArray, isosurfacesIndexAttribute, isosurfacesTypeArray, isosurfacesTypeAttribute, j, k, l, lineVertexIndex, linesCount, m, n, o, p, q, r, ref, ref1, ref2, ref3, setVertexIndexCoordinates, tetraCount, wireframeGeometry, wireframeIndexArray, wireframeIndexAttribute;
+      var a, addLine, b, connectivity, height, i, isosurfacesCornerIndexArray, isosurfacesCornerIndexAttribute, isosurfacesGeometry, isosurfacesIndexArray, isosurfacesIndexAttribute, j, k, l, lineVertexIndex, linesCount, m, n, o, p, q, r, ref, ref1, ref2, ref3, setVertexIndexCoordinates, tetraCount, wireframeGeometry, wireframeIndexArray, wireframeIndexAttribute;
       this.options = options;
       height = this.options.model.basePositionsTexture.image.height;
       setVertexIndexCoordinates = function(attribute, i, index) {
@@ -34,7 +34,7 @@
         addLine(this.options.elements[i * 4 + 2], this.options.elements[i * 4 + 3]);
       }
       wireframeGeometry = new THREE.BufferGeometry();
-      this.wireframeMesh = new THREE.LineSegments(wireframeGeometry, this.options.model.wireframeMaterial);
+      this.wireframeMesh = new THREE.LineSegments(wireframeGeometry, this.options.model.volumeWireframeMaterial);
       wireframeIndexArray = new Float32Array(linesCount * 4);
       wireframeIndexAttribute = new THREE.BufferAttribute(wireframeIndexArray, 2);
       lineVertexIndex = 0;
@@ -61,16 +61,16 @@
             setVertexIndexCoordinates(isosurfacesIndexAttribute, j * 6 + k, this.options.elements[j * 4 + i]);
           }
         }
-        isosurfacesGeometry.addAttribute("vertex" + (i + 1) + "Index", isosurfacesIndexAttribute);
+        isosurfacesGeometry.addAttribute("vertexIndexCorner" + (i + 1), isosurfacesIndexAttribute);
       }
-      isosurfacesTypeArray = new Float32Array(tetraCount * 6);
-      isosurfacesTypeAttribute = new THREE.BufferAttribute(isosurfacesTypeArray, 1);
+      isosurfacesCornerIndexArray = new Float32Array(tetraCount * 6);
+      isosurfacesCornerIndexAttribute = new THREE.BufferAttribute(isosurfacesCornerIndexArray, 1);
       for (i = q = 0, ref3 = tetraCount; 0 <= ref3 ? q < ref3 : q > ref3; i = 0 <= ref3 ? ++q : --q) {
         for (k = r = 0; r < 6; k = ++r) {
-          isosurfacesTypeArray[i * 6 + k] = k * 0.1;
+          isosurfacesCornerIndexArray[i * 6 + k] = k * 0.1;
         }
       }
-      isosurfacesGeometry.addAttribute("vertexType", isosurfacesTypeAttribute);
+      isosurfacesGeometry.addAttribute("cornerIndex", isosurfacesCornerIndexAttribute);
       isosurfacesGeometry.drawRange.count = tetraCount * 6;
       this._updateGeometry();
       this.options.model.add(this.wireframeMesh);
@@ -89,8 +89,8 @@
     };
 
     Volume.prototype.showFrame = function() {
-      this.wireframeMesh.visible = this.renderingControls.wireframe.value;
-      return this.isosurfacesMesh.visible = this.renderingControls.isosurfaces.value;
+      this.wireframeMesh.visible = this.options.engine.renderingControls.volumesShowWireframeControl.value;
+      return this.isosurfacesMesh.visible = this.options.engine.renderingControls.volumesShowIsosurfacesControl.value;
     };
 
     return Volume;

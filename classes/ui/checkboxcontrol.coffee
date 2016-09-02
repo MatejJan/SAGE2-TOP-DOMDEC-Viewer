@@ -29,4 +29,4 @@ class TopViewer.CheckboxControl
     else
       @$value.addClass('false').removeClass('true')
 
-    @options.onChange?(@value)
+    @options.onChange? @value, @

@@ -10,8 +10,11 @@
       this._mouseDownHandlers = [];
       this._mouseMoveHandlers = [];
       this._mouseUpHandlers = [];
+      this._mouseScrollHandlers = [];
+      this._globalMouseMoveHandlers = [];
       this._globalMouseUpHandlers = [];
       this.uiArea.addControl(this);
+      this.$element.data("control", this);
     }
 
     UIControl.prototype.mousedown = function(handler) {
@@ -26,6 +29,14 @@
       return this._mouseUpHandlers.push(handler);
     };
 
+    UIControl.prototype.scroll = function(handler) {
+      return this._mouseScrollHandlers.push(handler);
+    };
+
+    UIControl.prototype.globalMousemove = function(handler) {
+      return this._globalMouseMoveHandlers.push(handler);
+    };
+
     UIControl.prototype.globalMouseup = function(handler) {
       return this._globalMouseUpHandlers.push(handler);
     };
@@ -36,9 +47,6 @@
 
     UIControl.prototype.onMouseDown = function(position, button) {
       var handler, i, len, ref, results;
-      if (!(this.hover && this.$element.is(':visible'))) {
-        return;
-      }
       ref = this._mouseDownHandlers;
       results = [];
       for (i = 0, len = ref.length; i < len; i++) {
@@ -49,45 +57,56 @@
     };
 
     UIControl.prototype.onMouseMove = function(position) {
-      var bottom, handler, i, left, len, newHover, origin, parentOrigin, ref, ref1, ref2, results, right, top;
-      parentOrigin = this.uiArea.$appWindow.offset();
-      origin = this.$element.offset();
-      left = origin.left - parentOrigin.left;
-      top = origin.top - parentOrigin.top;
-      right = left + this.$element.outerWidth();
-      bottom = top + this.$element.outerHeight();
-      newHover = (left < (ref = position.x) && ref < right) && (top < (ref1 = position.y) && ref1 < bottom);
-      if (newHover && !this.hover) {
-        this.$element.addClass('hover');
-      }
-      if (this.hover && !newHover) {
-        this.$element.removeClass('hover');
-      }
-      this.hover = newHover;
-      ref2 = this._mouseMoveHandlers;
+      var handler, i, len, ref, results;
+      ref = this._mouseMoveHandlers;
       results = [];
-      for (i = 0, len = ref2.length; i < len; i++) {
-        handler = ref2[i];
+      for (i = 0, len = ref.length; i < len; i++) {
+        handler = ref[i];
         results.push(handler(position));
       }
       return results;
     };
 
     UIControl.prototype.onMouseUp = function(position, button) {
-      var handler, i, j, len, len1, ref, ref1, results;
-      ref = this._globalMouseUpHandlers;
+      var handler, i, len, ref, results;
+      ref = this._mouseUpHandlers;
+      results = [];
       for (i = 0, len = ref.length; i < len; i++) {
         handler = ref[i];
-        handler(position, button);
-      }
-      if (!(this.hover && this.$element.is(':visible'))) {
-        return;
-      }
-      ref1 = this._mouseUpHandlers;
-      results = [];
-      for (j = 0, len1 = ref1.length; j < len1; j++) {
-        handler = ref1[j];
         results.push(handler(position, button));
+      }
+      return results;
+    };
+
+    UIControl.prototype.onGlobalMouseMove = function(position, button) {
+      var handler, i, len, ref, results;
+      ref = this._globalMouseMoveHandlers;
+      results = [];
+      for (i = 0, len = ref.length; i < len; i++) {
+        handler = ref[i];
+        results.push(handler(position, button));
+      }
+      return results;
+    };
+
+    UIControl.prototype.onGlobalMouseUp = function(position, button) {
+      var handler, i, len, ref, results;
+      ref = this._globalMouseUpHandlers;
+      results = [];
+      for (i = 0, len = ref.length; i < len; i++) {
+        handler = ref[i];
+        results.push(handler(position, button));
+      }
+      return results;
+    };
+
+    UIControl.prototype.onMouseScroll = function(delta) {
+      var handler, i, len, ref, results;
+      ref = this._mouseScrollHandlers;
+      results = [];
+      for (i = 0, len = ref.length; i < len; i++) {
+        handler = ref[i];
+        results.push(handler(delta));
       }
       return results;
     };

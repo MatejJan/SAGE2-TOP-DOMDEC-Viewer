@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "shadowmaterial.js",
+  "sourceRoot": "",
+  "sources": [
+    "shadowmaterial.coffee"
+  ],
+  "names": [],
+  "mappings": ";AAAA;EAAA;AAAA,MAAA;;;EAEM,SAAS,CAAC;;;IACD,wBAAC,KAAD;MAAC,IAAC,CAAA,QAAD;MACZ,gDAAM,IAAC,CAAA,KAAP,EAEE;QAAA,YAAA,EAAc,+vDAAd;QAwDA,cAAA,EAAgB,yEAAA,GAMpB,KAAK,CAAC,WAAW,CAAC,OANE,GAMM,yEA9DtB;OAFF;IADW;;;;KADwB,SAAS,CAAC;AAFjD"
+}

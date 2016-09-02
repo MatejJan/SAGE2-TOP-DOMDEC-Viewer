@@ -7,15 +7,350 @@
   TopViewer.RenderingControls = (function(superClass) {
     extend(RenderingControls, superClass);
 
+    RenderingControls.MeshSurfaceSides = {
+      SingleFront: 'SingleFront',
+      SingleBack: 'SingleBack',
+      DoubleFast: 'DoubleFast',
+      DoubleQuality: 'DoubleQuality'
+    };
+
+    RenderingControls.VertexColorsType = {
+      Color: 'Color',
+      Scalar: 'Scalar'
+    };
+
     function RenderingControls(options) {
-      var $displacementArea, $mainGeometryArea;
+      var $displacementArea, $gradientArea, $gradientPreview, $lightingArea, $mainGeometryArea, $meshesArea, $meshesIsolinesArea, $meshesSurfaceArea, $meshesWireframeArea, $volumesArea, $volumesIsosurfacesArea, $volumesWireframeArea, customLight, found, gradient, gradientPreviewImage, i, j, len, len1, lightingPreset, ref, ref1, saveState, scrollOffset;
       this.options = options;
       RenderingControls.__super__.constructor.apply(this, arguments);
+      saveState = this.options.engine.options.app.state.renderingControls;
       this.$appWindow = this.options.engine.$appWindow;
       this.scene = this.options.engine.scene;
       this.$controls = $("<div class='rendering-controls'>");
       this.$appWindow.append(this.$controls);
+      this.$rootElement = this.$controls;
       this.rootControl = new TopViewer.UIControl(this, this.$controls);
+      scrollOffset = 0;
+      this.rootControl.scroll((function(_this) {
+        return function(delta) {
+          scrollOffset += delta;
+          scrollOffset = Math.max(scrollOffset, 0);
+          scrollOffset = Math.min(scrollOffset, _this.$controls.height() - _this.options.engine.$appWindow.height() * 0.8);
+          return _this.$controls.css({
+            top: -scrollOffset
+          });
+        };
+      })(this));
+      $lightingArea = $("<div class='lighting-area'></div>");
+      new TopViewer.ToggleContainer(this, {
+        $parent: this.$controls,
+        text: "Lighting",
+        "class": "panel",
+        visible: saveState.lighting.panelEnabled,
+        $contents: $lightingArea,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.lighting.panelEnabled = value;
+          };
+        })(this)
+      });
+      this.lightingSetupControl = new TopViewer.DropdownControl(this, {
+        $parent: $lightingArea,
+        "class": 'lighting-setup-dropdown',
+        onChange: (function(_this) {
+          return function(value, control) {
+            return saveState.lighting.lightingSetup = {
+              name: control.dropdownControl.options.text,
+              value: value.lightDirection
+            };
+          };
+        })(this)
+      });
+      ref = this.options.engine.lightingPresets;
+      for (i = 0, len = ref.length; i < len; i++) {
+        lightingPreset = ref[i];
+        this.lightingSetupControl.addValue(lightingPreset.name, lightingPreset);
+      }
+      if (saveState.lighting.lightingSetup.name) {
+        found = this.lightingSetupControl.setValue(saveState.lighting.lightingSetup.name);
+        if (!found) {
+          customLight = new LightingSetup(saveState.lightingSetup.name, saveState.lightingSetup.value);
+          this.lightingSetupControl.setValueDirectly(customLight.name, customLight);
+        }
+      } else {
+        this.lightingSetupControl.setValue(this.options.engine.lightingPresets[0]);
+      }
+      this.bidirectionalLightControl = new TopViewer.CheckboxControl(this, {
+        $parent: $lightingArea,
+        name: 'Bidirectional',
+        value: saveState.lighting.bidirectional,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.lighting.bidirectional = value;
+          };
+        })(this)
+      });
+      this.shadowsControl = new TopViewer.CheckboxControl(this, {
+        $parent: $lightingArea,
+        name: 'Cast shadows',
+        value: saveState.lighting.shadows,
+        onChange: (function(_this) {
+          return function(value) {
+            saveState.lighting.shadows = value;
+            return _this.options.engine.scene.update();
+          };
+        })(this)
+      });
+      $lightingArea.append("<p class='label'>Ambient light</p>");
+      this.ambientLevelControl = new TopViewer.SliderControl(this, {
+        $parent: $lightingArea,
+        minimumValue: 0,
+        maximumValue: 1,
+        value: saveState.lighting.ambient,
+        decimals: -2,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.lighting.ambient = value;
+          };
+        })(this)
+      });
+      $gradientArea = $("<div class='gradient-area'></div>");
+      new TopViewer.ToggleContainer(this, {
+        $parent: this.$controls,
+        text: "Colors",
+        "class": "panel",
+        visible: saveState.gradient.panelEnabled,
+        $contents: $gradientArea,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.gradient.panelEnabled = value;
+          };
+        })(this)
+      });
+      $gradientPreview = $("<div class='gradient-preview-area'><img class='gradient-preview-image'/></div>");
+      gradientPreviewImage = $gradientPreview.find('img')[0];
+      this.gradientControl = new TopViewer.DropdownControl(this, {
+        $parent: $gradientArea,
+        "class": 'gradient-dropdown',
+        onChange: (function(_this) {
+          return function(value) {
+            gradientPreviewImage.src = value.url;
+            return saveState.gradient.name = value.name;
+          };
+        })(this)
+      });
+      ref1 = this.options.engine.gradients;
+      for (j = 0, len1 = ref1.length; j < len1; j++) {
+        gradient = ref1[j];
+        this.gradientControl.addValue(gradient.name, gradient);
+      }
+      found = false;
+      if (saveState.gradient.name) {
+        found = this.gradientControl.setValue(saveState.gradient.name);
+      }
+      console.log("got name", saveState.gradient.name, found);
+      if (!found) {
+        this.gradientControl.setValue(this.options.engine.gradients[0]);
+      }
+      $gradientArea.append($gradientPreview);
+      $meshesArea = $("<div class='meshes-area'></div>");
+      new TopViewer.ToggleContainer(this, {
+        $parent: this.$controls,
+        text: "Meshes",
+        "class": "panel",
+        visible: saveState.meshes.panelEnabled,
+        $contents: $meshesArea,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.meshes.panelEnabled = value;
+          };
+        })(this)
+      });
+      $meshesSurfaceArea = $("<div class='surface-area sub-panel first'><div class='title'>Surface</div></div>");
+      $meshesArea.append($meshesSurfaceArea);
+      this.meshesShowSurfaceControl = new TopViewer.CheckboxControl(this, {
+        $parent: $meshesSurfaceArea,
+        name: 'Enable',
+        value: saveState.meshes.surfaceEnabled,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.meshes.surfaceEnabled = value;
+          };
+        })(this)
+      });
+      this.meshesSurfaceSidesControl = new TopViewer.DropdownControl(this, {
+        $parent: $meshesSurfaceArea,
+        "class": 'meshes-surface-sides-selector',
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.meshes.surfaceSides = value;
+          };
+        })(this)
+      });
+      this.meshesSurfaceSidesControl.addValue('Single Sided (front)', this.constructor.MeshSurfaceSides.SingleFront);
+      this.meshesSurfaceSidesControl.addValue('Single Sided (back)', this.constructor.MeshSurfaceSides.SingleBack);
+      this.meshesSurfaceSidesControl.addValue('Double Sided (fast)', this.constructor.MeshSurfaceSides.DoubleFast);
+      this.meshesSurfaceSidesControl.addValue('Double Sided (quality)', this.constructor.MeshSurfaceSides.DoubleQuality);
+      this.meshesSurfaceSidesControl.setValue(saveState.meshes.surfaceSides);
+      this.meshesSurfaceColorsControl = new TopViewer.VertexColorsControl(this, {
+        $parent: $meshesSurfaceArea,
+        "class": 'meshes-surface-colors-selector',
+        saveState: saveState.meshes.surfaceColors
+      });
+      $meshesSurfaceArea.append("<p class='label'>Opacity</p>");
+      this.meshesSurfaceOpacityControl = new TopViewer.SliderControl(this, {
+        $parent: $meshesSurfaceArea,
+        minimumValue: 0,
+        maximumValue: 1,
+        value: saveState.meshes.surfaceOpacity,
+        decimals: -2,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.meshes.surfaceOpacity = value;
+          };
+        })(this)
+      });
+      $meshesWireframeArea = $("<div class='wireframe-area sub-panel'><div class='title'>Wireframe</div></div>");
+      $meshesArea.append($meshesWireframeArea);
+      this.meshesShowWireframeControl = new TopViewer.CheckboxControl(this, {
+        $parent: $meshesWireframeArea,
+        name: 'Enable',
+        value: saveState.meshes.wireframeEnabled,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.meshes.wireframeEnabled = value;
+          };
+        })(this)
+      });
+      this.meshesWireframeColorsControl = new TopViewer.VertexColorsControl(this, {
+        $parent: $meshesWireframeArea,
+        "class": 'meshes-wireframe-colors-selector',
+        saveState: saveState.meshes.wireframeColors
+      });
+      $meshesWireframeArea.append("<p class='label'>Opacity</p>");
+      this.meshesWireframeOpacityControl = new TopViewer.SliderControl(this, {
+        $parent: $meshesWireframeArea,
+        minimumValue: 0,
+        maximumValue: 1,
+        value: saveState.meshes.wireframeOpacity,
+        decimals: -2,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.meshes.wireframeOpacity = value;
+          };
+        })(this)
+      });
+      $meshesIsolinesArea = $("<div class='isolines-area sub-panel'><div class='title'>Isolines</div></div>");
+      $meshesArea.append($meshesIsolinesArea);
+      this.meshesShowIsolinesControl = new TopViewer.CheckboxControl(this, {
+        $parent: $meshesIsolinesArea,
+        name: 'Enable',
+        value: saveState.meshes.isolinesEnabled,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.meshes.isolinesEnabled = value;
+          };
+        })(this)
+      });
+      this.meshesIsolinesScalarControl = new TopViewer.ScalarControl(this, {
+        $parent: $meshesIsolinesArea,
+        saveState: saveState.meshes.isolinesScalar
+      });
+      this.meshesIsolinesColorsControl = new TopViewer.VertexColorsControl(this, {
+        $parent: $meshesIsolinesArea,
+        "class": 'meshes-isolines-colors-selector',
+        saveState: saveState.meshes.isolinesColors
+      });
+      $meshesIsolinesArea.append("<p class='label'>Opacity</p>");
+      this.meshesIsolinesOpacityControl = new TopViewer.SliderControl(this, {
+        $parent: $meshesIsolinesArea,
+        minimumValue: 0,
+        maximumValue: 1,
+        value: saveState.meshes.isolinesOpacity,
+        decimals: -2,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.meshes.isolinesOpacity = value;
+          };
+        })(this)
+      });
+      $volumesArea = $("<div class='volumes-area'></div>");
+      new TopViewer.ToggleContainer(this, {
+        $parent: this.$controls,
+        text: "Volumes",
+        "class": "panel",
+        visible: saveState.volumes.panelEnabled,
+        $contents: $volumesArea,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.volumes.panelEnabled = value;
+          };
+        })(this)
+      });
+      $volumesWireframeArea = $("<div class='wireframe-area sub-panel'><div class='title'>Wireframe</div></div>");
+      $volumesArea.append($volumesWireframeArea);
+      this.volumesShowWireframeControl = new TopViewer.CheckboxControl(this, {
+        $parent: $volumesWireframeArea,
+        name: 'Enable',
+        value: saveState.volumes.wireframeEnabled,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.volumes.wireframeEnabled = value;
+          };
+        })(this)
+      });
+      this.volumesWireframeColorsControl = new TopViewer.VertexColorsControl(this, {
+        $parent: $volumesWireframeArea,
+        "class": 'volumes-wireframe-colors-selector',
+        saveState: saveState.volumes.wireframeColors
+      });
+      $volumesWireframeArea.append("<p class='label'>Opacity</p>");
+      this.volumesWireframeOpacityControl = new TopViewer.SliderControl(this, {
+        $parent: $volumesWireframeArea,
+        minimumValue: 0,
+        maximumValue: 1,
+        value: saveState.volumes.wireframeOpacity,
+        decimals: -2,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.volumes.wireframeOpacity = value;
+          };
+        })(this)
+      });
+      $volumesIsosurfacesArea = $("<div class='isosrufaces-area sub-panel'><div class='title'>Isosurfaces</div></div>");
+      $volumesArea.append($volumesIsosurfacesArea);
+      this.volumesShowIsosurfacesControl = new TopViewer.CheckboxControl(this, {
+        $parent: $volumesIsosurfacesArea,
+        name: 'Enable',
+        value: saveState.volumes.isosurfacesEnabled,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.volumes.isosurfacesEnabled = value;
+          };
+        })(this)
+      });
+      this.volumesIsosurfacesScalarControl = new TopViewer.ScalarControl(this, {
+        $parent: $volumesIsosurfacesArea,
+        saveState: saveState.volumes.isosurfacesScalar
+      });
+      this.volumesIsosurfacesColorsControl = new TopViewer.VertexColorsControl(this, {
+        $parent: $volumesIsosurfacesArea,
+        "class": 'volumes-isosurfaces-colors-selector',
+        saveState: saveState.volumes.isosurfacesColors
+      });
+      $volumesIsosurfacesArea.append("<p class='label'>Opacity</p>");
+      this.volumesIsosurfacesOpacityControl = new TopViewer.SliderControl(this, {
+        $parent: $volumesIsosurfacesArea,
+        minimumValue: 0,
+        maximumValue: 1,
+        value: saveState.volumes.isosurfacesOpacity,
+        decimals: -2,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.volumes.isosurfacesOpacity = value;
+          };
+        })(this)
+      });
       $displacementArea = $("<div class='displacement-area panel'><div class='title'>Displacement</div></div>");
       this.$controls.append($displacementArea);
       this.displacementDropdown = new TopViewer.DropdownControl(this, {
@@ -72,12 +407,12 @@
         surface: new TopViewer.CheckboxControl(this, {
           $parent: $contents,
           name: 'surface',
-          value: false
+          value: true
         }),
         wireframe: new TopViewer.CheckboxControl(this, {
           $parent: $contents,
           name: 'wireframe',
-          value: true
+          value: false
         }),
         isolines: new TopViewer.CheckboxControl(this, {
           $parent: $contents,
@@ -119,6 +454,7 @@
     };
 
     RenderingControls.prototype.addScalar = function(name, scalar) {
+      TopViewer.ScalarControl.addScalar(name, scalar);
       this.mainGeometrySurfaceDropdown.addValue(name, scalar);
       if (!this.mainGeometrySurfaceDropdown.value) {
         return this.mainGeometrySurfaceDropdown.setValue(scalar);

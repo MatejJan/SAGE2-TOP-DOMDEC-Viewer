@@ -1,7 +1,7 @@
 class TopViewer.ToggleContainer
   constructor: (@uiArea, @options) ->
     @$element = $("""
-      <div class="toggle-container #{@options.class}">
+      <div class="toggle-container #{@options.class} #{if @options.visible then 'contents-visible' else 'contents-hidden'}">
         <div class='toggle'></div>
         <div class='contents #{if @options.visible then 'visible' else 'hidden'}'></div>
       </div>
@@ -17,10 +17,14 @@ class TopViewer.ToggleContainer
       value: @options.visible
       onChange: (value) =>
         if value
+          @$element.addClass('contents-visible').removeClass('contents-hidden')
           $contents.addClass('visible').removeClass('hidden')
 
         else
+          @$element.addClass('contents-hidden').removeClass('contents-visible')
           $contents.addClass('hidden').removeClass('visible')
+
+        @options.onChange? value
 
     @options.$parent.append(@$element)
 

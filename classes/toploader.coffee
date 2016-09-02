@@ -11,7 +11,7 @@ class TopViewer.TopLoader
 
         when 'result'
           objects = message.data.objects
-          # console.log "Received", url, objects
+          #console.log "Received", url, objects
 
           onLoad objects
 

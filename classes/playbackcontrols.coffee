@@ -4,6 +4,7 @@ class TopViewer.PlaybackControls extends TopViewer.UIArea
   constructor: (@options) ->
     super
 
+    saveState = @options.engine.options.app.state.playbackControls
     @$appWindow = @options.engine.$appWindow
     @animation = @options.engine.animation
 
@@ -39,7 +40,8 @@ class TopViewer.PlaybackControls extends TopViewer.UIArea
     $readyRange = $timeline.find('.ready-range')
     @$playhead = $timeline.find('.playhead')
 
-    # Set the root UI control.
+    # Set the roots.
+    @$rootElement = @$controls
     @rootControl = new TopViewer.UIControl @, @$controls
 
     playControl = new TopViewer.UIControl @, $play
@@ -49,15 +51,15 @@ class TopViewer.PlaybackControls extends TopViewer.UIArea
     scrubberControl = new TopViewer.UIControl @, @$scrubber
 
     # Make a control to handle hovering.
-    new TopViewer.SliderControl @,
+    @framesPerSecondControl = new TopViewer.SliderControl @,
       $parent: @$controls
       class: 'speed'
       unit: 'FPS'
       minimumValue: 1
       maximumValue: 60
-      value: 30
+      value: saveState.fps
       onChange: (value) =>
-        @framesPerSecond = value
+        saveState.fps = value
 
     playControl.click =>
       @play()
@@ -163,7 +165,8 @@ class TopViewer.PlaybackControls extends TopViewer.UIArea
   update: (elapsedTime) ->
     return unless @playing and not @_scrubbing and @animation.frameTimes.length
 
-    @currentTime += elapsedTime * @framesPerSecond
+    @currentTime += elapsedTime * @framesPerSecondControl.value
+
     while @currentTime > @animation.frameTimes.length
       @currentTime -= @animation.frameTimes.length
 

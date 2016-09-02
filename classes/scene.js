@@ -10,33 +10,18 @@
     function Scene(options) {
       Scene.__super__.constructor.call(this);
       this.engine = options.engine;
-      this.skyLight = new THREE.HemisphereLight(0x92b6ee, 0x333333, 0.8);
-      this.add(this.skyLight);
-      this.whiteLight = new THREE.AmbientLight(0xffffff);
-      this.add(this.whiteLight);
-      this.directionalLight = this.addShadowedLight(0.2, 1, 0.3, 0xeadbad, 1);
-      this.planeMaterial = new THREE.MeshBasicMaterial({
+      this.ambientLight = new THREE.AmbientLight(0xffffff, 0);
+      this.add(this.ambientLight);
+      this.directionalLight = this.addShadowedLight(0, 1, 0, 0xffffff, 1);
+      this.planeMaterial = new THREE.MeshLambertMaterial({
         color: 0x444550
-      });
-      this.modelMaterial = new THREE.MeshLambertMaterial({
-        color: 0xffffff,
-        vertexColors: THREE.VertexColors,
-        side: THREE.DoubleSide,
-        combine: THREE.MultiplyOperation,
-        reflectivity: 0.3
-      });
-      this.wireframeMaterial = new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-        opacity: 0.5,
-        transparent: true,
-        side: THREE.DoubleSide,
-        wireframe: true
       });
       this.plane = new THREE.PlaneGeometry(20, 20);
       this.floor = new THREE.Mesh(this.plane, this.planeMaterial);
       this.floor.rotation.x = -Math.PI * 0.5;
       this.floor.rotation.z = -Math.PI * 0.5;
       this.floor.receiveShadow = true;
+      this.floor.castShadow = false;
       this.add(this.floor);
       this.normalizationMatrix = new THREE.Matrix4();
       this.rotationMatrix = new THREE.Matrix4();
@@ -48,26 +33,19 @@
 
     Scene.prototype.destroy = function() {
       this.remove.apply(this, this.children);
-      this.modelMaterial.dispose();
       return this.planeMaterial.dispose();
     };
 
     Scene.prototype.addShadowedLight = function(x, y, z, color, intensity) {
-      var d, directionalLight;
+      var directionalLight;
       directionalLight = new THREE.DirectionalLight(color, intensity);
       directionalLight.position.set(x, y, z);
-      this.add(directionalLight);
       directionalLight.castShadow = true;
-      d = 3;
-      directionalLight.shadowCameraLeft = -d;
-      directionalLight.shadowCameraRight = d;
-      directionalLight.shadowCameraTop = d;
-      directionalLight.shadowCameraBottom = -d;
-      directionalLight.shadowCameraNear = 0.0005;
-      directionalLight.shadowCameraFar = 50;
-      directionalLight.shadowMapWidth = 1024;
-      directionalLight.shadowMapHeight = 1024;
-      directionalLight.shadowDarkness = 0.8;
+      directionalLight.shadow = new THREE.LightShadow(new THREE.OrthographicCamera(-2, 2, 2, -2, 0.1, 5));
+      directionalLight.shadow.mapSize.width = 4096;
+      directionalLight.shadow.mapSize.height = 4096;
+      directionalLight.shadow.bias = -0.002;
+      this.add(directionalLight);
       return directionalLight;
     };
 
@@ -118,30 +96,32 @@
     };
 
     Scene.prototype.update = function() {
-      var i, j, len, len1, materialNeedsUpdate, mesh, model, ref, ref1;
+      var i, len, mesh, meshName, model, ref, results;
       ref = this.children;
+      results = [];
       for (i = 0, len = ref.length; i < len; i++) {
         model = ref[i];
         if (model instanceof TopViewer.Model) {
-          ref1 = model.meshes;
-          for (j = 0, len1 = ref1.length; j < len1; j++) {
-            mesh = ref1[j];
-            mesh.castShadow = this.engine.shadows;
-          }
+          results.push((function() {
+            var ref1, results1;
+            ref1 = model.meshes;
+            results1 = [];
+            for (meshName in ref1) {
+              mesh = ref1[meshName];
+              mesh.castShadow = this.engine.renderingControls.shadowsControl.value;
+              mesh.receiveShadows = this.engine.renderingControls.shadowsControl.value;
+              if (mesh.backsideMesh) {
+                mesh.backsideMesh.castShadow = this.engine.renderingControls.shadowsControl.value;
+                results1.push(mesh.backsideMesh.receiveShadows = this.engine.renderingControls.shadowsControl.value);
+              } else {
+                results1.push(void 0);
+              }
+            }
+            return results1;
+          }).call(this));
         }
       }
-      this.directionalLight.visible = this.engine.directionalLight;
-      this.whiteLight.visible = !this.engine.ambientLight;
-      this.skyLight.visible = this.engine.ambientLight;
-      materialNeedsUpdate = false;
-      if (this.engine.vertexColors !== this._vertexColor) {
-        this.modelMaterial.vertexColors = this.engine.vertexColors ? THREE.VertexColors : THREE.NoColors;
-        this._vertexColor = this.engine.vertexColors;
-        materialNeedsUpdate = true;
-      }
-      if (materialNeedsUpdate) {
-        return this.modelMaterial.needsUpdate = true;
-      }
+      return results;
     };
 
     Scene.prototype.updateScale = function() {
@@ -186,7 +166,7 @@
       center = this.sceneBoundingBox.center().clone();
       center.negate();
       minY = (this.sceneBoundingBox.min.y + center.y) * this._scaleFactor;
-      return this.floor.position.y = minY;
+      return this.floor.position.y = minY - 0.001;
     };
 
     Scene.prototype._recomputeNormalizationMatrix = function() {

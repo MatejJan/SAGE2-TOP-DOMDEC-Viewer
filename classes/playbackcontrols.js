@@ -8,9 +8,10 @@
     extend(PlaybackControls, superClass);
 
     function PlaybackControls(options) {
-      var $load, $pause, $play, $readyRange, $sleep, $timeline, loadControl, pauseControl, playControl, scrubberControl, sleepControl;
+      var $load, $pause, $play, $readyRange, $sleep, $timeline, loadControl, pauseControl, playControl, saveState, scrubberControl, sleepControl;
       this.options = options;
       PlaybackControls.__super__.constructor.apply(this, arguments);
+      saveState = this.options.engine.options.app.state.playbackControls;
       this.$appWindow = this.options.engine.$appWindow;
       this.animation = this.options.engine.animation;
       this.$controls = $("<div class=\"playback-controls\">\n  <div class=\"play-pause\">\n    <button class=\"play button icon-play\"></button>\n    <button class=\"pause button icon-pause\"></button>\n  </div>\n  <div class=\"load-sleep\">\n    <button class=\"load button icon-loading\"></button>\n    <button class=\"sleep button icon-loading animate-spin\"></button>\n  </div>\n  <div class=\"scrubber\">\n    <div class=\"timeline\">\n      <div class=\"ready-range\"></div>\n      <div class=\"playhead\"></div>\n    </div>\n  </div>\n</div>");
@@ -23,22 +24,23 @@
       $timeline = this.$scrubber.find('.timeline');
       $readyRange = $timeline.find('.ready-range');
       this.$playhead = $timeline.find('.playhead');
+      this.$rootElement = this.$controls;
       this.rootControl = new TopViewer.UIControl(this, this.$controls);
       playControl = new TopViewer.UIControl(this, $play);
       pauseControl = new TopViewer.UIControl(this, $pause);
       sleepControl = new TopViewer.UIControl(this, $sleep);
       loadControl = new TopViewer.UIControl(this, $load);
       scrubberControl = new TopViewer.UIControl(this, this.$scrubber);
-      new TopViewer.SliderControl(this, {
+      this.framesPerSecondControl = new TopViewer.SliderControl(this, {
         $parent: this.$controls,
         "class": 'speed',
         unit: 'FPS',
         minimumValue: 1,
         maximumValue: 60,
-        value: 30,
+        value: saveState.fps,
         onChange: (function(_this) {
           return function(value) {
-            return _this.framesPerSecond = value;
+            return saveState.fps = value;
           };
         })(this)
       });
@@ -168,7 +170,7 @@
       if (!(this.playing && !this._scrubbing && this.animation.frameTimes.length)) {
         return;
       }
-      this.currentTime += elapsedTime * this.framesPerSecond;
+      this.currentTime += elapsedTime * this.framesPerSecondControl.value;
       while (this.currentTime > this.animation.frameTimes.length) {
         this.currentTime -= this.animation.frameTimes.length;
       }

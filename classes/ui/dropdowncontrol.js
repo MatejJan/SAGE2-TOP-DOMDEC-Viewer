@@ -2,6 +2,7 @@
 (function() {
   TopViewer.DropdownControl = (function() {
     function DropdownControl(uiArea, options) {
+      var uiControl;
       this.uiArea = uiArea;
       this.options = options;
       this.$element = $("<div class=\"dropdown-control " + this.options["class"] + "\">\n</div>");
@@ -12,6 +13,21 @@
         visible: false,
         $contents: this.$values
       });
+      uiControl = new TopViewer.UIControl(this.uiArea, this.$element);
+      uiControl.globalMouseup((function(_this) {
+        return function(position) {
+          var $pointers, element, parentOrigin;
+          parentOrigin = _this.uiArea.$appWindow.offset();
+          $pointers = $('.pointerItem');
+          $pointers.hide();
+          element = document.elementFromPoint(parentOrigin.left + position.x, parentOrigin.top + position.y);
+          $pointers.show();
+          if (_this.$element.has(element).length) {
+            return;
+          }
+          return _this.dropdownControl.toggleControl.setValue(false);
+        };
+      })(this));
       this.options.$parent.append(this.$element);
       this.value = this.options.value;
       this.values = [];
@@ -37,13 +53,27 @@
       });
     };
 
-    DropdownControl.prototype.setValue = function(newValue) {
-      var value;
-      this.value = newValue;
+    DropdownControl.prototype.setValue = function(valueOrText) {
+      var base, value;
       value = _.find(this.values, function(value) {
-        return value.value === newValue;
+        return value.value === valueOrText || value.text === valueOrText;
       });
-      return this.dropdownControl.setText(value.text);
+      if (!value) {
+        return false;
+      }
+      this.value = value.value;
+      this.dropdownControl.setText(value.text);
+      if (typeof (base = this.options).onChange === "function") {
+        base.onChange(this.value, this);
+      }
+      return true;
+    };
+
+    DropdownControl.prototype.setValueDirectly = function(value, text) {
+      var base;
+      this.value = value;
+      this.dropdownControl.setText(text);
+      return typeof (base = this.options).onChange === "function" ? base.onChange(this.value, this) : void 0;
     };
 
     return DropdownControl;

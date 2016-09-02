@@ -4,13 +4,16 @@ class TopViewer.Mesh extends THREE.Mesh
   constructor: (@options) ->
     super new THREE.BufferGeometry(), @options.model.material
 
-    # Create the surface mesh. We need 3 index arrays so each vertex knows
-    # who its two face neighbors are, to calculate normals in the shader.
+    # Create the surface mesh. We send in all three triangle indices so we can calculate the normal in the shader.
     indexArrays = []
     indexAttributes = []
-    for i in [0..3]
+    for i in [0..2]
       indexArrays[i] = new Float32Array @options.elements.length * 2
       indexAttributes[i] = new THREE.BufferAttribute indexArrays[i], 2
+
+    # We also need to tell the vertices what their index is and if they are part of the main or additional face.
+    cornerIndexArray = new Float32Array @options.elements.length
+    cornerIndexAttribute = new THREE.BufferAttribute cornerIndexArray, 1
 
     height = @options.model.basePositionsTexture.image.height
 
@@ -19,23 +22,28 @@ class TopViewer.Mesh extends THREE.Mesh
       attribute.setY i, Math.floor(index / 4096) / height
 
     for i in [0...@options.elements.length]
-      setVertexIndexCoordinates(indexAttributes[0], i, @options.elements[i])
+      cornerInTriangle = i % 3
+      cornerIndexArray[i] = cornerInTriangle * 0.1
 
       # Create normal indices.
       baseIndex = Math.floor(i/3) * 3
-      indexInTriangle = i % 3
 
+      # Set the 3 indices of the triangle (that this vertex is part of).
       for j in [0..2]
-        setVertexIndexCoordinates(indexAttributes[indexInTriangle+1], baseIndex + j, @options.elements[i])
+        setVertexIndexCoordinates(indexAttributes[j], i, @options.elements[baseIndex+j])
 
-    @geometry.addAttribute 'vertexIndex', indexAttributes[0]
-    @geometry.addAttribute 'vertexIndex2', indexAttributes[1]
-    @geometry.addAttribute 'vertexIndex3', indexAttributes[2]
-    @geometry.addAttribute 'vertexIndex4', indexAttributes[3]
-
-    console.log indexArrays
+    @geometry.addAttribute 'vertexIndexCorner1', indexAttributes[0]
+    @geometry.addAttribute 'vertexIndexCorner2', indexAttributes[1]
+    @geometry.addAttribute 'vertexIndexCorner3', indexAttributes[2]
+    @geometry.addAttribute 'cornerIndex', cornerIndexAttribute
 
     @geometry.drawRange.count = @options.elements.length
+
+    @backsideMesh = new THREE.Mesh @geometry, @options.model.backsideMaterial
+
+    # Set the custom material for shadows.
+    @customDepthMaterial = @options.model.shadowMaterial
+    @backsideMesh.customDepthMaterial = @options.model.shadowMaterial
 
     # Create the wireframe mesh.
     connectivity = []
@@ -79,7 +87,9 @@ class TopViewer.Mesh extends THREE.Mesh
 
     # Each isoline vertex needs access to all three face vertices.
     for i in [0..2]
-      # The format of the array is, for each face: v[i]_x, v[i]_y, v[i]_x, v[i]_y
+      # The format of the array is, for each face and face corner i: v[i]_x, v[i]_y, v[i]_x, v[i]_y
+      # It is duplicated because we have two isoline vertices in
+      # succession and both of them need access to the same data.
       isolinesIndexArray = new Float32Array faceCount * 4
       isolinesIndexAttribute = new THREE.BufferAttribute isolinesIndexArray, 2
 
@@ -88,7 +98,7 @@ class TopViewer.Mesh extends THREE.Mesh
         for k in [0...2]
           setVertexIndexCoordinates(isolinesIndexAttribute, j*2+k, @options.elements[j * 3 + i])
 
-      isolinesGeometry.addAttribute "vertex#{i+1}Index", isolinesIndexAttribute
+      isolinesGeometry.addAttribute "vertexIndexCorner#{i+1}", isolinesIndexAttribute
 
     # We also need to tell the vertices if they are the start or the end of the isoline.
     isolinesTypeArray = new Float32Array faceCount * 2
@@ -97,7 +107,7 @@ class TopViewer.Mesh extends THREE.Mesh
     for i in [0...faceCount]
       isolinesTypeArray[i * 2 + 1] = 1.0
 
-    isolinesGeometry.addAttribute "vertexType", isolinesTypeAttribute
+    isolinesGeometry.addAttribute "cornerIndex", isolinesTypeAttribute
 
     isolinesGeometry.drawRange.count = faceCount * 2
 
@@ -106,6 +116,7 @@ class TopViewer.Mesh extends THREE.Mesh
 
     # Add the meshes to the model.
     @options.model.add @
+    @options.model.add @backsideMesh
     @options.model.add @wireframeMesh
     @options.model.add @isolinesMesh
 
@@ -117,6 +128,7 @@ class TopViewer.Mesh extends THREE.Mesh
 
   _updateGeometry: ->
     @_updateBounds @, @options.model
+    @_updateBounds @backsideMesh, @options.model
     @_updateBounds @wireframeMesh, @options.model
     @_updateBounds @isolinesMesh, @options.model
 
@@ -125,6 +137,21 @@ class TopViewer.Mesh extends THREE.Mesh
     mesh.geometry.boundingSphere = @options.model.boundingSphere
 
   showFrame: () ->
-    @visible = @renderingControls.surface.value
-    @wireframeMesh.visible = @renderingControls.wireframe.value
-    @isolinesMesh.visible = @renderingControls.isolines.value
+    # Do we need to draw the main mesh?
+    if @options.engine.renderingControls.meshesShowSurfaceControl.value
+      @visible = true
+
+      # Determine the type of mesh surface rendering.
+      switch @options.engine.renderingControls.meshesSurfaceSidesControl.value
+        when TopViewer.RenderingControls.MeshSurfaceSides.DoubleQuality
+          @backsideMesh.visible = true
+
+        else
+          @backsideMesh.visible = false
+
+    else
+      @visible = false
+      @backsideMesh.visible = false
+
+    @wireframeMesh.visible = @options.engine.renderingControls.meshesShowWireframeControl.value
+    @isolinesMesh.visible = @options.engine.renderingControls.meshesShowIsolinesControl.value

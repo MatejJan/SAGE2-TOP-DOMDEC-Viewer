@@ -13,6 +13,20 @@ class TopViewer.DropdownControl
       visible: false
       $contents: @$values
 
+    uiControl = new TopViewer.UIControl @uiArea, @$element
+    uiControl.globalMouseup (position) =>
+      # Close the dropdown, but only if we're not clicking inside the dropdown.
+      parentOrigin = @uiArea.$appWindow.offset()
+      $pointers = $('.pointerItem')
+      $pointers.hide()
+      element = document.elementFromPoint parentOrigin.left + position.x,  parentOrigin.top + position.y
+      $pointers.show()
+
+      # Are we even inside this area?
+      return if @$element.has(element).length
+
+      @dropdownControl.toggleControl.setValue false
+
     @options.$parent.append(@$element)
 
     @value = @options.value
@@ -40,10 +54,21 @@ class TopViewer.DropdownControl
       $item: $item
       control: control
 
-  setValue: (newValue) ->
-    @value = newValue
-
+  setValue: (valueOrText) ->
     value = _.find @values, (value) ->
-      value.value is newValue
+      value.value is valueOrText or value.text is valueOrText
 
+    return false unless value
+
+    @value = value.value
     @dropdownControl.setText value.text
+
+    @options.onChange? @value, @
+
+    true
+
+  setValueDirectly: (value, text) ->
+    @value = value
+    @dropdownControl.setText text
+
+    @options.onChange? @value, @

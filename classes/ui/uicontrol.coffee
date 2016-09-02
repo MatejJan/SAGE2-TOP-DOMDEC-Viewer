@@ -7,9 +7,13 @@ class TopViewer.UIControl
     @_mouseDownHandlers = []
     @_mouseMoveHandlers = []
     @_mouseUpHandlers = []
+    @_mouseScrollHandlers = []
+    @_globalMouseMoveHandlers = []
     @_globalMouseUpHandlers = []
 
     @uiArea.addControl @
+
+    @$element.data("control", @)
 
   mousedown: (handler) ->
     @_mouseDownHandlers.push handler
@@ -20,6 +24,12 @@ class TopViewer.UIControl
   mouseup: (handler) ->
     @_mouseUpHandlers.push handler
 
+  scroll: (handler) ->
+    @_mouseScrollHandlers.push handler
+
+  globalMousemove: (handler) ->
+    @_globalMouseMoveHandlers.push handler
+
   globalMouseup: (handler) ->
     @_globalMouseUpHandlers.push handler
 
@@ -27,29 +37,19 @@ class TopViewer.UIControl
     @mouseup handler
 
   onMouseDown: (position, button) ->
-    return unless @hover and @$element.is(':visible')
-
     handler position, button for handler in @_mouseDownHandlers
 
-  onMouseMove: (position) ->
-    parentOrigin = @uiArea.$appWindow.offset()
-    origin = @$element.offset()
-    left = origin.left - parentOrigin.left
-    top = origin.top - parentOrigin.top
-    right = left + @$element.outerWidth()
-    bottom = top + @$element.outerHeight()
-    newHover = left < position.x < right and top < position.y < bottom
-
-    @$element.addClass('hover') if newHover and not @hover
-    @$element.removeClass('hover') if @hover and not newHover
-
-    @hover = newHover
-
+  onMouseMove: (position) ->   
     handler position for handler in @_mouseMoveHandlers
 
   onMouseUp: (position, button) ->
+    handler position, button for handler in @_mouseUpHandlers
+
+  onGlobalMouseMove: (position, button) ->
+    handler position, button for handler in @_globalMouseMoveHandlers
+
+  onGlobalMouseUp: (position, button) ->
     handler position, button for handler in @_globalMouseUpHandlers
 
-    return unless @hover and @$element.is(':visible')
-
-    handler position, button for handler in @_mouseUpHandlers
+  onMouseScroll: (delta) ->
+    handler delta for handler in @_mouseScrollHandlers

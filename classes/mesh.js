@@ -8,34 +8,38 @@
     extend(Mesh, superClass);
 
     function Mesh(options) {
-      var a, addLine, b, baseIndex, connectivity, faceCount, height, i, indexArrays, indexAttributes, indexInTriangle, isolinesGeometry, isolinesIndexArray, isolinesIndexAttribute, isolinesTypeArray, isolinesTypeAttribute, j, k, l, lineVertexIndex, linesCount, m, n, o, p, q, r, ref, ref1, ref2, ref3, ref4, s, setVertexIndexCoordinates, t, wireframeGeometry, wireframeIndexArray, wireframeIndexAttribute;
+      var a, addLine, b, baseIndex, connectivity, cornerInTriangle, cornerIndexArray, cornerIndexAttribute, faceCount, height, i, indexArrays, indexAttributes, isolinesGeometry, isolinesIndexArray, isolinesIndexAttribute, isolinesTypeArray, isolinesTypeAttribute, j, k, l, lineVertexIndex, linesCount, m, n, o, p, q, r, ref, ref1, ref2, ref3, ref4, s, setVertexIndexCoordinates, t, wireframeGeometry, wireframeIndexArray, wireframeIndexAttribute;
       this.options = options;
       Mesh.__super__.constructor.call(this, new THREE.BufferGeometry(), this.options.model.material);
       indexArrays = [];
       indexAttributes = [];
-      for (i = l = 0; l <= 3; i = ++l) {
+      for (i = l = 0; l <= 2; i = ++l) {
         indexArrays[i] = new Float32Array(this.options.elements.length * 2);
         indexAttributes[i] = new THREE.BufferAttribute(indexArrays[i], 2);
       }
+      cornerIndexArray = new Float32Array(this.options.elements.length);
+      cornerIndexAttribute = new THREE.BufferAttribute(cornerIndexArray, 1);
       height = this.options.model.basePositionsTexture.image.height;
       setVertexIndexCoordinates = function(attribute, i, index) {
         attribute.setX(i, index % 4096 / 4096);
         return attribute.setY(i, Math.floor(index / 4096) / height);
       };
       for (i = m = 0, ref = this.options.elements.length; 0 <= ref ? m < ref : m > ref; i = 0 <= ref ? ++m : --m) {
-        setVertexIndexCoordinates(indexAttributes[0], i, this.options.elements[i]);
+        cornerInTriangle = i % 3;
+        cornerIndexArray[i] = cornerInTriangle * 0.1;
         baseIndex = Math.floor(i / 3) * 3;
-        indexInTriangle = i % 3;
         for (j = n = 0; n <= 2; j = ++n) {
-          setVertexIndexCoordinates(indexAttributes[indexInTriangle + 1], baseIndex + j, this.options.elements[i]);
+          setVertexIndexCoordinates(indexAttributes[j], i, this.options.elements[baseIndex + j]);
         }
       }
-      this.geometry.addAttribute('vertexIndex', indexAttributes[0]);
-      this.geometry.addAttribute('vertexIndex2', indexAttributes[1]);
-      this.geometry.addAttribute('vertexIndex3', indexAttributes[2]);
-      this.geometry.addAttribute('vertexIndex4', indexAttributes[3]);
-      console.log(indexArrays);
+      this.geometry.addAttribute('vertexIndexCorner1', indexAttributes[0]);
+      this.geometry.addAttribute('vertexIndexCorner2', indexAttributes[1]);
+      this.geometry.addAttribute('vertexIndexCorner3', indexAttributes[2]);
+      this.geometry.addAttribute('cornerIndex', cornerIndexAttribute);
       this.geometry.drawRange.count = this.options.elements.length;
+      this.backsideMesh = new THREE.Mesh(this.geometry, this.options.model.backsideMaterial);
+      this.customDepthMaterial = this.options.model.shadowMaterial;
+      this.backsideMesh.customDepthMaterial = this.options.model.shadowMaterial;
       connectivity = [];
       linesCount = 0;
       addLine = function(a, b) {
@@ -84,17 +88,18 @@
             setVertexIndexCoordinates(isolinesIndexAttribute, j * 2 + k, this.options.elements[j * 3 + i]);
           }
         }
-        isolinesGeometry.addAttribute("vertex" + (i + 1) + "Index", isolinesIndexAttribute);
+        isolinesGeometry.addAttribute("vertexIndexCorner" + (i + 1), isolinesIndexAttribute);
       }
       isolinesTypeArray = new Float32Array(faceCount * 2);
       isolinesTypeAttribute = new THREE.BufferAttribute(isolinesTypeArray, 1);
       for (i = t = 0, ref4 = faceCount; 0 <= ref4 ? t < ref4 : t > ref4; i = 0 <= ref4 ? ++t : --t) {
         isolinesTypeArray[i * 2 + 1] = 1.0;
       }
-      isolinesGeometry.addAttribute("vertexType", isolinesTypeAttribute);
+      isolinesGeometry.addAttribute("cornerIndex", isolinesTypeAttribute);
       isolinesGeometry.drawRange.count = faceCount * 2;
       this._updateGeometry();
       this.options.model.add(this);
+      this.options.model.add(this.backsideMesh);
       this.options.model.add(this.wireframeMesh);
       this.options.model.add(this.isolinesMesh);
       this.options.engine.scene.addMesh(this);
@@ -103,6 +108,7 @@
 
     Mesh.prototype._updateGeometry = function() {
       this._updateBounds(this, this.options.model);
+      this._updateBounds(this.backsideMesh, this.options.model);
       this._updateBounds(this.wireframeMesh, this.options.model);
       return this._updateBounds(this.isolinesMesh, this.options.model);
     };
@@ -113,9 +119,21 @@
     };
 
     Mesh.prototype.showFrame = function() {
-      this.visible = this.renderingControls.surface.value;
-      this.wireframeMesh.visible = this.renderingControls.wireframe.value;
-      return this.isolinesMesh.visible = this.renderingControls.isolines.value;
+      if (this.options.engine.renderingControls.meshesShowSurfaceControl.value) {
+        this.visible = true;
+        switch (this.options.engine.renderingControls.meshesSurfaceSidesControl.value) {
+          case TopViewer.RenderingControls.MeshSurfaceSides.DoubleQuality:
+            this.backsideMesh.visible = true;
+            break;
+          default:
+            this.backsideMesh.visible = false;
+        }
+      } else {
+        this.visible = false;
+        this.backsideMesh.visible = false;
+      }
+      this.wireframeMesh.visible = this.options.engine.renderingControls.meshesShowWireframeControl.value;
+      return this.isolinesMesh.visible = this.options.engine.renderingControls.meshesShowIsolinesControl.value;
     };
 
     return Mesh;

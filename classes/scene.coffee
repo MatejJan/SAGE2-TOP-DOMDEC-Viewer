@@ -6,37 +6,20 @@ class TopViewer.Scene extends THREE.Scene
 
     @engine = options.engine
 
-    # Create the fancy scene.
-    @skyLight = new THREE.HemisphereLight 0x92b6ee, 0x333333, 0.8
-    @add @skyLight
+    @ambientLight = new THREE.AmbientLight 0xffffff, 0
+    @add @ambientLight
 
-    @whiteLight = new THREE.AmbientLight 0xffffff
-    @add @whiteLight
+    @directionalLight = @addShadowedLight 0, 1, 0, 0xffffff, 1
 
-    @directionalLight = @addShadowedLight 0.2, 1, 0.3, 0xeadbad, 1
-
-    @planeMaterial = new THREE.MeshBasicMaterial
+    @planeMaterial = new THREE.MeshLambertMaterial
       color: 0x444550
-
-    @modelMaterial = new THREE.MeshLambertMaterial
-      color: 0xffffff
-      vertexColors: THREE.VertexColors
-      side: THREE.DoubleSide
-      combine: THREE.MultiplyOperation
-      reflectivity: 0.3
-
-    @wireframeMaterial = new THREE.MeshBasicMaterial
-      color: 0xffffff
-      opacity: 0.5
-      transparent: true
-      side: THREE.DoubleSide
-      wireframe: true
 
     @plane = new THREE.PlaneGeometry(20, 20)
     @floor = new THREE.Mesh @plane, @planeMaterial
     @floor.rotation.x = -Math.PI * 0.5
     @floor.rotation.z = -Math.PI * 0.5
-    @floor.receiveShadow = true;
+    @floor.receiveShadow = true
+    @floor.castShadow = false
     @add @floor
 
     @normalizationMatrix = new THREE.Matrix4()
@@ -50,27 +33,19 @@ class TopViewer.Scene extends THREE.Scene
 
   destroy: ->
     @remove @children...
-    @modelMaterial.dispose()
     @planeMaterial.dispose()
 
   addShadowedLight: (x, y, z, color, intensity) ->
     directionalLight = new THREE.DirectionalLight color, intensity
     directionalLight.position.set x, y, z
-    @add directionalLight
 
     directionalLight.castShadow = true
-    # directionalLight.shadowCameraVisible = true;
-    d = 3
-    directionalLight.shadowCameraLeft = -d
-    directionalLight.shadowCameraRight = d
-    directionalLight.shadowCameraTop = d
-    directionalLight.shadowCameraBottom = -d
-    directionalLight.shadowCameraNear = 0.0005
-    directionalLight.shadowCameraFar = 50
-    directionalLight.shadowMapWidth = 1024
-    directionalLight.shadowMapHeight = 1024
-    directionalLight.shadowDarkness = 0.8
-    #directionalLight.shadowBias = -0.001
+    directionalLight.shadow = new THREE.LightShadow new THREE.OrthographicCamera -2, 2, 2, -2, 0.1, 5
+    directionalLight.shadow.mapSize.width = 4096
+    directionalLight.shadow.mapSize.height = 4096
+    directionalLight.shadow.bias = -0.002
+
+    @add directionalLight
 
     directionalLight
 
@@ -115,21 +90,12 @@ class TopViewer.Scene extends THREE.Scene
 
   update: ->
     for model in @children when model instanceof TopViewer.Model
-      for mesh in model.meshes
-        mesh.castShadow = @engine.shadows
-
-    @directionalLight.visible = @engine.directionalLight
-    @whiteLight.visible = not @engine.ambientLight
-    @skyLight.visible = @engine.ambientLight
-
-    materialNeedsUpdate = false
-
-    if @engine.vertexColors isnt @_vertexColor
-      @modelMaterial.vertexColors = if @engine.vertexColors then THREE.VertexColors else THREE.NoColors
-      @_vertexColor = @engine.vertexColors
-      materialNeedsUpdate = true
-
-    @modelMaterial.needsUpdate = true if materialNeedsUpdate
+      for meshName, mesh of model.meshes
+        mesh.castShadow = @engine.renderingControls.shadowsControl.value
+        mesh.receiveShadows = @engine.renderingControls.shadowsControl.value
+        if mesh.backsideMesh
+          mesh.backsideMesh.castShadow = @engine.renderingControls.shadowsControl.value
+          mesh.backsideMesh.receiveShadows = @engine.renderingControls.shadowsControl.value
 
   updateScale: ->
     # Normalize meshes by bringing the size of the bounding box down to 1.
@@ -173,7 +139,7 @@ class TopViewer.Scene extends THREE.Scene
 
     # Move floor underneath all meshes.
     minY = (@sceneBoundingBox.min.y + center.y) * @_scaleFactor
-    @floor.position.y = minY
+    @floor.position.y = minY - 0.001
 
   _recomputeNormalizationMatrix: ->
     @normalizationMatrix.copy @rotationMatrix

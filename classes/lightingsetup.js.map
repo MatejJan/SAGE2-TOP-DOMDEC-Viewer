@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "lightingsetup.js",
+  "sourceRoot": "",
+  "sources": [
+    "lightingsetup.coffee"
+  ],
+  "names": [],
+  "mappings": ";AAAA;EAAA;EAEM,SAAS,CAAC;IACD,uBAAC,IAAD,EAAQ,aAAR;MAAC,IAAC,CAAA,OAAD;MAAO,IAAC,CAAA,gBAAD;IAAR;;;;;AAHf"
+}

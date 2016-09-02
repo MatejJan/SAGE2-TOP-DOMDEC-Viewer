@@ -1,287 +1,174 @@
 'use strict'
 
-class TopViewer.IsosurfaceMaterial extends THREE.RawShaderMaterial
+class TopViewer.IsosurfaceMaterial extends TopViewer.IsovalueMaterial
   constructor: (@model) ->
-    super
+    options =
       uniforms:
-        basePositionsTexture:
-          type: 't'
-          value: @model.basePositionsTexture
-
-        displacementsTexture:
-          type: 't'
-          value: @model.displacementsTexture
-
-        displacementFactor:
-          type: 'f'
+        lightingBidirectional:
           value: 0
 
-        scalarsTexture:
-          type: 't'
-          value: @model.scalarsTexture
-
-        scalarsMin:
-          type: 'f'
-          value: 0
-
-        scalarsRange:
-          type: 'f'
-          value: 0
-
-        gradientTexture:
-          type: 't'
-          value: @model.options.engine.gradientTexture
-
-        gradientCurveTexture:
-          type: 't'
-          value: @model.options.engine.gradientCurveTexture
-
-        time:
-          type: 'f'
-          value: 0
-
-        color:
-          type: 'c'
-          value: new THREE.Color('white')
-
-        opacity:
-          type: 'f'
-          value: 0.5
+      defines:
+        USE_SHADOWMAP: ''
 
       side: THREE.DoubleSide
+      lights: true
 
       vertexShader: """
-precision highp float;
-precision highp int;
+#{TopViewer.ShaderChunks.commonVertex}
+#{TopViewer.ShaderChunks.positionsMaterialVertex}
+#{TopViewer.ShaderChunks.vertexMaterialVertex}
+#{TopViewer.ShaderChunks.isovalueMaterialVertex}
+#{TopViewer.ShaderChunks.surfaceMaterialVertex}
 
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
+attribute vec2 vertexIndexCorner1;
+attribute vec2 vertexIndexCorner2;
+attribute vec2 vertexIndexCorner3;
+attribute vec2 vertexIndexCorner4;
+attribute float cornerIndex;
 
-uniform sampler2D basePositionsTexture;
+const int isosurfaceCount = 1;
 
-uniform sampler2D displacementsTexture;
-uniform float displacementFactor;
-
-uniform sampler2D scalarsTexture;
-uniform float scalarsMin;
-uniform float scalarsRange;
-
-uniform sampler2D gradientCurveTexture;
-
-uniform float time;
-
-attribute vec2 vertex1Index;
-attribute vec2 vertex2Index;
-attribute vec2 vertex3Index;
-attribute vec2 vertex4Index;
-attribute float vertexType;
-
-varying float scalar;
-
-const float isostep = 0.1;
+#{THREE.ShaderChunk.shadowmap_pars_vertex}
 
 void main()	{
+  /*
+    Isosurfaces vertex shader creates a surface inside the tetrahedron volume if the target
+    scalar value is found inside the tetrahedron. We know this is the case if some of the scalar values on the 4
+    vertices are below and some are above the target scalar value. We then construct the isosurface inside this
+    tetrahedron by dynamically constructing one or two triangles that span between points on the tetrahedron sides at
+    which we estimate (with linear interpolation) that the isovalue is found.
+
+    Becuase these one or two triangles need to be dynamically generated, we reserves 6 vertices in the vertex buffer as
+    potential isosurface triangle corners. Each of these 6 corners need information about the 4 tetrahedron vertices so
+    we supply this using the 4 vertex indices (these are texture coordinates to the point inside the data textures where
+    data for that index is found). We then distinguish between each of the 6 corners with the cornerIndex attribute,
+    which can have values of 0.0, 0.1, 0.2, 0.3, 0.4 and 0.5 to indicate the corner.
+
+    We first construct the whole isosurface triangle (we need all three corners so we can calculate the isosurface
+    normal … but feel free to try a better version, perhaps by calculating the gradient directly from tetrahedron
+    vertex scalar values) and then pass on one of the corners as the result of the shader, based on the corner index.
+
+    If the isosurface triangle is not needed, it is discarded by degenerating its vertices into a single point.
+  */
   scalar = -1.0;
 
+  // Isosurfaces only exists if we have a scalar.
   if (scalarsRange > 0.0) {
-    vec3 vertex1Position = texture2D(basePositionsTexture, vertex1Index).xyz;
-    vec3 vertex2Position = texture2D(basePositionsTexture, vertex2Index).xyz;
-    vec3 vertex3Position = texture2D(basePositionsTexture, vertex3Index).xyz;
-    vec3 vertex4Position = texture2D(basePositionsTexture, vertex4Index).xyz;
+    #{TopViewer.ShaderChunks.isovalueMaterialVertexSetup 4}
 
-    if (displacementFactor > 0.0) {
-      vertex1Position += texture2D(displacementsTexture, vertex1Index).xyz * displacementFactor;
-      vertex2Position += texture2D(displacementsTexture, vertex2Index).xyz * displacementFactor;
-      vertex3Position += texture2D(displacementsTexture, vertex3Index).xyz * displacementFactor;
-      vertex4Position += texture2D(displacementsTexture, vertex4Index).xyz * displacementFactor;
-    }
-
-    float scalar1 = clamp((texture2D(scalarsTexture, vertex1Index).a - scalarsMin) / scalarsRange, 0.01, 0.99);
-    float scalar2 = clamp((texture2D(scalarsTexture, vertex2Index).a - scalarsMin) / scalarsRange, 0.01, 0.99);
-    float scalar3 = clamp((texture2D(scalarsTexture, vertex3Index).a - scalarsMin) / scalarsRange, 0.01, 0.99);
-    float scalar4 = clamp((texture2D(scalarsTexture, vertex4Index).a - scalarsMin) / scalarsRange, 0.01, 0.99);
-    float curvedScalar1 = texture2D(gradientCurveTexture, vec2(scalar1, 0)).a;
-    float curvedScalar2 = texture2D(gradientCurveTexture, vec2(scalar2, 0)).a;
-    float curvedScalar3 = texture2D(gradientCurveTexture, vec2(scalar3, 0)).a;
-    float curvedScalar4 = texture2D(gradientCurveTexture, vec2(scalar4, 0)).a;
-
-    for (float isovalue=0.0;isovalue<1.0;isovalue+=isostep) {
-      bool above1 = curvedScalar1 > isovalue;
-      bool above2 = curvedScalar2 > isovalue;
-      bool above3 = curvedScalar3 > isovalue;
-      bool above4 = curvedScalar4 > isovalue;
-      int aboveCount = 0;
-      if (above1) aboveCount++;
-      if (above2) aboveCount++;
-      if (above3) aboveCount++;
-      if (above4) aboveCount++;
-
+    #{TopViewer.ShaderChunks.isovalueMaterialIsovalueIteration 4}
       if (aboveCount==0 || aboveCount==4) {
+        // None of the triangles need to show.
+        continue;
+      } else if (aboveCount != 2 && cornerIndex > 0.25) {
+        // The second triangle doesn't need to show.
         continue;
       } else {
-        vec3 leftPosition;
-        vec3 rightPosition;
-        float leftScalar;
-        float rightScalar;
+        // Calculate positions and scalar values on the corners of the isosurface.
+        vec3 cornerLeftPositions[3], cornerRightPositions[3];
+        float cornerLeftCurvedScalars[3], cornerRightCurvedScalars[3];
+        float cornerLeftVertexColorScalars[3], cornerRightVertexColorScalars[3];
 
-        if (aboveCount==2) {
-          // Case with two triangles.
-          if (vertexType < 0.05) {
-            // Vertex 1
-            if (above1 != above2) {
-              leftPosition = vertex1Position;
-              rightPosition =vertex2Position;
-              leftScalar = curvedScalar1;
-              rightScalar = curvedScalar2;
-            } else {
-              leftPosition = vertex1Position;
-              rightPosition =vertex3Position;
-              leftScalar = curvedScalar1;
-              rightScalar = curvedScalar3;
-            }
-          } else if (vertexType < 0.15) {
-            // Vertex 2
-            if (above2 != above4) {
-              leftPosition = vertex2Position;
-              rightPosition =vertex4Position;
-              leftScalar = curvedScalar2;
-              rightScalar = curvedScalar4;
-            } else {
-              leftPosition = vertex2Position;
-              rightPosition =vertex3Position;
-              leftScalar = curvedScalar2;
-              rightScalar = curvedScalar3;
-            }
-          } else if (vertexType < 0.25) {
-            // Vertex 3
-            if (above1 != above4) {
-              leftPosition = vertex1Position;
-              rightPosition =vertex4Position;
-              leftScalar = curvedScalar1;
-              rightScalar = curvedScalar4;
-            } else {
-              leftPosition = vertex1Position;
-              rightPosition =vertex3Position;
-              leftScalar = curvedScalar1;
-              rightScalar = curvedScalar3;
-            }
-          } else if (vertexType < 0.35) {
-            // Vertex extra 1
-            if (above1 != above3) {
-              leftPosition = vertex1Position;
-              rightPosition =vertex3Position;
-              leftScalar = curvedScalar1;
-              rightScalar = curvedScalar3;
-            } else {
-              leftPosition = vertex1Position;
-              rightPosition =vertex4Position;
-              leftScalar = curvedScalar1;
-              rightScalar = curvedScalar4;
-            }
-          } else if (vertexType < 0.45) {
-            // Vertex extra 2
-            if (above2 != above3) {
-              leftPosition = vertex2Position;
-              rightPosition =vertex3Position;
-              leftScalar = curvedScalar2;
-              rightScalar = curvedScalar3;
-            } else {
-              leftPosition = vertex2Position;
-              rightPosition =vertex4Position;
-              leftScalar = curvedScalar2;
-              rightScalar = curvedScalar4;
-            }
+        // Determine which of the cases we have. There are 4 vertices so we have 16 (2^4) possible combinations of
+        // vertices being above or below the isovalue. Each case then constructs triangles between corners that will
+        // lie somewhere on the line between one vertex that is above and one that is below. The left-right combination
+        // stores which vertices these are. They are carefuly selected so that all triangles face into the same
+        // direction of the gradient.
+        int case = 0;
+        if (above[3]) case += 1;
+        if (above[2]) case += 2;
+        if (above[1]) case += 4;
+        if (above[0]) case += 8;
+
+        if (case==1) {
+          #{@_setupCase [0,1,2], [3,3,3]}
+        } else if (case==2) {
+          #{@_setupCase [0,3,1], [2,2,2]}
+        } else if (case==3) {
+          if (cornerIndex < 0.25) {
+            #{@_setupCase [0,0,1], [2,3,3]}
           } else {
-            // Vertex extra 3
-            if (above3 != above4) {
-              leftPosition = vertex3Position;
-              rightPosition =vertex4Position;
-              leftScalar = curvedScalar3;
-              rightScalar = curvedScalar4;
-            } else {
-              leftPosition = vertex2Position;
-              rightPosition =vertex4Position;
-              leftScalar = curvedScalar2;
-              rightScalar = curvedScalar4;
-            }
+            #{@_setupCase [1,0,1], [2,2,3]}
           }
+
+        } else if (case==4) {
+          #{@_setupCase [0,2,3], [1,1,1]}
+        } else if (case==5) {
+          if (cornerIndex < 0.25) {
+            #{@_setupCase [0,1,0], [1,2,3]}
+          } else {
+            #{@_setupCase [0,1,2], [3,2,3]}
+          }
+        } else if (case==6) {
+          if (cornerIndex < 0.25) {
+            #{@_setupCase [0,1,0], [2,3,1]}
+          } else {
+            #{@_setupCase [2,1,0], [3,3,2]}
+          }
+        } else if (case==7) {
+          #{@_setupCase [1,2,3], [0,0,0]}
+        } else if (case==8) {
+          #{@_setupCase [1,3,2], [0,0,0]}
+        } else if (case==9) {
+          if (cornerIndex < 0.25) {
+            #{@_setupCase [0,1,0], [1,3,2]}
+          } else {
+            #{@_setupCase [1,2,0], [3,3,2]}
+          }
+        } else if (case==10) {
+          if (cornerIndex < 0.25) {
+            #{@_setupCase [0,1,0], [3,2,1]}
+          } else {
+            #{@_setupCase [2,1,0], [3,2,3]}
+          }
+        } else if (case==11) {
+          #{@_setupCase [0,3,2], [1,1,1]}
+        } else if (case==12) {
+          if (cornerIndex < 0.25) {
+            #{@_setupCase [0,1,0], [2,3,3]}
+          } else {
+            #{@_setupCase [0,1,1], [2,2,3]}
+          }
+        } else if (case==13) {
+          #{@_setupCase [0,1,3], [2,2,2]}
+        } else if (case==14) {
+          #{@_setupCase [0,2,1], [3,3,3]}
         } else {
-          // Case with one triangle. Skip for second triangle.
-          if (vertexType > 0.25) continue;
-
-          if (vertexType < 0.05) {
-            // Vertex 1
-            if (above1 != above2) {
-              leftPosition = vertex1Position;
-              rightPosition =vertex2Position;
-              leftScalar = curvedScalar1;
-              rightScalar = curvedScalar2;
-            } else if (above1 != above3) {
-              leftPosition = vertex1Position;
-              rightPosition =vertex3Position;
-              leftScalar = curvedScalar1;
-              rightScalar = curvedScalar3;
-            } else {
-              leftPosition = vertex1Position;
-              rightPosition =vertex4Position;
-              leftScalar = curvedScalar1;
-              rightScalar = curvedScalar4;
-            }
-          } else if (vertexType < 0.15) {
-            // Vertex 2
-            if (above2 != above3) {
-              leftPosition = vertex2Position;
-              rightPosition =vertex3Position;
-              leftScalar = curvedScalar2;
-              rightScalar = curvedScalar3;
-            } else if (above2 != above4) {
-              leftPosition = vertex2Position;
-              rightPosition =vertex4Position;
-              leftScalar = curvedScalar2;
-              rightScalar = curvedScalar4;
-            } else {
-              leftPosition = vertex1Position;
-              rightPosition =vertex3Position;
-              leftScalar = curvedScalar1;
-              rightScalar = curvedScalar3;
-            }
-          } else {
-            // Vertex 3
-            if (above3 != above4) {
-              leftPosition = vertex3Position;
-              rightPosition =vertex4Position;
-              leftScalar = curvedScalar3;
-              rightScalar = curvedScalar4;
-            } else if (above2 != above4) {
-              leftPosition = vertex2Position;
-              rightPosition =vertex4Position;
-              leftScalar = curvedScalar2;
-              rightScalar = curvedScalar4;
-            } else {
-              leftPosition = vertex1Position;
-              rightPosition =vertex4Position;
-              leftScalar = curvedScalar1;
-              rightScalar = curvedScalar4;
-            }
-          }
+          continue;
         }
 
-        // Make sure the lower value is on the left.
-        if (leftScalar > rightScalar) {
-          float tempScalar = leftScalar;
-          vec3 tempPosition = leftPosition;
-          leftScalar = rightScalar;
-          leftPosition = rightPosition;
-          rightScalar = tempScalar;
-          rightPosition = tempPosition;
+        // Calculate all corner positions and scalar values. We do this by linearly interpolating between the positions
+        // and scalar values at the two vertices we determine in the previous step.
+        vec3 cornerPositions[3];
+        float cornerScalars[3];
+
+        for (int i=0; i<3; i++) {
+          float range = cornerLeftCurvedScalars[i] - cornerRightCurvedScalars[i];
+          float percentage = (cornerLeftCurvedScalars[i] - isovalue) / range;
+
+          cornerPositions[i] = mix(cornerLeftPositions[i], cornerRightPositions[i], percentage);
+          cornerScalars[i] = mix(cornerLeftVertexColorScalars[i], cornerRightVertexColorScalars[i], percentage);
         }
 
-        float range = rightScalar - leftScalar;
-        float p = (isovalue - leftScalar) / range;
-        vec3 vertexPosition = mix(leftPosition, rightPosition, p);
-        scalar = mix(leftScalar, rightScalar, p);
+        vec3 tangent1, tangent2;
 
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(vertexPosition, 1.0);
+        tangent1 = cornerPositions[0] - cornerPositions[1];
+        tangent2 = cornerPositions[2] - cornerPositions[0];
+
+        vec3 normal = normalize(cross(tangent1, tangent2));
+        normalEye = normalize((modelViewMatrix * vec4(normal, 0.0)).xyz);
+
+        // Determine which corner we're currently on.
+        vec3 cornerPosition;
+
+        if (cornerIndex < 0.05) {cornerPosition = cornerPositions[0]; scalar = cornerScalars[0];}
+        else if (cornerIndex < 0.15) {cornerPosition = cornerPositions[1]; scalar = cornerScalars[1];}
+        else if (cornerIndex < 0.25) {cornerPosition = cornerPositions[2]; scalar = cornerScalars[2];}
+        else if (cornerIndex < 0.35) {cornerPosition = cornerPositions[0]; scalar = cornerScalars[0];}
+        else if (cornerIndex < 0.45) {cornerPosition = cornerPositions[1]; scalar = cornerScalars[1];}
+        else {cornerPosition = cornerPositions[2]; scalar = cornerScalars[2];}
+
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(cornerPosition, 1.0);
         return;
       }
     }
@@ -292,23 +179,23 @@ void main()	{
 }
 """
 
-      fragmentShader: """
-precision highp float;
-precision highp int;
+      fragmentShader: TopViewer.Shaders.surfaceFragmentShader
 
-uniform sampler2D gradientTexture;
+    _.extend options.uniforms, THREE.UniformsLib.lights
 
-uniform float time;
-uniform vec3 color;
-uniform float opacity;
+    super @model, options
 
-varying float scalar;
+  _setupCase: (left, right) ->
+    """
+          cornerLeftPositions[0] = vertexPositions[#{left[0]}]; cornerRightPositions[0] = vertexPositions[#{right[0]}];
+          cornerLeftPositions[1] = vertexPositions[#{left[1]}]; cornerRightPositions[1] = vertexPositions[#{right[1]}];
+          cornerLeftPositions[2] = vertexPositions[#{left[2]}]; cornerRightPositions[2] = vertexPositions[#{right[2]}];
 
-void main()	{
-  if (scalar >= 0.0) {
-    gl_FragColor = vec4(texture2D(gradientTexture, vec2(scalar, 0)).rgb, opacity);
-  } else {
-    gl_FragColor = vec4(color, opacity);
-  }
-}
+          cornerLeftCurvedScalars[0] = curvedScalars[#{left[0]}]; cornerRightCurvedScalars[0] = curvedScalars[#{right[0]}];
+          cornerLeftCurvedScalars[1] = curvedScalars[#{left[1]}]; cornerRightCurvedScalars[1] = curvedScalars[#{right[1]}];
+          cornerLeftCurvedScalars[2] = curvedScalars[#{left[2]}]; cornerRightCurvedScalars[2] = curvedScalars[#{right[2]}];
+
+          cornerLeftVertexColorScalars[0] = vertexColorScalars[#{left[0]}]; cornerRightVertexColorScalars[0] = vertexColorScalars[#{right[0]}];
+          cornerLeftVertexColorScalars[1] = vertexColorScalars[#{left[1]}]; cornerRightVertexColorScalars[1] = vertexColorScalars[#{right[1]}];
+          cornerLeftVertexColorScalars[2] = vertexColorScalars[#{left[2]}]; cornerRightVertexColorScalars[2] = vertexColorScalars[#{right[2]}];
 """

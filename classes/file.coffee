@@ -6,7 +6,9 @@ class TopViewer.File
   @loaders.xpost = @loaders.top
 
   constructor: (@url) ->
-    @extension = @url.split('.').pop()
+    @filename = @url.split('/').pop()
+    @extension = @filename.split('.').pop()
+
 
     @loader = @constructor.loaders[@extension]
 
@@ -24,4 +26,4 @@ class TopViewer.File
       onCompleteHandler()
     ,
       (loadPercentage) =>
-        #console.log "Loaded #{loadPercentage}%."
+        #console.log "Loaded #{loadPercentage}% of #{@filename}." if loadPercentage % 10 is 0

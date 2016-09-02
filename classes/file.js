@@ -9,7 +9,8 @@
 
     function File(url) {
       this.url = url;
-      this.extension = this.url.split('.').pop();
+      this.filename = this.url.split('/').pop();
+      this.extension = this.filename.split('.').pop();
       this.loader = this.constructor.loaders[this.extension];
     }
 

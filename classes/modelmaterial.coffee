@@ -1,159 +1,67 @@
 'use strict'
 
-class TopViewer.ModelMaterial extends THREE.RawShaderMaterial
+class TopViewer.ModelMaterial extends TopViewer.SurfaceMaterial
   constructor: (@model) ->
-    super
-      uniforms:
-        basePositionsTexture:
-          type: 't'
-          value: @model.basePositionsTexture
-
-        displacementsTexture:
-          type: 't'
-          value: @model.displacementsTexture
-
-        displacementFactor:
-          type: 'f'
-          value: 0
-
-        scalarsTexture:
-          type: 't'
-          value: @model.scalarsTexture
-
-        scalarsMin:
-          type: 'f'
-          value: 0
-
-        scalarsRange:
-          type: 'f'
-          value: 0
-
-        gradientTexture:
-          type: 't'
-          value: @model.options.engine.gradientTexture
-
-        gradientCurveTexture:
-          type: 't'
-          value: @model.options.engine.gradientCurveTexture
-
-        time:
-          type: 'f'
-          value: 0
-
-        color:
-          type: 'c'
-          value: new THREE.Color('white')
-
-        lightDirection:
-          type: 'v3'
-          value: new THREE.Vector3(1,-2,1).normalize()
-
-        ambientLevel:
-          type: 'f'
-          value: 0
-
-        opacity:
-          type: 'f'
-          value: 1
-
-      side: THREE.DoubleSide
-
+    super @model,
+      
       vertexShader: """
-precision highp float;
-precision highp int;
+#{TopViewer.ShaderChunks.commonVertex}
+#{TopViewer.ShaderChunks.positionsMaterialVertex}
+#{TopViewer.ShaderChunks.vertexMaterialVertex}
+#{TopViewer.ShaderChunks.surfaceMaterialVertex}
 
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
+attribute vec2 vertexIndexCorner1;
+attribute vec2 vertexIndexCorner2;
+attribute vec2 vertexIndexCorner3;
+attribute float cornerIndex;
 
-uniform sampler2D basePositionsTexture;
-
-uniform sampler2D displacementsTexture;
-uniform float displacementFactor;
-
-uniform sampler2D scalarsTexture;
-uniform float scalarsMin;
-uniform float scalarsRange;
-
-uniform float time;
-
-attribute vec2 vertexIndex;
-attribute vec2 vertexIndex2;
-attribute vec2 vertexIndex3;
-attribute vec2 vertexIndex4;
-
-varying float scalar;
-varying vec3 normal;
+#{THREE.ShaderChunk.shadowmap_pars_vertex}
 
 void main()	{
-  vec4 positionData = texture2D(basePositionsTexture, vertexIndex);
-  vec3 vertexPosition = positionData.xyz;
+  vec2 vertexIndices[3];
+  vertexIndices[0] = vertexIndexCorner1;
+  vertexIndices[1] = vertexIndexCorner2;
+  vertexIndices[2] = vertexIndexCorner3;
 
-  vec4 positionData2 = texture2D(basePositionsTexture, vertexIndex2);
-  vec3 vertexPosition2 = positionData2.xyz;
+  // Start by calculating all 3 triangle corners and the normal of the triangle.
+  vec3 vertexPositions[3];
 
-  vec4 positionData3 = texture2D(basePositionsTexture, vertexIndex3);
-  vec3 vertexPosition3 = positionData3.xyz;
+  for (int i=0; i<3; i++) {
+    vec4 positionData = texture2D(basePositionsTexture, vertexIndices[i]);
+    vertexPositions[i] = positionData.xyz;
 
-  vec4 positionData4 = texture2D(basePositionsTexture, vertexIndex4);
-  vec3 vertexPosition4 = positionData4.xyz;
+    if (displacementFactor > 0.0) {
+      positionData = texture2D(displacementsTexture, vertexIndices[i]);
+      vec4 positionDataNext = texture2D(displacementsTextureNext, vertexIndices[i]);
+      positionData = mix(positionData, positionDataNext, frameProgress);
 
-  if (displacementFactor > 0.0) {
-    positionData = texture2D(displacementsTexture, vertexIndex);
-    vertexPosition += positionData.xyz * displacementFactor;
-
-    positionData2 = texture2D(displacementsTexture, vertexIndex2);
-    vertexPosition2 += positionData2.xyz * displacementFactor;
-
-    positionData3 = texture2D(displacementsTexture, vertexIndex3);
-    vertexPosition3 += positionData3.xyz * displacementFactor;
-
-    positionData4 = texture2D(displacementsTexture, vertexIndex4);
-    vertexPosition4 += positionData4.xyz * displacementFactor;
+      vertexPositions[i] += positionData.xyz * displacementFactor;
+    }
   }
 
-  if (scalarsRange > 0.0) {
-    scalar = clamp((texture2D(scalarsTexture, vertexIndex).a - scalarsMin) / scalarsRange, 0.01, 0.99);
-  } else {
-    scalar = -1.0;
-  }
+  vec3 tangent1 = vertexPositions[0] - vertexPositions[1];
+  vec3 tangent2 = vertexPositions[2] - vertexPositions[0];
+  vec3 normal = normalize(cross(tangent1, tangent2)) * lightingNormalFactor;
 
-  vec3 tangent1 = normalize(vertexPosition2 - vertexPosition3);
-  vec3 tangent2 = normalize(vertexPosition4 - vertexPosition2);
+  // Determine which corner we're currently at and pass its position to the fragment shader.
+  vec2 vertexIndex;
+  vec3 vertexPosition;
 
-  normal = cross(tangent1, tangent2);
+  if (cornerIndex < 0.05) {vertexIndex = vertexIndices[0]; vertexPosition = vertexPositions[0];}
+  else if (cornerIndex < 0.15) {vertexIndex = vertexIndices[1]; vertexPosition = vertexPositions[1];}
+  else {vertexIndex = vertexIndices[2]; vertexPosition = vertexPositions[2];}
 
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(vertexPosition, 1.0);
+  vec4 worldPosition = modelMatrix * vec4(vertexPosition, 1.0);
+  gl_Position = projectionMatrix * viewMatrix * worldPosition;
+
+  #{TopViewer.ShaderChunks.vertexMaterialScalar}
+
+  // Pass on the normal and in view space.
+  normalEye = normalize((modelViewMatrix * vec4(normal, 0.0)).xyz);
+
+  // Shadowmap
+  #{THREE.ShaderChunk.shadowmap_vertex}
 }
 """
 
-      fragmentShader: """
-precision highp float;
-precision highp int;
-
-uniform sampler2D gradientCurveTexture;
-uniform sampler2D gradientTexture;
-
-uniform float time;
-uniform vec3 color;
-uniform vec3 lightDirection;
-uniform float ambientLevel;
-uniform float opacity;
-
-varying float scalar;
-varying vec3 normal;
-
-void main()	{
-  vec3 baseColor;
-  float shade = ambientLevel + (1.0 - ambientLevel) * max(dot(lightDirection, normal), 0.0);
-  shade = 1.0;
-
-  if (scalar >= 0.0) {
-    float curvedScalar = texture2D(gradientCurveTexture, vec2(scalar, 0)).a;
-    baseColor = texture2D(gradientTexture, vec2(curvedScalar, 0)).rgb;
-  } else {
-    baseColor = color;
-  }
-
-  gl_FragColor = vec4(shade * baseColor, opacity);
-}
-"""
+      fragmentShader: TopViewer.Shaders.surfaceFragmentShader

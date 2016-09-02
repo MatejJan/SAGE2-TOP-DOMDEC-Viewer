@@ -173,5 +173,5 @@ window.topviewer = SAGE2_App.extend
     @engine.destroy()
     @engine = null
 
-    # It's the end
+    # It's the end.
     @log 'Done'

@@ -5,7 +5,7 @@
       var $contents, $toggle;
       this.uiArea = uiArea;
       this.options = options;
-      this.$element = $("<div class=\"toggle-container " + this.options["class"] + "\">\n  <div class='toggle'></div>\n  <div class='contents " + (this.options.visible ? 'visible' : 'hidden') + "'></div>\n</div>");
+      this.$element = $("<div class=\"toggle-container " + this.options["class"] + " " + (this.options.visible ? 'contents-visible' : 'contents-hidden') + "\">\n  <div class='toggle'></div>\n  <div class='contents " + (this.options.visible ? 'visible' : 'hidden') + "'></div>\n</div>");
       $toggle = this.$element.find('.toggle');
       $contents = this.$element.find('.contents');
       $contents.append(this.options.$contents);
@@ -15,11 +15,15 @@
         value: this.options.visible,
         onChange: (function(_this) {
           return function(value) {
+            var base;
             if (value) {
-              return $contents.addClass('visible').removeClass('hidden');
+              _this.$element.addClass('contents-visible').removeClass('contents-hidden');
+              $contents.addClass('visible').removeClass('hidden');
             } else {
-              return $contents.addClass('hidden').removeClass('visible');
+              _this.$element.addClass('contents-hidden').removeClass('contents-visible');
+              $contents.addClass('hidden').removeClass('visible');
             }
+            return typeof (base = _this.options).onChange === "function" ? base.onChange(value) : void 0;
           };
         })(this)
       });

@@ -20,20 +20,30 @@
     "classes/ui/checkboxcontrol.js",
     "classes/ui/togglecontainer.js",
     "classes/ui/dropdowncontrol.js",
+    "classes/ui/vertexcolorscontrol.js",
+    "classes/ui/colorcontrol.js",
+    "classes/ui/scalarcontrol.js",
     "classes/animation.js",
     "classes/animationset.js",
     "classes/animationsetframeprocessor.js",
     "classes/animationsequence.js",
     "classes/concurrencymanager.js",
     "classes/engine.js",
+    "classes/gradient.js",
+    "classes/lightingsetup.js",
     "classes/file.js",
     "classes/filemanager.js",
     "classes/model.js",
     "classes/mesh.js",
     "classes/volume.js",
+    "classes/material.js",
+    "classes/shaderchunks.js",
+    "classes/shaders.js",
     "classes/modelmaterial.js",
+    "classes/wireframematerial.js",
     "classes/isolinematerial.js",
     "classes/isosurfacematerial.js",
+    "classes/shadowmaterial.js",
     "classes/playbackcontrols.js",
     "classes/renderingcontrols.js",
     "classes/scene.js"
@@ -41,9 +51,116 @@
   "load": {
     "file": "",
     "camera": {
-      "position": {"x":0, "y":0, "z":3},
+      "position": {"x":-2, "y":0, "z":2},
+      "rotation": {"_x":0, "_y":0, "_z":0, "_order":"XYZ"},
+      "scale": {"x":1, "y":1, "z":1},
+      "center": {"x":0, "y":0, "z":0}
+    },
+    "object": {
+      "position": {"x":0, "y":0, "z":0},
       "rotation": {"_x":0, "_y":0, "_z":0, "_order":"XYZ"},
       "scale": {"x":1, "y":1, "z":1}
+    },
+    "playbackControls": {
+      "fps": 30
+    },
+    "renderingControls": {
+      "lighting": {
+        "panelEnabled": true,
+        "lightingSetup": {
+          "name": null,
+          "lightDirection": {
+            "x": null,
+            "y": null,
+            "z": null
+          }
+        },
+        "bidirectional": false,
+        "shadows": true,
+        "ambient": 0.5
+      },
+      "gradient": {
+        "panelEnabled": true,
+        "name": null
+      },
+      "meshes": {
+        "panelEnabled": true,
+        "surfaceEnabled": true,
+        "surfaceSides": "DoubleQuality",
+        "surfaceColors": {
+          "type": "Color",
+          "color": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "scalar": {
+            "name": null
+          }
+        },
+        "surfaceOpacity": 1,
+        "wireframeEnabled": false,
+        "wireframeColors": {
+          "type": "Color",
+          "color": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "scalar": {
+            "name": null
+          }
+        },
+        "wireframeOpacity": 0.5,
+        "isolinesEnabled": false,
+        "isolinesScalar": {
+          "name": null
+        },
+        "isolinesColors": {
+          "type": "Color",
+          "color": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "scalar": {
+            "name": null
+          }
+        },
+        "isolinesOpacity": 1
+      },
+      "volumes": {
+        "panelEnabled": true,
+        "wireframeEnabled": false,
+        "wireframeColors": {
+          "type": "Color",
+          "color": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "scalar": {
+            "name": null
+          }
+        },
+        "wireframeOpacity": 0.5,
+        "isosurfacesEnabled": false,
+        "isosurfacesScalar": {
+          "name": null
+        },
+        "isosurfacesColors": {
+          "type": "Color",
+          "color": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "scalar": {
+            "name": null
+          }
+        },
+        "isosurfacesOpacity": 1
+      }
     }
   },
   "title": "TOP/DOMDEC Viewer",
