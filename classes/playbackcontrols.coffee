@@ -117,6 +117,8 @@ class TopViewer.PlaybackControls extends TopViewer.UIArea
     @currentFrameIndex = 0
     @currentTime = 0
 
+    @initialize()
+
   destroy: ->
     super
 
@@ -194,10 +196,11 @@ class TopViewer.PlaybackControls extends TopViewer.UIArea
     mouseXBrowser = @$appWindow.offset().left + position.x
     scrubberX = mouseXBrowser - @$scrubber.offset().left
     playPercentage = scrubberX / @$scrubber.width()
-    newCurrentTime = playPercentage * @animation.length
+    newCurrentTime = playPercentage * @animation.frameTimes.length
 
     # Make sure we're inside the bounds of animation Length.
     newCurrentTime = Math.min @animation.frameTimes.length - 0.001, Math.max 0, newCurrentTime
 
     @currentTime = newCurrentTime
+
     @onUpdateCurrentTime()

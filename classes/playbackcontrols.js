@@ -108,6 +108,7 @@
        */
       this.currentFrameIndex = 0;
       this.currentTime = 0;
+      this.initialize();
     }
 
     PlaybackControls.prototype.destroy = function() {
@@ -204,7 +205,7 @@
       mouseXBrowser = this.$appWindow.offset().left + position.x;
       scrubberX = mouseXBrowser - this.$scrubber.offset().left;
       playPercentage = scrubberX / this.$scrubber.width();
-      newCurrentTime = playPercentage * this.animation.length;
+      newCurrentTime = playPercentage * this.animation.frameTimes.length;
       newCurrentTime = Math.min(this.animation.frameTimes.length - 0.001, Math.max(0, newCurrentTime));
       this.currentTime = newCurrentTime;
       return this.onUpdateCurrentTime();

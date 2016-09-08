@@ -111,6 +111,16 @@
       return results;
     };
 
+    UIControl.prototype.isInside = function(position, parentOrigin) {
+      var bottom, left, origin, ref, ref1, right, top;
+      origin = this.$element.offset();
+      left = origin.left - parentOrigin.left;
+      top = origin.top - parentOrigin.top;
+      right = left + this.$element.outerWidth();
+      bottom = top + this.$element.outerHeight();
+      return (left < (ref = position.x) && ref < right) && (top < (ref1 = position.y) && ref1 < bottom);
+    };
+
     return UIControl;
 
   })();

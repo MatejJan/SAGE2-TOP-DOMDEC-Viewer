@@ -53,3 +53,13 @@ class TopViewer.UIControl
 
   onMouseScroll: (delta) ->
     handler delta for handler in @_mouseScrollHandlers
+
+  isInside: (position, parentOrigin) ->
+    origin = @$element.offset()
+
+    left = origin.left - parentOrigin.left
+    top = origin.top - parentOrigin.top
+    right = left + @$element.outerWidth()
+    bottom = top + @$element.outerHeight()
+
+    left < position.x < right and top < position.y < bottom

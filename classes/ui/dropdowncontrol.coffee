@@ -16,14 +16,10 @@ class TopViewer.DropdownControl
     uiControl = new TopViewer.UIControl @uiArea, @$element
     uiControl.globalMouseup (position) =>
       # Close the dropdown, but only if we're not clicking inside the dropdown.
-      parentOrigin = @uiArea.$appWindow.offset()
-      $pointers = $('.pointerItem')
-      $pointers.hide()
-      element = document.elementFromPoint parentOrigin.left + position.x,  parentOrigin.top + position.y
-      $pointers.show()
+      clickedControl = @uiArea.hoveredControl
 
       # Are we even inside this area?
-      return if @$element.has(element).length
+      return if @$element.has(clickedControl?.$element).length
 
       @dropdownControl.toggleControl.setValue false
 

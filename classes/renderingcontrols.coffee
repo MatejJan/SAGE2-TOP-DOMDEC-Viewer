@@ -368,7 +368,9 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
 
     @$vectors = $("<ul class='vectors'></ul>")
     @$controls.append(@$vectors)
-  
+
+    @initialize()
+
   addMesh: (name, mesh) ->
     $mesh = $("<li class='mesh'></li>")
     @$meshes.append($mesh)

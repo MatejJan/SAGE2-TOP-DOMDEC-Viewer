@@ -396,6 +396,7 @@
       this.$controls.append("<hr/>");
       this.$vectors = $("<ul class='vectors'></ul>");
       this.$controls.append(this.$vectors);
+      this.initialize();
     }
 
     RenderingControls.prototype.addMesh = function(name, mesh) {
