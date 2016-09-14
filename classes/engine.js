@@ -14,7 +14,6 @@
       this.camera.position.copy(cameraState.position);
       this.camera.rotation.set(cameraState.rotation._x, cameraState.rotation._y, cameraState.rotation._z, cameraState.rotation._order);
       this.camera.scale.set(cameraState.scale.x, cameraState.scale.y, cameraState.scale.z);
-      console.log("loaded camera", cameraState, this.camera);
       this.renderer = new THREE.WebGLRenderer({
         antialias: true
       });
@@ -150,7 +149,13 @@
       this._frameTime += elapsedTime;
       if (this._frameTime > 1) {
         this._frameCount = 0;
-        return this._frameTime = 0;
+        this._frameTime = 0;
+        if (window.isMaster) {
+          return this.options.app.broadcast('sync', {
+            currentTime: this.playbackControls.currentTime,
+            cameraState: this.options.app.state.camera
+          });
+        }
       }
     };
 

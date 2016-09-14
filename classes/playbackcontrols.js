@@ -167,6 +167,11 @@
       return this.onUpdateCurrentTime();
     };
 
+    PlaybackControls.prototype.setCurrentTime = function(currentTime) {
+      this.currentTime = Math.max(0, Math.min(this.animation.frameTimes.length, currentTime));
+      return this.onUpdateCurrentTime();
+    };
+
     PlaybackControls.prototype.update = function(elapsedTime) {
       if (!(this.playing && !this._scrubbing && this.animation.frameTimes.length)) {
         return;

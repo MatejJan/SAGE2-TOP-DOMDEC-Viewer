@@ -114,14 +114,12 @@
     Model.prototype.addScalar = function(scalarName, scalar) {
       var array, frame, height, i, k, l, len, len1, m, ref, ref1, ref2, results;
       if (this.scalars[scalarName]) {
-        console.log("Adding scalar frames");
         ref = scalar.frames;
         for (k = 0, len = ref.length; k < len; k++) {
           frame = ref[k];
           this.scalars[scalarName].frames.push(frame);
         }
       } else {
-        console.log("Adding new scalar");
         this.scalars[scalarName] = scalar;
         this.options.engine.renderingControls.addScalar(scalarName, scalar);
       }

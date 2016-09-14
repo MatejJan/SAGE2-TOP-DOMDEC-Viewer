@@ -34,6 +34,17 @@
       return addStoredFileListEventHandler(this.storedFileListEventHandler);
     },
     load: function(date) {},
+    sync: function(data) {
+      var cameraState;
+      if (!window.isMaster) {
+        this.engine.playbackControls.setCurrentTime(data.currentTime);
+        cameraState = data.cameraState;
+        this.engine.camera.position.copy(cameraState.position);
+        this.engine.camera.rotation.set(cameraState.rotation._x, cameraState.rotation._y, cameraState.rotation._z, cameraState.rotation._order);
+        this.engine.camera.scale.set(cameraState.scale.x, cameraState.scale.y, cameraState.scale.z);
+        return this.engine.cameraControls.center.copy(cameraState.center);
+      }
+    },
     draw: function(date) {
       return this.needsDraw = date;
     },

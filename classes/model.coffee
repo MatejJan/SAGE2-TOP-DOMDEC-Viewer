@@ -122,13 +122,11 @@ class TopViewer.Model extends THREE.Object3D
   addScalar: (scalarName, scalar) ->
     # See if we already have this scalar or we're just getting new frames.
     if @scalars[scalarName]
-      console.log "Adding scalar frames"
       # Add new frames to the existing scalar.
       for frame in scalar.frames
         @scalars[scalarName].frames.push frame
 
     else
-      console.log "Adding new scalar"
       # This is a new scalar.
       @scalars[scalarName] = scalar
 

@@ -14,8 +14,6 @@ class TopViewer.Engine
     @camera.rotation.set cameraState.rotation._x, cameraState.rotation._y, cameraState.rotation._z, cameraState.rotation._order
     @camera.scale.set cameraState.scale.x, cameraState.scale.y, cameraState.scale.z
 
-    console.log "loaded camera", cameraState, @camera
-
     @renderer = new THREE.WebGLRenderer
       antialias: true
 
@@ -160,10 +158,15 @@ class TopViewer.Engine
     @_frameCount++
     @_frameTime += elapsedTime
 
+    # Sync clients every second.
     if @_frameTime > 1
       #console.log "FPS:", @_frameCount
       @_frameCount = 0
       @_frameTime = 0
+      if window.isMaster
+        @options.app.broadcast 'sync',
+          currentTime: @playbackControls.currentTime
+          cameraState: @options.app.state.camera
 
   updateRotateControls: ->
     @rotateControls.update()

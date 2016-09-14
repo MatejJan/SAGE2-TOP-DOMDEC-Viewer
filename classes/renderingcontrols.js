@@ -148,7 +148,6 @@
       if (saveState.gradient.name) {
         found = this.gradientControl.setValue(saveState.gradient.name);
       }
-      console.log("got name", saveState.gradient.name, found);
       if (!found) {
         this.gradientControl.setValue(this.options.engine.gradients[0]);
       }

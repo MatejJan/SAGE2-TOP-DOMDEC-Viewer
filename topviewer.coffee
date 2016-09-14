@@ -49,6 +49,18 @@ window.topviewer = SAGE2_App.extend
   load: (date) ->
     #your load code here- update app based on this.state
 
+  sync: (data) ->
+    unless window.isMaster
+      # Sync time.
+      @engine.playbackControls.setCurrentTime data.currentTime
+
+      # Sync camera.
+      cameraState = data.cameraState
+      @engine.camera.position.copy cameraState.position
+      @engine.camera.rotation.set cameraState.rotation._x, cameraState.rotation._y, cameraState.rotation._z, cameraState.rotation._order
+      @engine.camera.scale.set cameraState.scale.x, cameraState.scale.y, cameraState.scale.z
+      @engine.cameraControls.center.copy cameraState.center
+
   draw: (date) ->
     @needsDraw = date
 

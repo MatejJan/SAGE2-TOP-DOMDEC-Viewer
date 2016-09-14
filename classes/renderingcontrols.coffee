@@ -122,7 +122,6 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
 
     found = false
     found = @gradientControl.setValue saveState.gradient.name if saveState.gradient.name
-    console.log "got name", saveState.gradient.name, found
     @gradientControl.setValue @options.engine.gradients[0] unless found
 
     $gradientArea.append $gradientPreview
