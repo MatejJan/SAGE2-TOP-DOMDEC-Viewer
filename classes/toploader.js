@@ -4,26 +4,25 @@
   TopViewer.TopLoader = (function() {
     function TopLoader() {}
 
-    TopLoader.prototype.load = function(url, onLoad, onProgress, onError) {
+    TopLoader.prototype.load = function(options) {
       var worker;
       worker = new Worker('/uploads/apps/top_viewer/classes/toploader-worker.js');
       worker.onmessage = (function(_this) {
         return function(message) {
-          var objects;
           switch (message.data.type) {
+            case 'size':
+              return typeof options.onSize === "function" ? options.onSize(message.data.size) : void 0;
             case 'progress':
-              if (onProgress) {
-                return onProgress(message.data.loadPercentage);
-              }
-              break;
+              return typeof options.onProgress === "function" ? options.onProgress(message.data.loadPercentage) : void 0;
             case 'result':
-              objects = message.data.objects;
-              return onLoad(objects);
+              return typeof options.onResults === "function" ? options.onResults(message.data.objects) : void 0;
+            case 'complete':
+              return typeof options.onComplete === "function" ? options.onComplete() : void 0;
           }
         };
       })(this);
       return worker.postMessage({
-        url: url
+        url: options.url
       });
     };
 

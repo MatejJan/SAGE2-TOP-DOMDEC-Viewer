@@ -1,6 +1,7 @@
 'use strict'
 
 importScripts '../libraries/three.min.js'
+importScripts '../libraries/underscore-min.js'
 
 self.onmessage = (message) ->
   url = message.data.url
@@ -24,6 +25,10 @@ self.onmessage = (message) ->
   rangeHeader = request.getResponseHeader 'Content-Range'
   rangeHeaderParts = rangeHeader.match /bytes (\d+)-(\d+)\/(\d+)/
   totalLength = parseInt rangeHeaderParts[3]
+
+  postMessage
+    type: 'size'
+    size: totalLength
 
   #console.log "Loading #{totalLength} bytes."
 
@@ -97,19 +102,16 @@ class TopParser
 
     @currentMode = null
 
-    @nodes = {}
     @currentNodesName = null
     @currentNodes = null
 
-    @elements = {}
     @currentElementsName = null
     @currentElements = null
 
-    @vectors = {}
     @currentVectorNodesName = null
     @currentVectorName = null
     @currentVector = null
-    @scalars = {}
+
     @currentScalarNodesName = null
     @currentScalarName = null
     @currentScalar = null
@@ -120,6 +122,14 @@ class TopParser
     @currentFrameNodeIndex = null
 
     @reportedProgressPercentage = 0
+
+    @throttledEndScalar = _.throttle =>
+      @endScalar()
+    , 3000, leading: false
+
+    @throttledEndVector = _.throttle =>
+      @endVector()
+    , 3000, leading: false
 
   parse: (data, progressPercentageStart, progressPercentageLength) ->
     # First see if the new data starts with a new line. This would mean that previous last line should be considered
@@ -159,6 +169,7 @@ class TopParser
     # Detect modes.
     switch parts[0]
       when 'Nodes'
+        @endCurrentMode()
         @currentMode = @constructor.modes.Nodes
 
         # Parse nodes header.
@@ -166,10 +177,10 @@ class TopParser
         @currentNodes =
           nodes: []
 
-        @nodes[@currentNodesName] = @currentNodes
         return
 
       when 'Elements'
+        @endCurrentMode()
         @currentMode = @constructor.modes.Elements
 
         # Parse elements header.
@@ -178,10 +189,10 @@ class TopParser
           elements: {}
           nodesName: parts[3]
 
-        @elements[@currentElementsName] = @currentElements
         return
 
       when 'Vector'
+        @endCurrentMode()
         @currentMode = @constructor.modes.VectorCount
 
         # Parse vector header.
@@ -192,11 +203,10 @@ class TopParser
           nodesName: parts[5]
           frames: []
 
-        @vectors[@currentVectorNodesName] ?= {}
-        @vectors[@currentVectorNodesName][@currentVectorName] = @currentVector
         return
 
       when 'Scalar'
+        @endCurrentMode()
         @currentMode = @constructor.modes.ScalarCount
 
         # Parse scalars header.
@@ -207,8 +217,6 @@ class TopParser
           nodesName: parts[5]
           frames: []
 
-        @scalars[@currentScalarNodesName] ?= {}
-        @scalars[@currentScalarNodesName][@currentScalarName] = @currentScalar
         return
 
     # No mode switch was detected, continue business as usual.
@@ -274,7 +282,10 @@ class TopParser
         @currentFrame.vectors[@currentFrameNodeIndex * 3 + 1] = parseFloat parts[1]
         @currentFrame.vectors[@currentFrameNodeIndex * 3 + 2] = parseFloat parts[2]
         @currentFrameNodeIndex++
-        @currentMode = @constructor.modes.VectorTime if @currentFrameNodeIndex is @currentFrameNodesCount
+
+        if @currentFrameNodeIndex is @currentFrameNodesCount
+          @endVectorFrame()
+          @currentMode = @constructor.modes.VectorTime
 
       when @constructor.modes.ScalarCount
         # Read number of nodes.
@@ -303,44 +314,109 @@ class TopParser
 
         @currentFrame.scalars[@currentFrameNodeIndex] = value
         @currentFrameNodeIndex++
-        @currentMode = @constructor.modes.ScalarTime if @currentFrameNodeIndex is @currentFrameNodesCount
 
-  end: ->
-    # Replace node and element arrays with array buffers.
-    for nodesName, nodesInstance of @nodes
-      length = Math.max 0, nodesInstance.nodes.length - 1
-      buffer = new Float32Array length * 3
+        if @currentFrameNodeIndex is @currentFrameNodesCount
+          @endScalarFrame()
+          @currentMode = @constructor.modes.ScalarTime
 
-      for i in [0...length]
-        # Convert to 0-based indices.
-        buffer[i*3] = nodesInstance.nodes[i+1].x
-        buffer[i*3+1] = nodesInstance.nodes[i+1].y
-        buffer[i*3+2] = nodesInstance.nodes[i+1].z
+  endCurrentMode: ->
+    switch @currentMode
+      when @constructor.modes.Nodes
+        @endNodes()
 
-      nodesInstance.nodes = buffer
+      when @constructor.modes.Elements
+        @endElements()
 
-    nodesPerElement =
-      "4": 3
-      "5": 4
+      when @constructor.modes.Vector
+        @endVector()
 
-    for elementsName, elementsInstance of @elements
-      for elementsType, elementsList of elementsInstance.elements
-        elementSize = nodesPerElement[elementsType]
-        buffer = new Uint32Array elementsList.length * elementSize
-        for i in [0...elementsList.length]
-          for j in [0...elementSize]
-            # Convert to 0-based indices.
-            buffer[i*elementSize+j] = elementsList[i][j] - 1
+      when @constructor.modes.Scalar
+        @endScalar()
 
-        elementsInstance.elements[elementsType] = buffer
+  endNodes: ->
+    # Create nodes array buffer.
+    length = Math.max 0, @currentNodes.nodes.length - 1
+    buffer = new Float32Array length * 3
+
+    for i in [0...length]
+      # Convert to 0-based indices.
+      buffer[i*3] = @currentNodes.nodes[i+1].x
+      buffer[i*3+1] = @currentNodes.nodes[i+1].y
+      buffer[i*3+2] = @currentNodes.nodes[i+1].z
+
+    @currentNodes.nodes = buffer
+
+    nodesResult = {}
+    nodesResult[@currentNodesName] = @currentNodes
 
     postMessage
       type: 'result'
       objects:
-        nodes: @nodes
-        elements: @elements
-        vectors: @vectors
-        scalars: @scalars
+        nodes: nodesResult
+
+  endElements: ->
+    # Create elements array buffer.
+    nodesPerElement =
+      "4": 3
+      "5": 4
+
+    for elementsType, elementsList of @currentElements.elements
+      elementSize = nodesPerElement[elementsType]
+      buffer = new Uint32Array elementsList.length * elementSize
+      for i in [0...elementsList.length]
+        for j in [0...elementSize]
+          # Convert to 0-based indices.
+          buffer[i*elementSize+j] = elementsList[i][j] - 1
+
+      @currentElements.elements[elementsType] = buffer
+
+    elementsResult = {}
+    elementsResult[@currentElementsName] = @currentElements
+
+    postMessage
+      type: 'result'
+      objects:
+        elements: elementsResult
+
+  endScalar: ->
+    return unless @currentScalar.frames.length
+
+    scalarsResult = {}
+    scalarsResult[@currentScalarNodesName] = {}
+    scalarsResult[@currentScalarNodesName][@currentScalarName] = @currentScalar
+
+    postMessage
+      type: 'result'
+      objects:
+        scalars: scalarsResult
+
+    @currentScalar.frames = []
+
+  endVector: ->
+    return unless @currentVector.frames.length
+
+    vectorsResult = {}
+    vectorsResult[@currentVectorNodesName] = {}
+    vectorsResult[@currentVectorNodesName][@currentVectorName] = @currentVector
+
+    postMessage
+      type: 'result'
+      objects:
+        vectors: vectorsResult
+
+    @currentVector.frames = []
+
+  endScalarFrame: ->
+    @throttledEndScalar()
+
+  endVectorFrame: ->
+    @throttledEndVector()
+
+  end: ->
+    @endCurrentMode()
+
+    postMessage
+      type: 'complete'
 
   reportProgress: (percentage) ->
     newPercentage = Math.floor(percentage * 100)

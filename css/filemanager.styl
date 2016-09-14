@@ -1,0 +1,44 @@
+.top-viewer
+  .file-manager
+    position fixed
+    top 0
+    left 0
+    z-index 1
+    opacity 0.5
+    transition all 0.2s
+    background hsla(234, 8%, 20%, 0.9)
+
+    &.hover
+    &.scrubbing
+      opacity 1
+
+    .files
+      .file
+        .file-container
+          .toggle
+            .checkbox-control
+              .name
+                position relative
+                width 60%
+
+                .load-progress
+                  display block
+                  position absolute
+                  top 0
+                  left 0
+                  bottom 0
+                  width 0
+                  background rgba(200, 200, 225, 0.5)
+                  -webkit-filter blur(0.3em)
+
+                &.loaded
+                  color rgba(200, 200, 225, 0.8)
+
+                  .load-progress
+                    display none
+
+              .file-size
+                display inline-block
+                width 25%
+                text-align right
+                vertical-align bottom

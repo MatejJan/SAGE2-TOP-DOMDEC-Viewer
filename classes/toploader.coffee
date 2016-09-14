@@ -1,19 +1,22 @@
 'use strict'
 
 class TopViewer.TopLoader
-  load: (url, onLoad, onProgress, onError) ->
+  load: (options) ->
     worker = new Worker '/uploads/apps/top_viewer/classes/toploader-worker.js'
 
     worker.onmessage = (message) =>
       switch message.data.type
+        when 'size'
+          options.onSize? message.data.size
+
         when 'progress'
-          onProgress message.data.loadPercentage if onProgress
+          options.onProgress? message.data.loadPercentage
 
         when 'result'
-          objects = message.data.objects
-          #console.log "Received", url, objects
+          options.onResults? message.data.objects
 
-          onLoad objects
+        when 'complete'
+          options.onComplete?()
 
     worker.postMessage
-      url: url
+      url: options.url

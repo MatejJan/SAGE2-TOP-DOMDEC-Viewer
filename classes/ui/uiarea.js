@@ -7,6 +7,7 @@
       this._controls = [];
       this._hoveredStack = [];
       this.$rootElement = null;
+      this._throttledMouseMoveHandler = _.throttle(this._mouseMoveHandler, 100);
     }
 
     UIArea.prototype.destroy = function() {
@@ -97,6 +98,10 @@
     };
 
     UIArea.prototype.onMouseMove = function(position) {
+      return this._throttledMouseMoveHandler(position);
+    };
+
+    UIArea.prototype._mouseMoveHandler = function(position) {
       var $element, control, hoveredControl, hovering, i, j, k, l, len, len1, len2, len3, len4, m, newlyHoveredControls, oldHoveredStack, parentOrigin, ref, ref1, ref2, results, unhoveredControls;
       parentOrigin = this.$appWindow.offset();
       ref = this._sortedControls;

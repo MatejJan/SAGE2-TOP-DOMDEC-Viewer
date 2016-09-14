@@ -5,6 +5,8 @@
 
   importScripts('../libraries/three.min.js');
 
+  importScripts('../libraries/underscore-min.js');
+
   self.onmessage = function(message) {
     var loadChunk, parser, rangeHeader, rangeHeaderParts, rangeLength, request, requestRangeEnd, requestRangeStart, totalLength, url;
     url = message.data.url;
@@ -19,6 +21,10 @@
     rangeHeader = request.getResponseHeader('Content-Range');
     rangeHeaderParts = rangeHeader.match(/bytes (\d+)-(\d+)\/(\d+)/);
     totalLength = parseInt(rangeHeaderParts[3]);
+    postMessage({
+      type: 'size',
+      size: totalLength
+    });
     loadChunk = (function(_this) {
       return function() {
         requestRangeEnd = Math.min(requestRangeEnd, totalLength - 1);
@@ -77,17 +83,13 @@
       this.url = url1;
       this.lastLine = null;
       this.currentMode = null;
-      this.nodes = {};
       this.currentNodesName = null;
       this.currentNodes = null;
-      this.elements = {};
       this.currentElementsName = null;
       this.currentElements = null;
-      this.vectors = {};
       this.currentVectorNodesName = null;
       this.currentVectorName = null;
       this.currentVector = null;
-      this.scalars = {};
       this.currentScalarNodesName = null;
       this.currentScalarName = null;
       this.currentScalar = null;
@@ -96,6 +98,20 @@
       this.currentFrameNodesCount = null;
       this.currentFrameNodeIndex = null;
       this.reportedProgressPercentage = 0;
+      this.throttledEndScalar = _.throttle((function(_this) {
+        return function() {
+          return _this.endScalar();
+        };
+      })(this), 3000, {
+        leading: false
+      });
+      this.throttledEndVector = _.throttle((function(_this) {
+        return function() {
+          return _this.endVector();
+        };
+      })(this), 3000, {
+        leading: false
+      });
     }
 
     TopParser.prototype.parse = function(data, progressPercentageStart, progressPercentageLength) {
@@ -123,27 +139,28 @@
     };
 
     TopParser.prototype.parseLine = function(line) {
-      var base, base1, base2, elementIndex, elementType, name, name1, newElement, parts, value, vertex, vertexIndex;
+      var base, elementIndex, elementType, newElement, parts, value, vertex, vertexIndex;
       parts = line.match(/\S+/g);
       switch (parts[0]) {
         case 'Nodes':
+          this.endCurrentMode();
           this.currentMode = this.constructor.modes.Nodes;
           this.currentNodesName = parts[1];
           this.currentNodes = {
             nodes: []
           };
-          this.nodes[this.currentNodesName] = this.currentNodes;
           return;
         case 'Elements':
+          this.endCurrentMode();
           this.currentMode = this.constructor.modes.Elements;
           this.currentElementsName = parts[1];
           this.currentElements = {
             elements: {},
             nodesName: parts[3]
           };
-          this.elements[this.currentElementsName] = this.currentElements;
           return;
         case 'Vector':
+          this.endCurrentMode();
           this.currentMode = this.constructor.modes.VectorCount;
           this.currentVectorNodesName = parts[5];
           this.currentVectorName = parts[1];
@@ -152,12 +169,9 @@
             nodesName: parts[5],
             frames: []
           };
-          if ((base = this.vectors)[name = this.currentVectorNodesName] == null) {
-            base[name] = {};
-          }
-          this.vectors[this.currentVectorNodesName][this.currentVectorName] = this.currentVector;
           return;
         case 'Scalar':
+          this.endCurrentMode();
           this.currentMode = this.constructor.modes.ScalarCount;
           this.currentScalarNodesName = parts[5];
           this.currentScalarName = parts[1];
@@ -166,10 +180,6 @@
             nodesName: parts[5],
             frames: []
           };
-          if ((base1 = this.scalars)[name1 = this.currentScalarNodesName] == null) {
-            base1[name1] = {};
-          }
-          this.scalars[this.currentScalarNodesName][this.currentScalarName] = this.currentScalar;
           return;
       }
       switch (this.currentMode) {
@@ -184,8 +194,8 @@
         case this.constructor.modes.Elements:
           elementIndex = parseInt(parts[0]);
           elementType = parseInt(parts[1]);
-          if ((base2 = this.currentElements.elements)[elementType] == null) {
-            base2[elementType] = [];
+          if ((base = this.currentElements.elements)[elementType] == null) {
+            base[elementType] = [];
           }
           switch (elementType) {
             case 4:
@@ -216,6 +226,7 @@
           this.currentFrame.vectors[this.currentFrameNodeIndex * 3 + 2] = parseFloat(parts[2]);
           this.currentFrameNodeIndex++;
           if (this.currentFrameNodeIndex === this.currentFrameNodesCount) {
+            this.endVectorFrame();
             return this.currentMode = this.constructor.modes.VectorTime;
           }
           break;
@@ -244,53 +255,119 @@
           this.currentFrame.scalars[this.currentFrameNodeIndex] = value;
           this.currentFrameNodeIndex++;
           if (this.currentFrameNodeIndex === this.currentFrameNodesCount) {
+            this.endScalarFrame();
             return this.currentMode = this.constructor.modes.ScalarTime;
           }
       }
     };
 
-    TopParser.prototype.end = function() {
-      var buffer, elementSize, elementsInstance, elementsList, elementsName, elementsType, i, j, k, l, length, m, nodesInstance, nodesName, nodesPerElement, ref, ref1, ref2, ref3, ref4, ref5;
-      ref = this.nodes;
-      for (nodesName in ref) {
-        nodesInstance = ref[nodesName];
-        length = Math.max(0, nodesInstance.nodes.length - 1);
-        buffer = new Float32Array(length * 3);
-        for (i = k = 0, ref1 = length; 0 <= ref1 ? k < ref1 : k > ref1; i = 0 <= ref1 ? ++k : --k) {
-          buffer[i * 3] = nodesInstance.nodes[i + 1].x;
-          buffer[i * 3 + 1] = nodesInstance.nodes[i + 1].y;
-          buffer[i * 3 + 2] = nodesInstance.nodes[i + 1].z;
-        }
-        nodesInstance.nodes = buffer;
+    TopParser.prototype.endCurrentMode = function() {
+      switch (this.currentMode) {
+        case this.constructor.modes.Nodes:
+          return this.endNodes();
+        case this.constructor.modes.Elements:
+          return this.endElements();
+        case this.constructor.modes.Vector:
+          return this.endVector();
+        case this.constructor.modes.Scalar:
+          return this.endScalar();
       }
+    };
+
+    TopParser.prototype.endNodes = function() {
+      var buffer, i, k, length, nodesResult, ref;
+      length = Math.max(0, this.currentNodes.nodes.length - 1);
+      buffer = new Float32Array(length * 3);
+      for (i = k = 0, ref = length; 0 <= ref ? k < ref : k > ref; i = 0 <= ref ? ++k : --k) {
+        buffer[i * 3] = this.currentNodes.nodes[i + 1].x;
+        buffer[i * 3 + 1] = this.currentNodes.nodes[i + 1].y;
+        buffer[i * 3 + 2] = this.currentNodes.nodes[i + 1].z;
+      }
+      this.currentNodes.nodes = buffer;
+      nodesResult = {};
+      nodesResult[this.currentNodesName] = this.currentNodes;
+      return postMessage({
+        type: 'result',
+        objects: {
+          nodes: nodesResult
+        }
+      });
+    };
+
+    TopParser.prototype.endElements = function() {
+      var buffer, elementSize, elementsList, elementsResult, elementsType, i, j, k, l, nodesPerElement, ref, ref1, ref2;
       nodesPerElement = {
         "4": 3,
         "5": 4
       };
-      ref2 = this.elements;
-      for (elementsName in ref2) {
-        elementsInstance = ref2[elementsName];
-        ref3 = elementsInstance.elements;
-        for (elementsType in ref3) {
-          elementsList = ref3[elementsType];
-          elementSize = nodesPerElement[elementsType];
-          buffer = new Uint32Array(elementsList.length * elementSize);
-          for (i = l = 0, ref4 = elementsList.length; 0 <= ref4 ? l < ref4 : l > ref4; i = 0 <= ref4 ? ++l : --l) {
-            for (j = m = 0, ref5 = elementSize; 0 <= ref5 ? m < ref5 : m > ref5; j = 0 <= ref5 ? ++m : --m) {
-              buffer[i * elementSize + j] = elementsList[i][j] - 1;
-            }
+      ref = this.currentElements.elements;
+      for (elementsType in ref) {
+        elementsList = ref[elementsType];
+        elementSize = nodesPerElement[elementsType];
+        buffer = new Uint32Array(elementsList.length * elementSize);
+        for (i = k = 0, ref1 = elementsList.length; 0 <= ref1 ? k < ref1 : k > ref1; i = 0 <= ref1 ? ++k : --k) {
+          for (j = l = 0, ref2 = elementSize; 0 <= ref2 ? l < ref2 : l > ref2; j = 0 <= ref2 ? ++l : --l) {
+            buffer[i * elementSize + j] = elementsList[i][j] - 1;
           }
-          elementsInstance.elements[elementsType] = buffer;
         }
+        this.currentElements.elements[elementsType] = buffer;
       }
+      elementsResult = {};
+      elementsResult[this.currentElementsName] = this.currentElements;
       return postMessage({
         type: 'result',
         objects: {
-          nodes: this.nodes,
-          elements: this.elements,
-          vectors: this.vectors,
-          scalars: this.scalars
+          elements: elementsResult
         }
+      });
+    };
+
+    TopParser.prototype.endScalar = function() {
+      var scalarsResult;
+      if (!this.currentScalar.frames.length) {
+        return;
+      }
+      scalarsResult = {};
+      scalarsResult[this.currentScalarNodesName] = {};
+      scalarsResult[this.currentScalarNodesName][this.currentScalarName] = this.currentScalar;
+      postMessage({
+        type: 'result',
+        objects: {
+          scalars: scalarsResult
+        }
+      });
+      return this.currentScalar.frames = [];
+    };
+
+    TopParser.prototype.endVector = function() {
+      var vectorsResult;
+      if (!this.currentVector.frames.length) {
+        return;
+      }
+      vectorsResult = {};
+      vectorsResult[this.currentVectorNodesName] = {};
+      vectorsResult[this.currentVectorNodesName][this.currentVectorName] = this.currentVector;
+      postMessage({
+        type: 'result',
+        objects: {
+          vectors: vectorsResult
+        }
+      });
+      return this.currentVector.frames = [];
+    };
+
+    TopParser.prototype.endScalarFrame = function() {
+      return this.throttledEndScalar();
+    };
+
+    TopParser.prototype.endVectorFrame = function() {
+      return this.throttledEndVector();
+    };
+
+    TopParser.prototype.end = function() {
+      this.endCurrentMode();
+      return postMessage({
+        type: 'complete'
       });
     };
 

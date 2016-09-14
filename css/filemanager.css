@@ -1,0 +1,39 @@
+.top-viewer .file-manager {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  opacity: 0.5;
+  transition: all 0.2s;
+  background: rgba(47,48,55,0.9);
+}
+.top-viewer .file-manager.hover,
+.top-viewer .file-manager.scrubbing {
+  opacity: 1;
+}
+.top-viewer .file-manager .files .file .file-container .toggle .checkbox-control .name {
+  position: relative;
+  width: 60%;
+}
+.top-viewer .file-manager .files .file .file-container .toggle .checkbox-control .name .load-progress {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  background: rgba(200,200,225,0.5);
+  -webkit-filter: blur(0.3em);
+}
+.top-viewer .file-manager .files .file .file-container .toggle .checkbox-control .name.loaded {
+  color: rgba(200,200,225,0.8);
+}
+.top-viewer .file-manager .files .file .file-container .toggle .checkbox-control .name.loaded .load-progress {
+  display: none;
+}
+.top-viewer .file-manager .files .file .file-container .toggle .checkbox-control .file-size {
+  display: inline-block;
+  width: 25%;
+  text-align: right;
+  vertical-align: bottom;
+}

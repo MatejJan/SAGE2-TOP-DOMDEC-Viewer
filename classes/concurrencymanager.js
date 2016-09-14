@@ -25,11 +25,12 @@
       item = this.options.items[this._nextItemIndexToRun];
       item[this.options.methodName]((function(_this) {
         return function() {
+          var base;
           _this._itemsCompleted++;
           _this._concurrentItemsRunning--;
           _this.processRunQueue();
-          if (_this.options.onProgress) {
-            _this.options.onProgress(_this.progress(), item);
+          if (typeof (base = _this.options).onProgress === "function") {
+            base.onProgress(_this.progress(), item);
           }
           if (_this._itemsCompleted === _this.options.items.length) {
             return _this._complete();
@@ -46,11 +47,11 @@
     };
 
     ConcurrencyManager.prototype._complete = function() {
-      var runEnd, runTime;
+      var base, runEnd, runTime;
       runEnd = new Date();
       runTime = runEnd - this._runStart;
       console.log("Concurrency manager completed in " + runTime + "ms");
-      return this.options.onComplete();
+      return typeof (base = this.options).onComplete === "function" ? base.onComplete() : void 0;
     };
 
     return ConcurrencyManager;

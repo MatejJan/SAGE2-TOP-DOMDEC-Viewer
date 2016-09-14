@@ -1,0 +1,283 @@
+.top-viewer
+  position relative
+  cursor default
+  font-family "Ubuntu Condensed", sans-serif
+  color rgba(200, 200, 225, 0.5)
+
+  p
+    font-family "Ubuntu Condensed", sans-serif
+    font-size 1.6em
+    margin 0.3em
+
+  button
+    background none
+    border none
+    padding 0
+    color white
+    opacity 0.7
+    cursor pointer
+    transition all 0.2s
+    font-size inherit
+
+    &::before
+      font-size 3em
+
+    &.hover
+      opacity 0.9
+
+    &:focus
+      outline none
+
+  ul
+    list-style none
+    padding-left 0
+
+    .toggle-container
+      .contents
+        margin-left 1em
+
+  .label
+    margin-bottom 0
+
+  .panel
+    border 1px solid rgba(200, 200, 225, 0.5)
+    margin 0.4em
+    padding 0.4em 0.4em 0
+    width 20em
+
+    > .toggle
+      > .checkbox-control
+        font-size 1.2em
+        text-transform uppercase
+
+        .value
+          display none
+
+    &.contents-visible
+      > .toggle
+        > .checkbox-control
+          border-bottom 1px solid rgba(200, 200, 225, 0.5)
+          margin-bottom 0.5em
+
+      padding 0.4em
+
+    .sub-panel
+      margin 0.3em
+      border-bottom 1px solid rgba(200, 200, 225, 0.5)
+
+      .title
+        font-size 1.6em
+        font-style italic
+        margin 0.5em 0 0.3em
+        padding-bottom 0.1em
+
+      &.first
+        .title
+          margin-top 0
+
+      &:last-child
+        border-bottom none
+
+  .slider-control
+    font-family "Ubuntu Condensed", sans-serif
+    color rgba(200, 200, 225, 0.5)
+    padding 0.3em
+
+    .value
+      display inline-block
+      font-size 1.6em
+
+    .slider
+      display inline-block
+      position relative
+      width 10em
+      height 1.5em
+      opacity 1
+      transition all 0.2s
+
+      .track
+        position relative
+        height 0.5em
+        margin 0.5em
+        background rgba(210, 210, 225, 0.5)
+        border-radius 0.5em
+        border none
+        box-shadow 0 0 0.3em rgba(200, 200, 225, 0.5)
+
+        .thumb
+          position absolute
+          left 0
+          top 50%
+
+          &::before
+            content: ''
+            position absolute
+            top 0
+            left 0
+            width 1.1em
+            height 1.1em
+            transform translate(-50%, -55%) scale(0.7)
+            border-radius 100%
+            background rgba(255, 255, 255, 0.5)
+            transition all 0.2s
+
+      &.hover
+        .track
+          .thumb::before
+            transform translate(-50%, -55%)
+            background rgba(255, 255, 255, 0.7)
+            box-shadow 0 0 0.2em rgba(0, 0, 0, 0.3)
+
+    &.hover
+      .slider
+        opacity 1
+
+  .checkbox-control
+    font-size 1.6em
+
+    .value
+      position relative
+      border 0.15em solid rgba(200, 200, 225, 0.5)
+      display inline-block
+      width 0.7em
+      height 0.7em
+      margin 0.3em
+      vertical-align middle
+
+      &.true::after
+        content "✔"
+        position absolute
+        left 0.2em
+        top 0
+        font-size 0.6em
+
+    .name
+      display inline-block
+      width 80%
+      overflow hidden
+      text-overflow ellipsis
+      vertical-align middle
+
+  .toggle-container
+    .toggle
+      .checkbox-control
+        .value
+          border none
+
+          &::after
+            content "▶"
+            position absolute
+            left 0.2em
+            top 0
+            font-size 0.6em
+
+          &.true::after
+            content "▼"
+
+    .contents
+      display none
+
+      &.visible
+        display block
+
+  .dropdown-control
+    .toggle-container
+      position relative
+
+      .checkbox-control
+        .value
+          border none
+
+          &::after
+            content "▼"
+
+      .contents
+        position absolute
+        top 100%
+        left 0
+        border 1px solid rgba(200, 200, 225, 0.5)
+        background hsla(234, 8%, 20%, 0.9)
+        font-size 1.6em
+        z-index 1
+        box-shadow 0 0.4em 0.5em rgba(0,0,0,0.3)
+
+        .values
+          .value
+            padding 0.4em
+
+            &.hover
+              background rgba(200, 200, 225, 0.1)
+
+  .vertex-colors-control
+    .sub-area
+      display none
+      margin-left 2em
+
+      &.displayed
+        display block
+
+  .color-control
+    margin 0.3em
+
+    .color-preview
+      display block
+      width 1.5em
+      height 1.5em
+      border 1px solid rgba(200, 200, 225, 0.5)
+
+    .toggle-container
+      position relative
+
+      .checkbox-control
+        .value
+          border none
+
+          &::after
+            content "▼"
+
+      .contents
+        position absolute
+        top 0
+        left 3.5em
+        width 11.2em
+        padding 0.5em
+        border 1px solid rgba(200, 200, 225, 0.5)
+        background hsla(234, 8%, 20%, 0.9)
+        z-index 1
+        box-shadow 0 0.4em 0.5em rgba(0,0,0,0.3)
+
+        .presets-area
+          margin-bottom 0.5em
+
+          .presets
+            list-style none
+            padding 0
+            width 12em
+            margin-top 0.3em
+
+            .preset
+              display inline-block
+              width 1.3em
+              height 1.3em
+              margin 0 0.3em 0.2em 0
+
+        .color-sliders
+          display inline-block
+          width 12.5em
+
+          .slider-area
+            width 12.5em
+
+            .name
+              display inline-block
+              font-size 1.6em
+              width 0.8em
+              text-align right
+
+            .slider-control
+              display inline-block
+              width 10em
+              padding 0
+
+              .slider
+                width 6.5em

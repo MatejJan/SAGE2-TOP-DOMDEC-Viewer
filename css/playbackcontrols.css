@@ -1,7 +1,4 @@
-.sage-item {
-  position: relative;
-}
-.playback-controls {
+.top-viewer .playback-controls {
   position: fixed;
   bottom: -4em;
   left: 0;
@@ -12,13 +9,13 @@
   transition: all 0.2s;
   background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(47,48,55,0.9) 100%);
 }
-.playback-controls.hover,
-.playback-controls.scrubbing {
+.top-viewer .playback-controls.hover,
+.top-viewer .playback-controls.scrubbing {
   opacity: 1;
   bottom: 0;
   height: 6em;
 }
-.playback-controls button {
+.top-viewer .playback-controls button {
   background: none;
   border: none;
   padding: 0;
@@ -28,16 +25,16 @@
   transition: all 0.2s;
   font-size: inherit;
 }
-.playback-controls button::before {
+.top-viewer .playback-controls button::before {
   font-size: 3em;
 }
-.playback-controls button.hover {
+.top-viewer .playback-controls button.hover {
   opacity: 0.9;
 }
-.playback-controls button:focus {
+.top-viewer .playback-controls button:focus {
   outline: none;
 }
-.playback-controls .scrubber {
+.top-viewer .playback-controls .scrubber {
   position: absolute;
   left: 1em;
   right: 1em;
@@ -45,7 +42,7 @@
   height: 2em;
   cursor: pointer;
 }
-.playback-controls .scrubber .timeline {
+.top-viewer .playback-controls .scrubber .timeline {
   position: absolute;
   left: 0;
   right: 0;
@@ -54,7 +51,7 @@
   border-radius: 0.5em;
   background: rgba(255,255,255,0.1);
 }
-.playback-controls .scrubber .timeline .ready-range {
+.top-viewer .playback-controls .scrubber .timeline .ready-range {
   position: absolute;
   left: 0;
   top: 0;
@@ -62,12 +59,12 @@
   background: rgba(200,200,225,0.5);
   -webkit-filter: blur(0.3em);
 }
-.playback-controls .scrubber .timeline .playhead {
+.top-viewer .playback-controls .scrubber .timeline .playhead {
   position: absolute;
   left: 0;
   top: 50%;
 }
-.playback-controls .scrubber .timeline .playhead::before {
+.top-viewer .playback-controls .scrubber .timeline .playhead::before {
   content: '';
   position: absolute;
   top: 0;
@@ -79,65 +76,65 @@
   background: rgba(255,255,255,0.5);
   transition: all 0.2s;
 }
-.playback-controls .scrubber .timeline .frame {
+.top-viewer .playback-controls .scrubber .timeline .frame {
   position: absolute;
   height: 100%;
   top: 0;
 }
-.playback-controls .scrubber .timeline .frame .progress {
+.top-viewer .playback-controls .scrubber .timeline .frame .progress {
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
   background: rgba(255,255,255,0.1);
 }
-.playback-controls.scrubbing .scrubber .timeline .playhead::before,
-.playback-controls .scrubber.hover .timeline .playhead::before {
+.top-viewer .playback-controls.scrubbing .scrubber .timeline .playhead::before,
+.top-viewer .playback-controls .scrubber.hover .timeline .playhead::before {
   transform: translate(-50%, -55%);
   background: rgba(255,255,255,0.7);
   box-shadow: 0 0 2px rgba(0,0,0,0.3);
 }
-.playback-controls .play-pause {
+.top-viewer .playback-controls .play-pause {
   position: absolute;
   left: 0;
   bottom: 0;
 }
-.playback-controls .play-pause .button {
+.top-viewer .playback-controls .play-pause .button {
   width: 6em;
   height: 4em;
 }
-.playback-controls .play-pause .pause {
+.top-viewer .playback-controls .play-pause .pause {
   display: none;
 }
-.playback-controls.playing .play {
+.top-viewer .playback-controls.playing .play {
   display: none;
 }
-.playback-controls.playing .pause {
+.top-viewer .playback-controls.playing .pause {
   display: block;
 }
-.playback-controls .load-sleep {
+.top-viewer .playback-controls .load-sleep {
   position: absolute;
   right: 0;
   bottom: 0;
 }
-.playback-controls .load-sleep .button {
+.top-viewer .playback-controls .load-sleep .button {
   width: 6em;
   height: 4em;
 }
-.playback-controls .load-sleep .button::before {
+.top-viewer .playback-controls .load-sleep .button::before {
   font-size: 2em;
 }
-.playback-controls .load-sleep .sleep {
+.top-viewer .playback-controls .load-sleep .sleep {
   display: none;
 }
-.playback-controls.loading .load,
-.playback-controls.loaded .load {
+.top-viewer .playback-controls.loading .load,
+.top-viewer .playback-controls.loaded .load {
   display: none;
 }
-.playback-controls.loading .sleep {
+.top-viewer .playback-controls.loading .sleep {
   display: block;
 }
-.playback-controls .speed {
+.top-viewer .playback-controls .speed {
   position: absolute;
   bottom: 0.5em;
   left: 7em;
@@ -146,10 +143,10 @@
   width: 20em;
   padding: 0.5em 0;
 }
-.playback-controls .speed .value {
+.top-viewer .playback-controls .speed .value {
   font-size: 1.6em;
 }
-.playback-controls .speed .slider {
+.top-viewer .playback-controls .speed .slider {
   position: absolute;
   top: 0.2em;
   left: 4.5em;
@@ -157,7 +154,7 @@
   opacity: 0;
   transition: all 0.2s;
 }
-.playback-controls .speed .slider .track {
+.top-viewer .playback-controls .speed .slider .track {
   position: relative;
   height: 0.5em;
   margin: 1em 0.5em;
@@ -166,12 +163,12 @@
   border: none;
   box-shadow: 0 0 0.3em rgba(200,200,225,0.5);
 }
-.playback-controls .speed .slider .track .thumb {
+.top-viewer .playback-controls .speed .slider .track .thumb {
   position: absolute;
   left: 0;
   top: 50%;
 }
-.playback-controls .speed .slider .track .thumb::before {
+.top-viewer .playback-controls .speed .slider .track .thumb::before {
   content: '';
   position: absolute;
   top: 0;
@@ -183,11 +180,11 @@
   background: rgba(255,255,255,0.5);
   transition: all 0.2s;
 }
-.playback-controls .speed .slider.hover .track .thumb::before {
+.top-viewer .playback-controls .speed .slider.hover .track .thumb::before {
   transform: translate(-50%, -55%);
   background: rgba(255,255,255,0.7);
   box-shadow: 0 0 0.2em rgba(0,0,0,0.3);
 }
-.playback-controls .speed.hover .slider {
+.top-viewer .playback-controls .speed.hover .slider {
   opacity: 1;
 }

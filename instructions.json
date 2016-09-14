@@ -24,9 +24,6 @@
     "classes/ui/colorcontrol.js",
     "classes/ui/scalarcontrol.js",
     "classes/animation.js",
-    "classes/animationset.js",
-    "classes/animationsetframeprocessor.js",
-    "classes/animationsequence.js",
     "classes/concurrencymanager.js",
     "classes/engine.js",
     "classes/gradient.js",
@@ -60,6 +57,11 @@
       "position": {"x":0, "y":0, "z":0},
       "rotation": {"_x":0, "_y":0, "_z":0, "_order":"XYZ"},
       "scale": {"x":1, "y":1, "z":1}
+    },
+    "fileManager": {
+      "files": {
+        "panelEnabled": true
+      }
     },
     "playbackControls": {
       "fps": 30

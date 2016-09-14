@@ -10,7 +10,8 @@
       targetFile = data.state.file;
       this.lastDrawTime = data.date.getTime() / 1000;
       $element = $(this.element);
-      $element.append("<link href='https://fonts.googleapis.com/css?family=Ubuntu+Condensed' rel='stylesheet' type='text/css'>\n<link href=\"/uploads/apps/top_viewer/css/fontello.css\" rel=\"stylesheet\"/>\n<link href=\"/uploads/apps/top_viewer/css/animation.css\" rel=\"stylesheet\"/>\n<link rel=\"stylesheet\" type=\"text/css\" href=\"/uploads/apps/top_viewer/css/playbackcontrols.css\" />\n<link rel=\"stylesheet\" type=\"text/css\" href=\"/uploads/apps/top_viewer/css/renderingcontrols.css\" />");
+      $element.addClass('top-viewer');
+      $element.append("<link href='https://fonts.googleapis.com/css?family=Ubuntu+Condensed' rel='stylesheet' type='text/css'>\n<link href=\"/uploads/apps/top_viewer/css/fontello.css\" rel=\"stylesheet\"/>\n<link href=\"/uploads/apps/top_viewer/css/animation.css\" rel=\"stylesheet\"/>\n<link rel=\"stylesheet\" type=\"text/css\" href=\"/uploads/apps/top_viewer/css/ui.css\" />\n<link rel=\"stylesheet\" type=\"text/css\" href=\"/uploads/apps/top_viewer/css/filemanager.css\" />\n<link rel=\"stylesheet\" type=\"text/css\" href=\"/uploads/apps/top_viewer/css/playbackcontrols.css\" />\n<link rel=\"stylesheet\" type=\"text/css\" href=\"/uploads/apps/top_viewer/css/renderingcontrols.css\" />");
       this.engine = new TopViewer.Engine({
         app: this,
         width: this.width,
@@ -27,7 +28,7 @@
       this.drawLoop();
       this.storedFileListEventHandler = (function(_this) {
         return function(fileListData) {
-          return _this.fileManager.initialize(fileListData);
+          return _this.fileManager.initializeFiles(fileListData);
         };
       })(this);
       return addStoredFileListEventHandler(this.storedFileListEventHandler);

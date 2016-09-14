@@ -12,10 +12,13 @@ window.topviewer = SAGE2_App.extend
     @lastDrawTime = data.date.getTime() / 1000
 
     $element = $(@element)
+    $element.addClass('top-viewer')
     $element.append """
       <link href='https://fonts.googleapis.com/css?family=Ubuntu+Condensed' rel='stylesheet' type='text/css'>
       <link href="/uploads/apps/top_viewer/css/fontello.css" rel="stylesheet"/>
       <link href="/uploads/apps/top_viewer/css/animation.css" rel="stylesheet"/>
+      <link rel="stylesheet" type="text/css" href="/uploads/apps/top_viewer/css/ui.css" />
+      <link rel="stylesheet" type="text/css" href="/uploads/apps/top_viewer/css/filemanager.css" />
       <link rel="stylesheet" type="text/css" href="/uploads/apps/top_viewer/css/playbackcontrols.css" />
       <link rel="stylesheet" type="text/css" href="/uploads/apps/top_viewer/css/renderingcontrols.css" />
     """
@@ -39,7 +42,7 @@ window.topviewer = SAGE2_App.extend
 
     # Be prepared to receive the file list.
     @storedFileListEventHandler = (fileListData) =>
-      @fileManager.initialize fileListData
+      @fileManager.initializeFiles fileListData
 
     addStoredFileListEventHandler @storedFileListEventHandler
 

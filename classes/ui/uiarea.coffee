@@ -8,6 +8,8 @@ class TopViewer.UIArea
 
     @$rootElement = null
 
+    @_throttledMouseMoveHandler = _.throttle @_mouseMoveHandler, 100
+
   destroy: ->
     @$appWindow = null
     control.destroy?() for control in @_controls
@@ -74,6 +76,9 @@ class TopViewer.UIArea
     control.onMouseDown position, button for control in @_hoveredStack
 
   onMouseMove: (position) ->
+    @_throttledMouseMoveHandler position
+
+  _mouseMoveHandler: (position) ->
     # Determine which element we're hovering on.
     parentOrigin = @$appWindow.offset()
 

@@ -32,3 +32,7 @@ class TopViewer.ScalarControl
     if name is @scalarSelectionControl.dropdownControl.options.text
       # We loaded the scalar we've been waiting for so set it.
       @scalarSelectionControl.setValue scalar
+
+    # Otherwise select it if none other is set.
+    unless @scalarSelectionControl.dropdownControl.value
+      @scalarSelectionControl.setValue scalar

@@ -5,10 +5,9 @@ class TopViewer.File
   # Re-use top for alternative xpost extension.
   @loaders.xpost = @loaders.top
 
-  constructor: (@url) ->
-    @filename = @url.split('/').pop()
+  constructor: (@options) ->
+    @filename = @options.url.split('/').pop()
     @extension = @filename.split('.').pop()
-
 
     @loader = @constructor.loaders[@extension]
 
@@ -22,8 +21,20 @@ class TopViewer.File
 
       return
 
-    @loader.load @url, (@objects) =>
-      onCompleteHandler()
-    ,
-      (loadPercentage) =>
-        #console.log "Loaded #{loadPercentage}% of #{@filename}." if loadPercentage % 10 is 0
+    @loader.load
+      url: @options.url,
+      onSize: (size) =>
+        @options.onSize? size
+
+      onProgress: (loadPercentage) =>
+        @options.onProgress? loadPercentage
+
+      onResults: (@objects) =>
+        # Trigger file onLoad event.
+        @options.onResults? @objects
+
+      onComplete: =>
+        @options.onComplete?()
+
+        # Report to the concurrency manager that we have finished execution.
+        onCompleteHandler()

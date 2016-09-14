@@ -28,7 +28,7 @@ class TopViewer.ConcurrencyManager
       @_concurrentItemsRunning--
       @processRunQueue()
 
-      @options.onProgress @progress(), item if @options.onProgress
+      @options.onProgress? @progress(), item
 
       @_complete() if @_itemsCompleted is @options.items.length
 
@@ -47,4 +47,4 @@ class TopViewer.ConcurrencyManager
     runTime = runEnd - @_runStart #ms
     console.log "Concurrency manager completed in #{runTime}ms"
 
-    @options.onComplete()
+    @options.onComplete?()

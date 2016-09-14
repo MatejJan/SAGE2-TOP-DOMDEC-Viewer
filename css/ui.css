@@ -1,0 +1,269 @@
+.top-viewer {
+  position: relative;
+  cursor: default;
+  font-family: "Ubuntu Condensed", sans-serif;
+  color: rgba(200,200,225,0.5);
+}
+.top-viewer p {
+  font-family: "Ubuntu Condensed", sans-serif;
+  font-size: 1.6em;
+  margin: 0.3em;
+}
+.top-viewer button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #fff;
+  opacity: 0.7;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: inherit;
+}
+.top-viewer button::before {
+  font-size: 3em;
+}
+.top-viewer button.hover {
+  opacity: 0.9;
+}
+.top-viewer button:focus {
+  outline: none;
+}
+.top-viewer ul {
+  list-style: none;
+  padding-left: 0;
+}
+.top-viewer ul .toggle-container .contents {
+  margin-left: 1em;
+}
+.top-viewer .label {
+  margin-bottom: 0;
+}
+.top-viewer .panel {
+  border: 1px solid rgba(200,200,225,0.5);
+  margin: 0.4em;
+  padding: 0.4em 0.4em 0;
+  width: 20em;
+}
+.top-viewer .panel > .toggle > .checkbox-control {
+  font-size: 1.2em;
+  text-transform: uppercase;
+}
+.top-viewer .panel > .toggle > .checkbox-control .value {
+  display: none;
+}
+.top-viewer .panel.contents-visible {
+  padding: 0.4em;
+}
+.top-viewer .panel.contents-visible > .toggle > .checkbox-control {
+  border-bottom: 1px solid rgba(200,200,225,0.5);
+  margin-bottom: 0.5em;
+}
+.top-viewer .panel .sub-panel {
+  margin: 0.3em;
+  border-bottom: 1px solid rgba(200,200,225,0.5);
+}
+.top-viewer .panel .sub-panel .title {
+  font-size: 1.6em;
+  font-style: italic;
+  margin: 0.5em 0 0.3em;
+  padding-bottom: 0.1em;
+}
+.top-viewer .panel .sub-panel.first .title {
+  margin-top: 0;
+}
+.top-viewer .panel .sub-panel:last-child {
+  border-bottom: none;
+}
+.top-viewer .slider-control {
+  font-family: "Ubuntu Condensed", sans-serif;
+  color: rgba(200,200,225,0.5);
+  padding: 0.3em;
+}
+.top-viewer .slider-control .value {
+  display: inline-block;
+  font-size: 1.6em;
+}
+.top-viewer .slider-control .slider {
+  display: inline-block;
+  position: relative;
+  width: 10em;
+  height: 1.5em;
+  opacity: 1;
+  transition: all 0.2s;
+}
+.top-viewer .slider-control .slider .track {
+  position: relative;
+  height: 0.5em;
+  margin: 0.5em;
+  background: rgba(210,210,225,0.5);
+  border-radius: 0.5em;
+  border: none;
+  box-shadow: 0 0 0.3em rgba(200,200,225,0.5);
+}
+.top-viewer .slider-control .slider .track .thumb {
+  position: absolute;
+  left: 0;
+  top: 50%;
+}
+.top-viewer .slider-control .slider .track .thumb::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1.1em;
+  height: 1.1em;
+  transform: translate(-50%, -55%) scale(0.7);
+  border-radius: 100%;
+  background: rgba(255,255,255,0.5);
+  transition: all 0.2s;
+}
+.top-viewer .slider-control .slider.hover .track .thumb::before {
+  transform: translate(-50%, -55%);
+  background: rgba(255,255,255,0.7);
+  box-shadow: 0 0 0.2em rgba(0,0,0,0.3);
+}
+.top-viewer .slider-control.hover .slider {
+  opacity: 1;
+}
+.top-viewer .checkbox-control {
+  font-size: 1.6em;
+}
+.top-viewer .checkbox-control .value {
+  position: relative;
+  border: 0.15em solid rgba(200,200,225,0.5);
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  margin: 0.3em;
+  vertical-align: middle;
+}
+.top-viewer .checkbox-control .value.true::after {
+  content: "✔";
+  position: absolute;
+  left: 0.2em;
+  top: 0;
+  font-size: 0.6em;
+}
+.top-viewer .checkbox-control .name {
+  display: inline-block;
+  width: 80%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+.top-viewer .toggle-container .toggle .checkbox-control .value {
+  border: none;
+}
+.top-viewer .toggle-container .toggle .checkbox-control .value::after {
+  content: "▶";
+  position: absolute;
+  left: 0.2em;
+  top: 0;
+  font-size: 0.6em;
+}
+.top-viewer .toggle-container .toggle .checkbox-control .value.true::after {
+  content: "▼";
+}
+.top-viewer .toggle-container .contents {
+  display: none;
+}
+.top-viewer .toggle-container .contents.visible {
+  display: block;
+}
+.top-viewer .dropdown-control .toggle-container {
+  position: relative;
+}
+.top-viewer .dropdown-control .toggle-container .checkbox-control .value {
+  border: none;
+}
+.top-viewer .dropdown-control .toggle-container .checkbox-control .value::after {
+  content: "▼";
+}
+.top-viewer .dropdown-control .toggle-container .contents {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  border: 1px solid rgba(200,200,225,0.5);
+  background: rgba(47,48,55,0.9);
+  font-size: 1.6em;
+  z-index: 1;
+  box-shadow: 0 0.4em 0.5em rgba(0,0,0,0.3);
+}
+.top-viewer .dropdown-control .toggle-container .contents .values .value {
+  padding: 0.4em;
+}
+.top-viewer .dropdown-control .toggle-container .contents .values .value.hover {
+  background: rgba(200,200,225,0.1);
+}
+.top-viewer .vertex-colors-control .sub-area {
+  display: none;
+  margin-left: 2em;
+}
+.top-viewer .vertex-colors-control .sub-area.displayed {
+  display: block;
+}
+.top-viewer .color-control {
+  margin: 0.3em;
+}
+.top-viewer .color-control .color-preview {
+  display: block;
+  width: 1.5em;
+  height: 1.5em;
+  border: 1px solid rgba(200,200,225,0.5);
+}
+.top-viewer .color-control .toggle-container {
+  position: relative;
+}
+.top-viewer .color-control .toggle-container .checkbox-control .value {
+  border: none;
+}
+.top-viewer .color-control .toggle-container .checkbox-control .value::after {
+  content: "▼";
+}
+.top-viewer .color-control .toggle-container .contents {
+  position: absolute;
+  top: 0;
+  left: 3.5em;
+  width: 11.2em;
+  padding: 0.5em;
+  border: 1px solid rgba(200,200,225,0.5);
+  background: rgba(47,48,55,0.9);
+  z-index: 1;
+  box-shadow: 0 0.4em 0.5em rgba(0,0,0,0.3);
+}
+.top-viewer .color-control .toggle-container .contents .presets-area {
+  margin-bottom: 0.5em;
+}
+.top-viewer .color-control .toggle-container .contents .presets-area .presets {
+  list-style: none;
+  padding: 0;
+  width: 12em;
+  margin-top: 0.3em;
+}
+.top-viewer .color-control .toggle-container .contents .presets-area .presets .preset {
+  display: inline-block;
+  width: 1.3em;
+  height: 1.3em;
+  margin: 0 0.3em 0.2em 0;
+}
+.top-viewer .color-control .toggle-container .contents .color-sliders {
+  display: inline-block;
+  width: 12.5em;
+}
+.top-viewer .color-control .toggle-container .contents .color-sliders .slider-area {
+  width: 12.5em;
+}
+.top-viewer .color-control .toggle-container .contents .color-sliders .slider-area .name {
+  display: inline-block;
+  font-size: 1.6em;
+  width: 0.8em;
+  text-align: right;
+}
+.top-viewer .color-control .toggle-container .contents .color-sliders .slider-area .slider-control {
+  display: inline-block;
+  width: 10em;
+  padding: 0;
+}
+.top-viewer .color-control .toggle-container .contents .color-sliders .slider-area .slider-control .slider {
+  width: 6.5em;
+}

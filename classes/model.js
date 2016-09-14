@@ -112,45 +112,67 @@
     };
 
     Model.prototype.addScalar = function(scalarName, scalar) {
-      var array, frame, height, i, k, l, len, ref, ref1;
-      this.scalars[scalarName] = scalar;
+      var array, frame, height, i, k, l, len, len1, m, ref, ref1, ref2, results;
+      if (this.scalars[scalarName]) {
+        console.log("Adding scalar frames");
+        ref = scalar.frames;
+        for (k = 0, len = ref.length; k < len; k++) {
+          frame = ref[k];
+          this.scalars[scalarName].frames.push(frame);
+        }
+      } else {
+        console.log("Adding new scalar");
+        this.scalars[scalarName] = scalar;
+        this.options.engine.renderingControls.addScalar(scalarName, scalar);
+      }
       this._updateFrames();
-      ref = scalar.frames;
-      for (k = 0, len = ref.length; k < len; k++) {
-        frame = ref[k];
+      ref1 = scalar.frames;
+      results = [];
+      for (l = 0, len1 = ref1.length; l < len1; l++) {
+        frame = ref1[l];
         height = 1;
         while (frame.scalars.length > 4096 * height) {
           height *= 2;
         }
         array = new Float32Array(4096 * height);
-        for (i = l = 0, ref1 = frame.scalars.length; 0 <= ref1 ? l < ref1 : l > ref1; i = 0 <= ref1 ? ++l : --l) {
+        for (i = m = 0, ref2 = frame.scalars.length; 0 <= ref2 ? m < ref2 : m > ref2; i = 0 <= ref2 ? ++m : --m) {
           array[i] = frame.scalars[i];
         }
         frame.texture = new THREE.DataTexture(array, 4096, height, THREE.AlphaFormat, THREE.FloatType);
-        frame.texture.needsUpdate = true;
+        results.push(frame.texture.needsUpdate = true);
       }
-      return this.options.engine.renderingControls.addScalar(scalarName, scalar);
+      return results;
     };
 
     Model.prototype.addVector = function(vectorName, vector) {
-      var array, frame, height, i, k, l, len, ref, ref1;
-      this.vectors[vectorName] = vector;
+      var array, frame, height, i, k, l, len, len1, m, ref, ref1, ref2, results;
+      if (this.vectors[vectorName]) {
+        ref = vector.frames;
+        for (k = 0, len = ref.length; k < len; k++) {
+          frame = ref[k];
+          this.vectors[vectorName].frames.push(frame);
+        }
+      } else {
+        this.vectors[vectorName] = vector;
+        this.options.engine.renderingControls.addVector(vectorName, vector);
+      }
       this._updateFrames();
-      ref = vector.frames;
-      for (k = 0, len = ref.length; k < len; k++) {
-        frame = ref[k];
+      ref1 = vector.frames;
+      results = [];
+      for (l = 0, len1 = ref1.length; l < len1; l++) {
+        frame = ref1[l];
         height = 1;
         while (frame.vectors.length / 3 > 4096 * height) {
           height *= 2;
         }
         array = new Float32Array(4096 * height * 3);
-        for (i = l = 0, ref1 = frame.vectors.length; 0 <= ref1 ? l < ref1 : l > ref1; i = 0 <= ref1 ? ++l : --l) {
+        for (i = m = 0, ref2 = frame.vectors.length; 0 <= ref2 ? m < ref2 : m > ref2; i = 0 <= ref2 ? ++m : --m) {
           array[i] = frame.vectors[i];
         }
         frame.texture = new THREE.DataTexture(array, 4096, height, THREE.RGBFormat, THREE.FloatType);
-        frame.texture.needsUpdate = true;
+        results.push(frame.texture.needsUpdate = true);
       }
-      return this.options.engine.renderingControls.addVector(vectorName, vector);
+      return results;
     };
 
     Model.prototype._updateFrames = function() {
@@ -339,7 +361,7 @@
             break;
           case TopViewer.RenderingControls.VertexColorsType.Scalar:
             selectedScalar = surfaceMaterial.colorsControl.scalarControl.value;
-            this._setupVertexScalars(material, selectedScalar, frame, nextFrame);
+            this._setupVertexScalars(surfaceMaterial.material, selectedScalar, frame, nextFrame);
         }
         surfaceMaterial.material.uniforms.vertexScalarsGradientTexture.value = renderingControls.gradientControl.value.texture;
         surfaceMaterial.material.uniforms.opacity.value = surfaceMaterial.opacityControl.value;

@@ -120,7 +120,21 @@ class TopViewer.Model extends THREE.Object3D
     @options.engine.scene.update()
 
   addScalar: (scalarName, scalar) ->
-    @scalars[scalarName] = scalar
+    # See if we already have this scalar or we're just getting new frames.
+    if @scalars[scalarName]
+      console.log "Adding scalar frames"
+      # Add new frames to the existing scalar.
+      for frame in scalar.frames
+        @scalars[scalarName].frames.push frame
+
+    else
+      console.log "Adding new scalar"
+      # This is a new scalar.
+      @scalars[scalarName] = scalar
+
+      # Add scalar to controls.
+      @options.engine.renderingControls.addScalar scalarName, scalar
+
     @_updateFrames()
     
     for frame in scalar.frames
@@ -133,10 +147,20 @@ class TopViewer.Model extends THREE.Object3D
       frame.texture = new THREE.DataTexture array, 4096, height, THREE.AlphaFormat, THREE.FloatType
       frame.texture.needsUpdate = true
 
-    @options.engine.renderingControls.addScalar scalarName, scalar
-    
   addVector: (vectorName, vector) ->
-    @vectors[vectorName] = vector
+    # See if we already have this vector or we're just getting new frames.
+    if @vectors[vectorName]
+      # Add new frames to the existing vector.
+      for frame in vector.frames
+        @vectors[vectorName].frames.push frame
+
+    else
+      # This is a new vector.
+      @vectors[vectorName] = vector
+
+      # Add vector to controls.
+      @options.engine.renderingControls.addVector vectorName, vector
+
     @_updateFrames()
 
     for frame in vector.frames
@@ -148,8 +172,6 @@ class TopViewer.Model extends THREE.Object3D
       array[i] = frame.vectors[i] for i in [0...frame.vectors.length]
       frame.texture = new THREE.DataTexture array, 4096, height, THREE.RGBFormat, THREE.FloatType
       frame.texture.needsUpdate = true
-
-    @options.engine.renderingControls.addVector vectorName, vector
 
   _updateFrames: ->
     # Determine time frames.
@@ -313,7 +335,7 @@ class TopViewer.Model extends THREE.Object3D
         when TopViewer.RenderingControls.VertexColorsType.Scalar
           selectedScalar = surfaceMaterial.colorsControl.scalarControl.value
 
-          @_setupVertexScalars material, selectedScalar, frame, nextFrame
+          @_setupVertexScalars surfaceMaterial.material, selectedScalar, frame, nextFrame
 
       surfaceMaterial.material.uniforms.vertexScalarsGradientTexture.value = renderingControls.gradientControl.value.texture
       

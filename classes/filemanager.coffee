@@ -1,25 +1,108 @@
 'use strict'
 
-class TopViewer.FileManager
+class TopViewer.FileManager extends TopViewer.UIArea
   constructor: (@options) ->
+    super
 
-  initialize: (fileListData) ->
+    saveState = @options.engine.options.app.state.fileManager
+    @$appWindow = @options.engine.$appWindow
+    @scene = @options.engine.scene
+
+    # Construct the html of rendering controls.
+    @$manager = $("<div class='file-manager'>")
+    @$appWindow.append @$manager
+
+    # Set the roots.
+    @$rootElement = @$manager
+    @rootControl = new TopViewer.UIControl @, @$manager
+
+    # Setup scrolling.
+    scrollOffset = 0
+    @rootControl.scroll (delta) =>
+      scrollOffset += delta
+      scrollOffset = Math.max scrollOffset, 0
+      scrollOffset = Math.min scrollOffset, @$controls.height() - @options.engine.$appWindow.height() * 0.8
+
+      @$controls.css
+        top: -scrollOffset
+
+    # Files
+
+    @$filesArea = $("<ul class='files'></ul>")
+    new TopViewer.ToggleContainer @,
+      $parent: @$manager
+      text: "Files"
+      class: 'panel'
+      visible: saveState.files.panelEnabled
+      $contents: @$filesArea
+      onChange: (value) =>
+        saveState.files.panelEnabled = value
+
+    @files = {}
+
+    @initialize()
+
+    @options.engine.uiAreas.push @
+
+  addFile: (file) ->
+    $file = $("<li class='file'></li>")
+    @$filesArea.append($file)
+
+    $contents = $("<div>")
+
+    fileContainer = new TopViewer.ToggleContainer @,
+      $parent: $file
+      text: file.filename
+      class: 'file-container'
+      visible: false
+      $contents: $contents
+
+    $loadProgress = $('<span class="load-progress">')
+    $name = fileContainer.toggleControl.$element.find('.name')
+    $name.append($loadProgress)
+
+    $fileSize = $('<span class="file-size">')
+    $name.after($fileSize)
+
+    file.options.onSize = (size) =>
+      units = ['B', 'kB', 'MB', 'GB']
+      unitIndex = 0
+      while size > 100
+        size /= 1000
+        unitIndex++
+
+      $fileSize.text "#{Math.round10(size, -1)}#{units[unitIndex]}"
+
+    file.options.onProgress = (percentage) =>
+      $loadProgress.css('width', "#{percentage}%")
+
+    file.options.onComplete = =>
+      $name.addClass('loaded')
+
+  initializeFiles: (fileListData) ->
     return unless @options.targetFile
 
     filenameStartIndex = @options.targetFile.lastIndexOf('/') + 1
     targetFolder = @options.targetFile.substring 0, filenameStartIndex
 
     # Scan the same folder as the target file and build the database.
-    @urls = {}
+    @files = {}
 
-    for file in fileListData.others
-      url = file.sage2URL
+    for fileData in fileListData.others
+      url = fileData.sage2URL
 
       # Only include files in the same folder.
       fileFolder = url.substring 0, url.lastIndexOf('/') + 1
       continue unless targetFolder is fileFolder
 
-      @urls[url] = new TopViewer.File url
+      file = new TopViewer.File
+        url: url
+        onResults: (objects) =>
+          @_addObjects objects
+
+      @addFile file
+
+      @files[url] = file
 
     # We have built a list of files in the same folder. Now scan the files to generate objects.
     @objects =
@@ -33,14 +116,8 @@ class TopViewer.FileManager
     @models = {}
 
     new TopViewer.ConcurrencyManager
-      items: _.values @urls
+      items: _.values @files
       methodName: 'load'
-      onProgress: (progress, item) =>
-        console.log "Loaded #{Math.floor progress * 100}% of files."
-        @_addObjects item.objects
-
-      onComplete: =>
-        #console.log "Models created!", @models
 
   _addObjects: (objects) ->
     # Add nodes.

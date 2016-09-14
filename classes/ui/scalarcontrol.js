@@ -38,6 +38,9 @@
     ScalarControl.prototype.addScalar = function(name, scalar) {
       this.scalarSelectionControl.addValue(name, scalar);
       if (name === this.scalarSelectionControl.dropdownControl.options.text) {
+        this.scalarSelectionControl.setValue(scalar);
+      }
+      if (!this.scalarSelectionControl.dropdownControl.value) {
         return this.scalarSelectionControl.setValue(scalar);
       }
     };
