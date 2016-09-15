@@ -350,6 +350,19 @@
           };
         })(this)
       });
+      this.$scalarsArea = $("<ul class='scalars-area'></ul>");
+      new TopViewer.ToggleContainer(this, {
+        $parent: this.$controls,
+        text: "Scalars",
+        "class": "panel",
+        visible: saveState.scalars.panelEnabled,
+        $contents: this.$scalarsArea,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.scalars.panelEnabled = value;
+          };
+        })(this)
+      });
       $displacementArea = $("<div class='displacement-area panel'><div class='title'>Displacement</div></div>");
       this.$controls.append($displacementArea);
       this.displacementDropdown = new TopViewer.DropdownControl(this, {
@@ -375,15 +388,6 @@
         name: 'surface',
         value: true
       });
-      this.mainGeometrySurfaceDropdown = new TopViewer.DropdownControl(this, {
-        $parent: $mainGeometryArea,
-        "class": 'main-geometry-result-selector',
-        value: null,
-        text: 'None'
-      });
-      this.mainGeometrySurfaceDropdown.addValue('None', null);
-      $mainGeometryArea.append("<div class='gradient-curve'>\n  <canvas height='256' width='256'></canvas>\n</div>");
-      this.gradientCurve = new ColorCurve($mainGeometryArea.find('.gradient-curve canvas')[0]);
       this.mainGeometrySurfaceWireframeControl = new TopViewer.CheckboxControl(this, {
         $parent: $mainGeometryArea,
         name: 'wireframe',
@@ -454,11 +458,26 @@
     };
 
     RenderingControls.prototype.addScalar = function(name, scalar) {
+      var $contents, $scalar, states;
+      console.log("Adding scalar", scalar);
       TopViewer.ScalarControl.addScalar(name, scalar);
-      this.mainGeometrySurfaceDropdown.addValue(name, scalar);
-      if (!this.mainGeometrySurfaceDropdown.value) {
-        return this.mainGeometrySurfaceDropdown.setValue(scalar);
-      }
+      $scalar = $("<li class='scalar'></li>");
+      this.$scalarsArea.append($scalar);
+      $contents = $("<div>");
+      new TopViewer.ToggleContainer(this, {
+        $parent: $scalar,
+        text: name,
+        visible: true,
+        $contents: $contents
+      });
+      states = this.options.engine.options.app.state.renderingControls.scalars;
+      return scalar.renderingControls = {
+        curveTransformControl: new TopViewer.CurveTransformControl(this, {
+          $parent: $contents,
+          saveState: TopViewer.SaveState.findStateForName(states, name),
+          scalar: scalar
+        })
+      };
     };
 
     RenderingControls.prototype.addVector = function(name, vector) {
@@ -480,17 +499,17 @@
 
     RenderingControls.prototype.onMouseDown = function(position, button) {
       RenderingControls.__super__.onMouseDown.apply(this, arguments);
-      return this.gradientCurve.mouseDown(this.transformPositionToPage(position));
+      return TopViewer.CurveTransformControl.mouseDown(this.transformPositionToPage(position));
     };
 
     RenderingControls.prototype.onMouseMove = function(position) {
       RenderingControls.__super__.onMouseMove.apply(this, arguments);
-      return this.gradientCurve.mouseMove(this.transformPositionToPage(position));
+      return TopViewer.CurveTransformControl.mouseMove(this.transformPositionToPage(position));
     };
 
     RenderingControls.prototype.onMouseUp = function(position, button) {
       RenderingControls.__super__.onMouseUp.apply(this, arguments);
-      return this.gradientCurve.mouseUp(this.transformPositionToPage(position));
+      return TopViewer.CurveTransformControl.mouseUp(this.transformPositionToPage(position));
     };
 
     RenderingControls.prototype.transformPositionToPage = function(position) {

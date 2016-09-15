@@ -38,6 +38,14 @@ function ColorCurve(canvas, callback)
   this.lastUpdated = Date.now()
 }
 
+ColorCurve.prototype.setPoints = function(points) {
+  this.points = points;
+  this.updateValues();
+  this.draw();
+  this.redraw = 0;
+  this.lastUpdated = Date.now()
+}
+
 // Update the RGB array to fit the new curve values. Transform curve points to 0..255 values
 ColorCurve.prototype.updateValues = function() {
   'use strict';

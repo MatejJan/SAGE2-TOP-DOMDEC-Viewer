@@ -27,13 +27,17 @@
 ###
 
 class TopViewer.Model extends THREE.Object3D
-  # Create an empty scalar texture if there are no scalars.
+  # Create an empty scalar texture to be used when there are no scalars.
   @noScalarsTexture = new THREE.DataTexture new Float32Array(4096 * 4096), 4096, 4096, THREE.AlphaFormat, THREE.FloatType
   @noScalarsTexture.needsUpdate = true
 
-  # Create an empty displacement texture if there are no vectors.
+  # Create an empty displacement texture to be used when there are no vectors.
   @noDisplacementsTexture = new THREE.DataTexture new Float32Array(4096 * 4096 * 3), 4096, 4096, THREE.RGBFormat, THREE.FloatType
   @noDisplacementsTexture.needsUpdate = true
+
+  # Create an empty scalar texture to be used when there are no curves.
+  @noCurveTexture = new THREE.DataTexture new Float32Array(4096), 4096, 1, THREE.AlphaFormat, THREE.FloatType, THREE.UVMapping, THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter
+  @noCurveTexture.needsUpdate = true
 
   constructor: (@options) ->
     super
@@ -125,6 +129,9 @@ class TopViewer.Model extends THREE.Object3D
       # Add new frames to the existing scalar.
       for frame in scalar.frames
         @scalars[scalarName].frames.push frame
+
+      # Update the scalars histogram.
+      @scalars[scalarName].renderingControls.curveTransformControl.updateHistogram()
 
     else
       # This is a new scalar.
@@ -364,7 +371,7 @@ class TopViewer.Model extends THREE.Object3D
       wireframeMaterial.material.uniforms.opacity.value = wireframeMaterial.opacityControl.value
       wireframeMaterial.material.transparent = wireframeMaterial.material.uniforms.opacity.value isnt 1
 
-    # Extra setup for isoline materials.
+    # Extra setup for isovalue materials.
     for isovalueMaterial in isovalueMaterials
       # Isovalue scalar
       selectedScalar = isovalueMaterial.scalarControl.value
@@ -372,8 +379,9 @@ class TopViewer.Model extends THREE.Object3D
         scalarData = @scalars[scalar.scalarName]
         if scalarData is selectedScalar
           isovalueMaterial.material.uniforms.scalarsTexture.value = scalar.scalarFrame.texture
-          isovalueMaterial.material.uniforms.scalarsMin.value = scalarData.limits.minValue
-          isovalueMaterial.material.uniforms.scalarsRange.value = scalarData.limits.maxValue - scalarData.limits.minValue
+          isovalueMaterial.material.uniforms.scalarsCurveTexture.value = scalarData.renderingControls.curveTransformControl.curveTexture
+          isovalueMaterial.material.uniforms.scalarsMin.value = scalarData.renderingControls.curveTransformControl.clip.min
+          isovalueMaterial.material.uniforms.scalarsRange.value = scalarData.renderingControls.curveTransformControl.clip.max - scalarData.renderingControls.curveTransformControl.clip.min
 
       for scalar in nextFrame.scalars
         if @scalars[scalar.scalarName] is selectedScalar
@@ -406,8 +414,9 @@ class TopViewer.Model extends THREE.Object3D
       scalarData = @scalars[scalar.scalarName]
       if scalarData is selectedScalar
         material.uniforms.vertexScalarsTexture.value = scalar.scalarFrame.texture
-        material.uniforms.vertexScalarsMin.value = scalarData.limits.minValue
-        material.uniforms.vertexScalarsRange.value = scalarData.limits.maxValue - scalarData.limits.minValue
+        material.uniforms.vertexScalarsCurveTexture.value = scalarData.renderingControls.curveTransformControl.curveTexture
+        material.uniforms.vertexScalarsMin.value = scalarData.renderingControls.curveTransformControl.clip.min
+        material.uniforms.vertexScalarsRange.value = scalarData.renderingControls.curveTransformControl.clip.max - scalarData.renderingControls.curveTransformControl.clip.min
 
     for scalar in nextFrame.scalars
       if @scalars[scalar.scalarName] is selectedScalar

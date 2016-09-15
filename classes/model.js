@@ -40,6 +40,10 @@
 
     Model.noDisplacementsTexture.needsUpdate = true;
 
+    Model.noCurveTexture = new THREE.DataTexture(new Float32Array(4096), 4096, 1, THREE.AlphaFormat, THREE.FloatType, THREE.UVMapping, THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter);
+
+    Model.noCurveTexture.needsUpdate = true;
+
     function Model(options) {
       var height, i, j, k, l, ref;
       this.options = options;
@@ -119,6 +123,7 @@
           frame = ref[k];
           this.scalars[scalarName].frames.push(frame);
         }
+        this.scalars[scalarName].renderingControls.curveTransformControl.updateHistogram();
       } else {
         this.scalars[scalarName] = scalar;
         this.options.engine.renderingControls.addScalar(scalarName, scalar);
@@ -390,8 +395,9 @@
           scalarData = this.scalars[scalar.scalarName];
           if (scalarData === selectedScalar) {
             isovalueMaterial.material.uniforms.scalarsTexture.value = scalar.scalarFrame.texture;
-            isovalueMaterial.material.uniforms.scalarsMin.value = scalarData.limits.minValue;
-            isovalueMaterial.material.uniforms.scalarsRange.value = scalarData.limits.maxValue - scalarData.limits.minValue;
+            isovalueMaterial.material.uniforms.scalarsCurveTexture.value = scalarData.renderingControls.curveTransformControl.curveTexture;
+            isovalueMaterial.material.uniforms.scalarsMin.value = scalarData.renderingControls.curveTransformControl.clip.min;
+            isovalueMaterial.material.uniforms.scalarsRange.value = scalarData.renderingControls.curveTransformControl.clip.max - scalarData.renderingControls.curveTransformControl.clip.min;
           }
         }
         ref4 = nextFrame.scalars;
@@ -439,8 +445,9 @@
         scalarData = this.scalars[scalar.scalarName];
         if (scalarData === selectedScalar) {
           material.uniforms.vertexScalarsTexture.value = scalar.scalarFrame.texture;
-          material.uniforms.vertexScalarsMin.value = scalarData.limits.minValue;
-          material.uniforms.vertexScalarsRange.value = scalarData.limits.maxValue - scalarData.limits.minValue;
+          material.uniforms.vertexScalarsCurveTexture.value = scalarData.renderingControls.curveTransformControl.curveTexture;
+          material.uniforms.vertexScalarsMin.value = scalarData.renderingControls.curveTransformControl.clip.min;
+          material.uniforms.vertexScalarsRange.value = scalarData.renderingControls.curveTransformControl.clip.max - scalarData.renderingControls.curveTransformControl.clip.min;
         }
       }
       ref1 = nextFrame.scalars;

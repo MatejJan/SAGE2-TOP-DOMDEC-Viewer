@@ -18,10 +18,3 @@
   width: 100%;
   height: 1em;
 }
-.top-viewer .rendering-controls .gradient-curve {
-  padding: 0.5em;
-}
-.top-viewer .rendering-controls .gradient-curve canvas {
-  width: 10em;
-  height: 10em;
-}

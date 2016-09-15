@@ -78,9 +78,6 @@ class TopViewer.Engine
     @_frameTime = 0
     @_frameCount = 0
 
-    @gradientCurveData = new Float32Array 4096
-    @gradientCurveTexture = new THREE.DataTexture @gradientCurveData, 4096, 1, THREE.AlphaFormat, THREE.FloatType, THREE.UVMapping, THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter
-
   destroy: ->
     @scene.destroy()
     @playbackControls.destroy()
@@ -131,11 +128,7 @@ class TopViewer.Engine
     else if @activeControls is @cameraControls
       @cameraControls.update()
 
-    # Update gradient curve data.
-    unless @_gradientMapLastUpdate is @renderingControls.gradientCurve.lastUpdated
-      @_gradientMapLastUpdate = @renderingControls.gradientCurve.lastUpdated
-      @gradientCurveData[i] = @renderingControls.gradientCurve.getY(i/4096) for i in [0...4096]
-      @gradientCurveTexture.needsUpdate = true
+    TopViewer.CurveTransformControl.update()
 
     # Update lights.
     @scene.directionalLight.position.copy @renderingControls.lightingSetupControl.value.lightPosition

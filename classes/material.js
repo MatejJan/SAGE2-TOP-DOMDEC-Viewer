@@ -60,7 +60,7 @@
           value: 0
         },
         vertexScalarsCurveTexture: {
-          value: this.model.options.engine.gradientCurveTexture
+          value: TopViewer.Model.noCurveTexture
         },
         vertexScalarsGradientTexture: {
           value: this.model.options.engine.gradients[0].texture
@@ -119,7 +119,7 @@
           value: TopViewer.Model.noScalarsTexture
         },
         scalarsCurveTexture: {
-          value: this.model.options.engine.gradientCurveTexture
+          value: TopViewer.Model.noCurveTexture
         },
         scalarsMin: {
           value: 0

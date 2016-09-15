@@ -53,7 +53,7 @@ class TopViewer.VertexMaterial extends TopViewer.PositionsMaterial
         value: 0
 
       vertexScalarsCurveTexture:
-        value: @model.options.engine.gradientCurveTexture
+        value: TopViewer.Model.noCurveTexture
 
       vertexScalarsGradientTexture:
         value: @model.options.engine.gradients[0].texture
@@ -105,7 +105,7 @@ class TopViewer.IsovalueMaterial extends TopViewer.VertexMaterial
         value: TopViewer.Model.noScalarsTexture
 
       scalarsCurveTexture:
-        value: @model.options.engine.gradientCurveTexture
+        value: TopViewer.Model.noCurveTexture
 
       scalarsMin:
         value: 0

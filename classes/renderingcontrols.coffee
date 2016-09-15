@@ -306,6 +306,16 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
       onChange: (value) =>
         saveState.volumes.isosurfacesOpacity = value
 
+    # Scalars
+    @$scalarsArea = $("<ul class='scalars-area'></ul>")
+    new TopViewer.ToggleContainer @,
+      $parent: @$controls
+      text: "Scalars"
+      class: "panel"
+      visible: saveState.scalars.panelEnabled
+      $contents: @$scalarsArea
+      onChange: (value) =>
+        saveState.scalars.panelEnabled = value
 
     # TODO: OLD CONTROLS
 
@@ -336,22 +346,6 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
       $parent: $mainGeometryArea
       name: 'surface'
       value: true
-
-    @mainGeometrySurfaceDropdown = new TopViewer.DropdownControl @,
-      $parent: $mainGeometryArea
-      class: 'main-geometry-result-selector'
-      value: null
-      text: 'None'
-
-    @mainGeometrySurfaceDropdown.addValue 'None', null
-
-    $mainGeometryArea.append("""
-      <div class='gradient-curve'>
-        <canvas height='256' width='256'></canvas>
-      </div>
-    """)
-
-    @gradientCurve = new ColorCurve $mainGeometryArea.find('.gradient-curve canvas')[0]
 
     @mainGeometrySurfaceWireframeControl = new TopViewer.CheckboxControl @,
       $parent: $mainGeometryArea
@@ -422,10 +416,29 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
       $contents: $contents
 
   addScalar: (name, scalar) ->
+    console.log "Adding scalar", scalar
+    # Update scalar dropdowns.
     TopViewer.ScalarControl.addScalar name, scalar
 
-    @mainGeometrySurfaceDropdown.addValue name, scalar
-    @mainGeometrySurfaceDropdown.setValue scalar unless @mainGeometrySurfaceDropdown.value
+    $scalar = $("<li class='scalar'></li>")
+    @$scalarsArea.append($scalar)
+
+    $contents = $("<div>")
+
+    new TopViewer.ToggleContainer @,
+      $parent: $scalar
+      text: name
+      visible: true
+      $contents: $contents
+
+    # Add curve control for this scalar.
+    states = @options.engine.options.app.state.renderingControls.scalars
+
+    scalar.renderingControls =
+      curveTransformControl: new TopViewer.CurveTransformControl @,
+        $parent: $contents
+        saveState: TopViewer.SaveState.findStateForName states, name
+        scalar: scalar
 
   addVector: (name, vector) ->
     $vector = $("<li class='vector'></li>")
@@ -445,17 +458,17 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
   onMouseDown: (position, button) ->
     super
 
-    @gradientCurve.mouseDown @transformPositionToPage position
+    TopViewer.CurveTransformControl.mouseDown @transformPositionToPage position
 
   onMouseMove: (position) ->
     super
 
-    @gradientCurve.mouseMove @transformPositionToPage position
+    TopViewer.CurveTransformControl.mouseMove @transformPositionToPage position
 
   onMouseUp: (position, button) ->
     super
 
-    @gradientCurve.mouseUp @transformPositionToPage position
+    TopViewer.CurveTransformControl.mouseUp @transformPositionToPage position
 
   transformPositionToPage: (position) ->
     offset = @$appWindow.offset()

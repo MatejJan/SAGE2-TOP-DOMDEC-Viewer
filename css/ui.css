@@ -267,3 +267,28 @@
 .top-viewer .color-control .toggle-container .contents .color-sliders .slider-area .slider-control .slider {
   width: 6.5em;
 }
+.top-viewer .curve-transform-control {
+  padding: 0.5em;
+}
+.top-viewer .curve-transform-control .histogram-canvas {
+  width: 10em;
+  height: 2.5em;
+  border-bottom: rgba(255,255,255,0.2) solid 1px;
+  margin-bottom: 0.5em;
+}
+.top-viewer .curve-transform-control .curve-area {
+  position: relative;
+}
+.top-viewer .curve-transform-control .curve-area .curve-canvas {
+  position: relative;
+  z-index: 1;
+  width: 10em;
+  height: 10em;
+}
+.top-viewer .curve-transform-control .curve-area .spectrogram-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 10em;
+  height: 10em;
+}

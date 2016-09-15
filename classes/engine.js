@@ -57,8 +57,6 @@
       this.uiAreas.push(this.renderingControls);
       this._frameTime = 0;
       this._frameCount = 0;
-      this.gradientCurveData = new Float32Array(4096);
-      this.gradientCurveTexture = new THREE.DataTexture(this.gradientCurveData, 4096, 1, THREE.AlphaFormat, THREE.FloatType, THREE.UVMapping, THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter);
     }
 
     Engine.prototype.destroy = function() {
@@ -107,12 +105,12 @@
     };
 
     Engine.prototype.draw = function(elapsedTime) {
-      var frameIndex, frameProgress, frameTime, i, j, k, l, len, len1, model, nextFrameIndex, nextFrameTime, ref, ref1, ref2, ref3, uiArea;
+      var frameIndex, frameProgress, frameTime, i, j, len, len1, model, nextFrameIndex, nextFrameTime, ref, ref1, ref2, ref3, uiArea;
       this.uiControlsActive = false;
       this.rotateControls.update();
       ref = this.uiAreas;
-      for (j = 0, len = ref.length; j < len; j++) {
-        uiArea = ref[j];
+      for (i = 0, len = ref.length; i < len; i++) {
+        uiArea = ref[i];
         if (uiArea.rootControl.hover) {
           this.uiControlsActive = true;
         }
@@ -122,13 +120,7 @@
       } else if (this.activeControls === this.cameraControls) {
         this.cameraControls.update();
       }
-      if (this._gradientMapLastUpdate !== this.renderingControls.gradientCurve.lastUpdated) {
-        this._gradientMapLastUpdate = this.renderingControls.gradientCurve.lastUpdated;
-        for (i = k = 0; k < 4096; i = ++k) {
-          this.gradientCurveData[i] = this.renderingControls.gradientCurve.getY(i / 4096);
-        }
-        this.gradientCurveTexture.needsUpdate = true;
-      }
+      TopViewer.CurveTransformControl.update();
       this.scene.directionalLight.position.copy(this.renderingControls.lightingSetupControl.value.lightPosition);
       this.scene.ambientLight.intensity = this.renderingControls.ambientLevelControl.value;
       this.playbackControls.update(elapsedTime);
@@ -138,8 +130,8 @@
       nextFrameTime = (ref2 = this.animation.frameTimes[nextFrameIndex]) != null ? ref2 : -1;
       frameProgress = this.playbackControls.currentTime - this.playbackControls.currentFrameIndex;
       ref3 = this.scene.children;
-      for (l = 0, len1 = ref3.length; l < len1; l++) {
-        model = ref3[l];
+      for (j = 0, len1 = ref3.length; j < len1; j++) {
+        model = ref3[j];
         if (model instanceof TopViewer.Model) {
           model.showFrame(frameTime, nextFrameTime, frameProgress);
         }
@@ -170,60 +162,60 @@
     };
 
     Engine.prototype.onMouseDown = function(position, button) {
-      var j, len, ref, results, uiArea;
+      var i, len, ref, results, uiArea;
       if (!this.uiControlsActive) {
         this.activeControls.mouseDown(position.x, position.y, this.buttonIndexFromString(button));
       }
       this._updateSaveState();
       ref = this.uiAreas;
       results = [];
-      for (j = 0, len = ref.length; j < len; j++) {
-        uiArea = ref[j];
+      for (i = 0, len = ref.length; i < len; i++) {
+        uiArea = ref[i];
         results.push(uiArea.onMouseDown(position, button));
       }
       return results;
     };
 
     Engine.prototype.onMouseMove = function(position) {
-      var j, len, ref, results, uiArea;
+      var i, len, ref, results, uiArea;
       if (!this.uiControlsActive) {
         this.activeControls.mouseMove(position.x, position.y);
       }
       this._updateSaveState();
       ref = this.uiAreas;
       results = [];
-      for (j = 0, len = ref.length; j < len; j++) {
-        uiArea = ref[j];
+      for (i = 0, len = ref.length; i < len; i++) {
+        uiArea = ref[i];
         results.push(uiArea.onMouseMove(position));
       }
       return results;
     };
 
     Engine.prototype.onMouseUp = function(position, button) {
-      var j, len, ref, results, uiArea;
+      var i, len, ref, results, uiArea;
       if (!this.uiControlsActive) {
         this.activeControls.mouseUp(position.x, position.y, this.buttonIndexFromString(button));
       }
       this._updateSaveState();
       ref = this.uiAreas;
       results = [];
-      for (j = 0, len = ref.length; j < len; j++) {
-        uiArea = ref[j];
+      for (i = 0, len = ref.length; i < len; i++) {
+        uiArea = ref[i];
         results.push(uiArea.onMouseUp(position, button));
       }
       return results;
     };
 
     Engine.prototype.onMouseScroll = function(delta) {
-      var j, len, ref, results, uiArea;
+      var i, len, ref, results, uiArea;
       if (!this.uiControlsActive) {
         this.activeControls.scale(delta);
       }
       this._updateSaveState();
       ref = this.uiAreas;
       results = [];
-      for (j = 0, len = ref.length; j < len; j++) {
-        uiArea = ref[j];
+      for (i = 0, len = ref.length; i < len; i++) {
+        uiArea = ref[i];
         results.push(uiArea.onMouseScroll(delta));
       }
       return results;
