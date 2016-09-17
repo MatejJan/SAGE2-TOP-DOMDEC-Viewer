@@ -26,8 +26,6 @@ attribute vec2 vertexIndexCorner3;
 attribute vec2 vertexIndexCorner4;
 attribute float cornerIndex;
 
-const int isosurfaceCount = 3;
-
 #{THREE.ShaderChunk.shadowmap_pars_vertex}
 
 void main()	{

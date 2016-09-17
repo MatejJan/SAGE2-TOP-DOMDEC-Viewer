@@ -77,7 +77,6 @@ self.onmessage = (message) ->
         loadChunk()
 
       else
-        # Instruct the parser to complete when all parsing objects have returned.
         # console.log "Loading finished."
 
     # Initiate the request to load the chunk range.
@@ -139,7 +138,6 @@ class TopParser
       @lastLine = null
 
     lines = data.match /[^\r\n]+/g
-    #console.log "Parsing #{lines.length} lines.", @url
 
     # The last line in the new parse is complete if the data ended with a new line.
     lastLineIsComplete = false
@@ -273,8 +271,6 @@ class TopParser
           time: @currentFrameTime
           vectors: new Float32Array @currentFrameNodesCount * 3
 
-        @currentVector.frames.push @currentFrame
-
         @currentFrameNodeIndex = 0
 
       when @constructor.modes.Vector
@@ -284,6 +280,9 @@ class TopParser
         @currentFrameNodeIndex++
 
         if @currentFrameNodeIndex is @currentFrameNodesCount
+          # Add completed vector frame to frames.
+          @currentVector.frames.push @currentFrame
+
           @endVectorFrame()
           @currentMode = @constructor.modes.VectorTime
 
@@ -303,8 +302,6 @@ class TopParser
           minValue: null
           maxValue: null
 
-        @currentScalar.frames.push @currentFrame
-
         @currentFrameNodeIndex = 0
 
       when @constructor.modes.Scalar
@@ -316,6 +313,9 @@ class TopParser
         @currentFrameNodeIndex++
 
         if @currentFrameNodeIndex is @currentFrameNodesCount
+          # Add completed scalar frame to frames.
+          @currentScalar.frames.push @currentFrame
+
           @endScalarFrame()
           @currentMode = @constructor.modes.ScalarTime
 

@@ -83,6 +83,7 @@
       this.isolineMaterial = new TopViewer.IsolineMaterial(this);
       this.volumeWireframeMaterial = new TopViewer.WireframeMaterial(this);
       this.isosurfaceMaterial = new TopViewer.IsosurfaceMaterial(this);
+      this.fieldMaterial = new TopViewer.FieldMaterial(this);
       this.colorScalar = null;
       if (this.nodes.length) {
         this.options.engine.scene.addModel(this);
@@ -153,10 +154,16 @@
         ref = vector.frames;
         for (k = 0, len = ref.length; k < len; k++) {
           frame = ref[k];
-          this.vectors[vectorName].frames.push(frame);
+          this.vectors[vectorName].options.vector.frames.push(frame);
         }
       } else {
-        this.vectors[vectorName] = vector;
+        this.vectors[vectorName] = new TopViewer.Vector({
+          name: vectorName,
+          vector: vector,
+          model: this,
+          engine: this.options.engine
+        });
+        this.vectors[vectorName].frames = vector.frames;
         this.options.engine.renderingControls.addVector(vectorName, vector);
       }
       this._updateFrames();
@@ -250,7 +257,7 @@
     };
 
     Model.prototype.showFrame = function(frameTime, nextFrameTime, frameProgress) {
-      var collection, displacementsTexture, displacementsTextureNext, frame, frameIndex, isovalueMaterial, isovalueMaterials, k, l, len, len1, len2, len3, len4, len5, len6, len7, len8, m, material, n, name, nextFrame, o, object, p, positionMaterials, q, r, ref, ref1, ref2, ref3, ref4, ref5, renderingControls, results, s, scalar, scalarData, selectedScalar, surfaceMaterial, surfaceMaterials, t, testFrame, time, vector, wireframeMaterial, wireframeMaterials;
+      var collection, displacementsTexture, displacementsTextureNext, frame, frameIndex, isovalueMaterial, isovalueMaterials, k, l, len, len1, len10, len2, len3, len4, len5, len6, len7, len8, len9, m, material, n, name, nextFrame, o, object, p, positionMaterials, q, r, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, renderingControls, results, s, scalar, scalarData, selectedScalar, surfaceMaterial, surfaceMaterials, t, testFrame, time, u, v, vector, vectorTexture, vectorTextureNext, wireframeMaterial, wireframeMaterials;
       frame = null;
       nextFrame = null;
       for (frameIndex = k = 0, ref = this.frames.length; 0 <= ref ? k < ref : k > ref; frameIndex = 0 <= ref ? ++k : --k) {
@@ -271,7 +278,7 @@
         nextFrame = frame;
       }
       renderingControls = this.options.engine.renderingControls;
-      positionMaterials = [this.material, this.shadowMaterial, this.wireframeMaterial, this.volumeWireframeMaterial, this.isolineMaterial, this.isosurfaceMaterial];
+      positionMaterials = [this.material, this.shadowMaterial, this.wireframeMaterial, this.volumeWireframeMaterial, this.isolineMaterial, this.isosurfaceMaterial, this.fieldMaterial];
       surfaceMaterials = [
         {
           material: this.material,
@@ -292,6 +299,10 @@
           material: this.volumeWireframeMaterial,
           colorsControl: renderingControls.volumesWireframeColorsControl,
           opacityControl: renderingControls.volumesWireframeOpacityControl
+        }, {
+          material: this.fieldMaterial,
+          colorsControl: renderingControls.vectorsFieldColorsControl,
+          opacityControl: renderingControls.vectorsFieldOpacityControl
         }
       ];
       isovalueMaterials = [
@@ -335,14 +346,14 @@
       ref1 = frame.vectors;
       for (l = 0, len = ref1.length; l < len; l++) {
         vector = ref1[l];
-        if (this.vectors[vector.vectorName] === renderingControls.displacementDropdown.value) {
+        if (this.vectors[vector.vectorName].options.vector === renderingControls.vectorsDisplacementVectorControl.value) {
           displacementsTexture = vector.vectorFrame.texture;
         }
       }
       ref2 = nextFrame.vectors;
       for (m = 0, len1 = ref2.length; m < len1; m++) {
         vector = ref2[m];
-        if (this.vectors[vector.vectorName] === renderingControls.displacementDropdown.value) {
+        if (this.vectors[vector.vectorName].options.vector === renderingControls.vectorsDisplacementVectorControl.value) {
           displacementsTextureNext = vector.vectorFrame.texture;
         }
       }
@@ -351,7 +362,7 @@
         material.uniforms.frameProgress.value = frameProgress;
         material.uniforms.displacementsTexture.value = displacementsTexture;
         material.uniforms.displacementsTextureNext.value = displacementsTextureNext;
-        material.uniforms.displacementFactor.value = renderingControls.displacementFactor.value;
+        material.uniforms.displacementFactor.value = renderingControls.vectorsDisplacementFactorControl.value;
         time = performance.now() / 1000;
         material.uniforms.time.value = time;
       }
@@ -398,6 +409,7 @@
             isovalueMaterial.material.uniforms.scalarsCurveTexture.value = scalarData.renderingControls.curveTransformControl.curveTexture;
             isovalueMaterial.material.uniforms.scalarsMin.value = scalarData.renderingControls.curveTransformControl.clip.min;
             isovalueMaterial.material.uniforms.scalarsRange.value = scalarData.renderingControls.curveTransformControl.clip.max - scalarData.renderingControls.curveTransformControl.clip.min;
+            isovalueMaterial.material.uniforms.isovalues.value = scalarData.renderingControls.curveTransformControl.isovaluesControl.value;
           }
         }
         ref4 = nextFrame.scalars;
@@ -420,10 +432,31 @@
         isovalueMaterial.material.uniforms.opacity.value = isovalueMaterial.opacityControl.value;
         isovalueMaterial.material.transparent = isovalueMaterial.material.uniforms.opacity.value !== 1;
       }
-      ref5 = [this.meshes, this.volumes];
-      results = [];
+      this.isosurfaceMaterial.uniforms.lightingBidirectional.value = 1;
+      this.fieldMaterial.uniforms.unitLength.value = renderingControls.vectorsFieldLengthControl.value;
+      vectorTexture = this.constructor.noDisplacementsTexture;
+      vectorTextureNext = this.constructor.noDisplacementsTexture;
+      ref5 = frame.vectors;
       for (t = 0, len8 = ref5.length; t < len8; t++) {
-        collection = ref5[t];
+        vector = ref5[t];
+        if (this.vectors[vector.vectorName].options.vector === renderingControls.vectorsFieldVectorControl.value) {
+          vectorTexture = vector.vectorFrame.texture;
+        }
+      }
+      ref6 = nextFrame.vectors;
+      for (u = 0, len9 = ref6.length; u < len9; u++) {
+        vector = ref6[u];
+        if (this.vectors[vector.vectorName].options.vector === renderingControls.vectorsFieldVectorControl.value) {
+          vectorTextureNext = vector.vectorFrame.texture;
+        }
+      }
+      this.fieldMaterial.uniforms.vectorTexture.value = vectorTexture;
+      this.fieldMaterial.uniforms.vectorTextureNext.value = vectorTextureNext;
+      this.fieldMaterial.transparent = true;
+      ref7 = [this.meshes, this.volumes, this.vectors];
+      results = [];
+      for (v = 0, len10 = ref7.length; v < len10; v++) {
+        collection = ref7[v];
         results.push((function() {
           var results1;
           results1 = [];

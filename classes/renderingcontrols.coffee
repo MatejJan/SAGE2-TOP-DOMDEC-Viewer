@@ -116,6 +116,7 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
       onChange: (value) =>
         gradientPreviewImage.src = value.url
         saveState.gradient.name = value.name
+        TopViewer.CurveTransformControl.drawSpectrogram()
 
     for gradient in @options.engine.gradients
       @gradientControl.addValue gradient.name, gradient
@@ -236,6 +237,11 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
       onChange: (value) =>
         saveState.meshes.isolinesOpacity = value
 
+    # Individual meshes
+
+    @$meshes = $("<ul class='meshes sub-panel'></ul>")
+    $meshesArea.append(@$meshes)
+
     # Volumes
 
     $volumesArea = $("<div class='volumes-area'></div>")
@@ -307,6 +313,7 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
         saveState.volumes.isosurfacesOpacity = value
 
     # Scalars
+    
     @$scalarsArea = $("<ul class='scalars-area'></ul>")
     new TopViewer.ToggleContainer @,
       $parent: @$controls
@@ -317,50 +324,70 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
       onChange: (value) =>
         saveState.scalars.panelEnabled = value
 
-    # TODO: OLD CONTROLS
+    # Vectors
 
-    $displacementArea = $("<div class='displacement-area panel'><div class='title'>Displacement</div></div>")
-    @$controls.append $displacementArea
+    @$vectorsArea = $("<div class='vectors-area'></div>")
+    new TopViewer.ToggleContainer @,
+      $parent: @$controls
+      text: "Vectors"
+      class: "panel"
+      visible: saveState.vectors.panelEnabled
+      $contents: @$vectorsArea
+      onChange: (value) =>
+        saveState.vectors.panelEnabled = value
 
-    @displacementDropdown = new TopViewer.DropdownControl @,
-      $parent: $displacementArea
-      class: 'displacement-selector'
-      value: null
-      text: 'None'
+    @$vectorsDisplacementArea = $("<div class='vectors-displacement-area sub-panel'><div class='title'>Displacement</div></div>")
+    @$vectorsArea.append(@$vectorsDisplacementArea)
 
-    @displacementDropdown.addValue 'None', null
+    @vectorsDisplacementVectorControl = new TopViewer.VectorControl @,
+      $parent: @$vectorsDisplacementArea
+      saveState: saveState.vectors.displacementVector
 
-    @displacementFactor = new TopViewer.SliderControl @,
-      $parent: $displacementArea
-      class: 'displacement-factor'
+    @$vectorsDisplacementArea.append("<p class='label'>Amplification</p>")
+    @vectorsDisplacementFactorControl = new TopViewer.SliderControl @,
+      $parent: @$vectorsDisplacementArea
+      class: 'vectors-displacement-factor'
       minimumValue: 0
       maximumValue: 100
       power: 4
-      value: 1
       decimals: -2
+      value: saveState.vectors.displacementFactor
+      onChange: (value) =>
+        saveState.displacementFactor = value
 
-    $mainGeometryArea = $("<div class='main-geometry-area panel'><div class='title'>Main Geometry</div></div>")
-    @$controls.append $mainGeometryArea
+    @$vectorsFieldArea = $("<div class='vectors-field-area sub-panel'><div class='title'>Vector field</div></div>")
+    @$vectorsArea.append(@$vectorsFieldArea)
 
-    @mainGeometrySurfaceControl = new TopViewer.CheckboxControl @,
-      $parent: $mainGeometryArea
-      name: 'surface'
-      value: true
+    @vectorsFieldVectorControl = new TopViewer.VectorControl @,
+      $parent: @$vectorsFieldArea
+      saveState: saveState.vectors.fieldVector
 
-    @mainGeometrySurfaceWireframeControl = new TopViewer.CheckboxControl @,
-      $parent: $mainGeometryArea
-      name: 'wireframe'
-      value: false
+    @$vectorsFieldArea.append("<p class='label'>Unit length</p>")
+    @vectorsFieldLengthControl = new TopViewer.SliderControl @,
+      $parent: @$vectorsFieldArea
+      class: 'vectors-field-length'
+      minimumValue: 0
+      maximumValue: 2
+      power: 4
+      decimals: -4
+      value: saveState.vectors.fieldLength
+      onChange: (value) =>
+        saveState.vectors.fieldLength = value
 
-    @$controls.append("<hr/>")
+    @vectorsFieldColorsControl = new TopViewer.VertexColorsControl @,
+      $parent: @$vectorsFieldArea
+      class: 'vectors-field-colors-selector'
+      saveState: saveState.vectors.fieldColors
 
-    @$meshes = $("<ul class='meshes'></ul>")
-    @$controls.append(@$meshes)
-
-    @$controls.append("<hr/>")
-
-    @$vectors = $("<ul class='vectors'></ul>")
-    @$controls.append(@$vectors)
+    @$vectorsFieldArea.append("<p class='label'>Opacity</p>")
+    @vectorsFieldOpacityControl = new TopViewer.SliderControl @,
+      $parent: @$vectorsFieldArea
+      minimumValue: 0
+      maximumValue: 1
+      value: saveState.vectors.fieldOpacity
+      decimals: -2
+      onChange: (value) =>
+        saveState.vectors.fieldOpacity = value
 
     @initialize()
 
@@ -416,9 +443,8 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
       $contents: $contents
 
   addScalar: (name, scalar) ->
-    console.log "Adding scalar", scalar
     # Update scalar dropdowns.
-    TopViewer.ScalarControl.addScalar name, scalar
+    TopViewer.ScalarControl.addResults name, scalar
 
     $scalar = $("<li class='scalar'></li>")
     @$scalarsArea.append($scalar)
@@ -439,21 +465,11 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
         $parent: $contents
         saveState: TopViewer.SaveState.findStateForName states, name
         scalar: scalar
+        gradientControl: @gradientControl
 
   addVector: (name, vector) ->
-    $vector = $("<li class='vector'></li>")
-    @$vectors.append($vector)
-
-    $contents = $("<div>")
-
-    new TopViewer.ToggleContainer @,
-      $parent: $vector
-      text: name
-      visible: false
-      $contents: $contents
-
-    @displacementDropdown.addValue name, vector
-    @displacementDropdown.setValue vector if name.toLowerCase().indexOf('disp') > -1
+    # Update vector dropdowns.
+    TopViewer.VectorControl.addResults name, vector
 
   onMouseDown: (position, button) ->
     super

@@ -92,6 +92,8 @@ uniform sampler2D scalarsTextureNext;
 uniform sampler2D scalarsCurveTexture;
 uniform float scalarsMin;
 uniform float scalarsRange;
+uniform int isovalues;
+const int maxIsovalues = 9;
 """
 
   @isovalueMaterialVertexSetup: (vertexCount) ->
@@ -141,10 +143,12 @@ uniform float scalarsRange;
 
   @isovalueMaterialIsovalueIteration: (vertexCount) ->
     """
-    // Distribute n isovalues evenly in the range between 0 and 1, where n is isosurfaceCount.
-    float isovalueStep = 1.0 / float(isosurfaceCount + 1);
+    // Distribute n isovalues evenly in the range between 0 and 1.
+    float isovalueStep = 1.0 / float(isovalues + 1);
 
-    for (int isosurfaceIndex=0; isosurfaceIndex < isosurfaceCount; isosurfaceIndex++) {
+    for (int isosurfaceIndex=0; isosurfaceIndex < maxIsovalues; isosurfaceIndex++) {
+      if (isosurfaceIndex >= isovalues) break;
+
       float isovalue = isovalueStep * float(isosurfaceIndex + 1);
 
       // Calculate how many vertices have their curved scalar above the isovalue.

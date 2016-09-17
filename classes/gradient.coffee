@@ -17,3 +17,13 @@ class TopViewer.Gradient
 
     # Initiate loading.
     @image.src = @url
+
+  colorAtPercentage: (percentage) ->
+    pixelIndex = Math.floor 1024 * percentage
+    pixelIndex = Math.max 0, Math.min 1023, pixelIndex
+    index = pixelIndex * 4
+
+    r: @data[index]
+    g: @data[index+1]
+    b: @data[index+2]
+    a: @data[index+3]

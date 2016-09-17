@@ -113,4 +113,7 @@ class TopViewer.IsovalueMaterial extends TopViewer.VertexMaterial
       scalarsRange:
         value: 0
 
+      isovalues:
+        value: 5
+
     super @model, options

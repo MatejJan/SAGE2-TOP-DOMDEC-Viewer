@@ -90,6 +90,8 @@ class TopViewer.Model extends THREE.Object3D
     @volumeWireframeMaterial = new TopViewer.WireframeMaterial @
     @isosurfaceMaterial = new TopViewer.IsosurfaceMaterial @
 
+    @fieldMaterial = new TopViewer.FieldMaterial @
+
     @colorScalar = null
 
     # Add the model to the scene.
@@ -157,11 +159,17 @@ class TopViewer.Model extends THREE.Object3D
     if @vectors[vectorName]
       # Add new frames to the existing vector.
       for frame in vector.frames
-        @vectors[vectorName].frames.push frame
+        @vectors[vectorName].options.vector.frames.push frame
 
     else
       # This is a new vector.
-      @vectors[vectorName] = vector
+      @vectors[vectorName] = new TopViewer.Vector
+        name: vectorName
+        vector: vector
+        model: @
+        engine: @options.engine
+
+      @vectors[vectorName].frames = vector.frames
 
       # Add vector to controls.
       @options.engine.renderingControls.addVector vectorName, vector
@@ -241,7 +249,7 @@ class TopViewer.Model extends THREE.Object3D
 
     renderingControls = @options.engine.renderingControls
 
-    positionMaterials = [@material, @shadowMaterial, @wireframeMaterial, @volumeWireframeMaterial, @isolineMaterial, @isosurfaceMaterial]
+    positionMaterials = [@material, @shadowMaterial, @wireframeMaterial, @volumeWireframeMaterial, @isolineMaterial, @isosurfaceMaterial, @fieldMaterial]
 
     surfaceMaterials = [
       material: @material
@@ -261,6 +269,10 @@ class TopViewer.Model extends THREE.Object3D
       material: @volumeWireframeMaterial
       colorsControl: renderingControls.volumesWireframeColorsControl
       opacityControl: renderingControls.volumesWireframeOpacityControl
+    ,
+      material: @fieldMaterial
+      colorsControl: renderingControls.vectorsFieldColorsControl
+      opacityControl: renderingControls.vectorsFieldOpacityControl
     ]
 
     isovalueMaterials = [
@@ -307,11 +319,11 @@ class TopViewer.Model extends THREE.Object3D
     displacementsTextureNext = @constructor.noDisplacementsTexture
 
     for vector in frame.vectors
-      if @vectors[vector.vectorName] is renderingControls.displacementDropdown.value
+      if @vectors[vector.vectorName].options.vector is renderingControls.vectorsDisplacementVectorControl.value
         displacementsTexture = vector.vectorFrame.texture
 
     for vector in nextFrame.vectors
-      if @vectors[vector.vectorName] is renderingControls.displacementDropdown.value
+      if @vectors[vector.vectorName].options.vector is renderingControls.vectorsDisplacementVectorControl.value
         displacementsTextureNext = vector.vectorFrame.texture
 
     # Setup all materials.
@@ -322,7 +334,7 @@ class TopViewer.Model extends THREE.Object3D
       # Positions
       material.uniforms.displacementsTexture.value = displacementsTexture
       material.uniforms.displacementsTextureNext.value = displacementsTextureNext
-      material.uniforms.displacementFactor.value = renderingControls.displacementFactor.value
+      material.uniforms.displacementFactor.value = renderingControls.vectorsDisplacementFactorControl.value
 
       # Time
       time = performance.now() / 1000
@@ -382,6 +394,7 @@ class TopViewer.Model extends THREE.Object3D
           isovalueMaterial.material.uniforms.scalarsCurveTexture.value = scalarData.renderingControls.curveTransformControl.curveTexture
           isovalueMaterial.material.uniforms.scalarsMin.value = scalarData.renderingControls.curveTransformControl.clip.min
           isovalueMaterial.material.uniforms.scalarsRange.value = scalarData.renderingControls.curveTransformControl.clip.max - scalarData.renderingControls.curveTransformControl.clip.min
+          isovalueMaterial.material.uniforms.isovalues.value = scalarData.renderingControls.curveTransformControl.isovaluesControl.value
 
       for scalar in nextFrame.scalars
         if @scalars[scalar.scalarName] is selectedScalar
@@ -404,8 +417,33 @@ class TopViewer.Model extends THREE.Object3D
       isovalueMaterial.material.uniforms.opacity.value = isovalueMaterial.opacityControl.value
       isovalueMaterial.material.transparent = isovalueMaterial.material.uniforms.opacity.value isnt 1
 
+    # Override isosurface material to always have bidirectional lighting, because normals get
+    # arbitrary positioned and there is no real meaning/consistency to the lighting.
+    @isosurfaceMaterial.uniforms.lightingBidirectional.value = 1
+
+    # Set field material unit length.
+    @fieldMaterial.uniforms.unitLength.value = renderingControls.vectorsFieldLengthControl.value
+
+    # Determine field vector.
+    vectorTexture = @constructor.noDisplacementsTexture
+    vectorTextureNext = @constructor.noDisplacementsTexture
+
+    for vector in frame.vectors
+      if @vectors[vector.vectorName].options.vector is renderingControls.vectorsFieldVectorControl.value
+        vectorTexture = vector.vectorFrame.texture
+
+    for vector in nextFrame.vectors
+      if @vectors[vector.vectorName].options.vector is renderingControls.vectorsFieldVectorControl.value
+        vectorTextureNext = vector.vectorFrame.texture
+
+    @fieldMaterial.uniforms.vectorTexture.value = vectorTexture
+    @fieldMaterial.uniforms.vectorTextureNext.value = vectorTextureNext
+
+    # Override field material to be always transparent.
+    @fieldMaterial.transparent = true
+
     # Display all objects.
-    for collection in [@meshes, @volumes]
+    for collection in [@meshes, @volumes, @vectors]
       for name, object of collection
         object.showFrame()
 

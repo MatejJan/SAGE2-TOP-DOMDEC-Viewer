@@ -16,8 +16,6 @@ attribute vec2 vertexIndexCorner2;
 attribute vec2 vertexIndexCorner3;
 attribute float cornerIndex;
 
-const int isosurfaceCount = 3;
-
 void main()	{
   if (scalarsRange > 0.0) {
     #{TopViewer.ShaderChunks.isovalueMaterialVertexSetup 3}

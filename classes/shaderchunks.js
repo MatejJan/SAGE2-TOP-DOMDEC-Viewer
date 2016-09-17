@@ -21,7 +21,7 @@
 
     ShaderChunks.surfaceMaterialFragment = "uniform float lightingBidirectional;\nvarying vec3 normalEye;";
 
-    ShaderChunks.isovalueMaterialVertex = "uniform sampler2D scalarsTexture;\nuniform sampler2D scalarsTextureNext;\nuniform sampler2D scalarsCurveTexture;\nuniform float scalarsMin;\nuniform float scalarsRange;";
+    ShaderChunks.isovalueMaterialVertex = "uniform sampler2D scalarsTexture;\nuniform sampler2D scalarsTextureNext;\nuniform sampler2D scalarsCurveTexture;\nuniform float scalarsMin;\nuniform float scalarsRange;\nuniform int isovalues;\nconst int maxIsovalues = 9;";
 
     ShaderChunks.isovalueMaterialVertexSetup = function(vertexCount) {
       var i;
@@ -36,7 +36,7 @@
     };
 
     ShaderChunks.isovalueMaterialIsovalueIteration = function(vertexCount) {
-      return "// Distribute n isovalues evenly in the range between 0 and 1, where n is isosurfaceCount.\nfloat isovalueStep = 1.0 / float(isosurfaceCount + 1);\n\nfor (int isosurfaceIndex=0; isosurfaceIndex < isosurfaceCount; isosurfaceIndex++) {\n  float isovalue = isovalueStep * float(isosurfaceIndex + 1);\n\n  // Calculate how many vertices have their curved scalar above the isovalue.\n  bool above[" + vertexCount + "];\n  int aboveCount = 0;\n\n  for (int i=0; i<" + vertexCount + "; i++) {\n    above[i] = curvedScalars[i] > isovalue;\n    if (above[i]) aboveCount++;\n  }";
+      return "// Distribute n isovalues evenly in the range between 0 and 1.\nfloat isovalueStep = 1.0 / float(isovalues + 1);\n\nfor (int isosurfaceIndex=0; isosurfaceIndex < maxIsovalues; isosurfaceIndex++) {\n  if (isosurfaceIndex >= isovalues) break;\n\n  float isovalue = isovalueStep * float(isosurfaceIndex + 1);\n\n  // Calculate how many vertices have their curved scalar above the isovalue.\n  bool above[" + vertexCount + "];\n  int aboveCount = 0;\n\n  for (int i=0; i<" + vertexCount + "; i++) {\n    above[i] = curvedScalars[i] > isovalue;\n    if (above[i]) aboveCount++;\n  }";
     };
 
     return ShaderChunks;

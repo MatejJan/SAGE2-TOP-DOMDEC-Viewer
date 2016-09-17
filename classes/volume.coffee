@@ -79,9 +79,9 @@ class TopViewer.Volume
     # Finish creating geometry.
     @_updateGeometry()
 
-    # Add the meshes to the model.
-    @options.model.add @wireframeMesh
+    # Add the meshes to the model. Add wireframe last for better draw order when both are transparent.
     @options.model.add @isosurfacesMesh
+    @options.model.add @wireframeMesh
 
     # Add the mesh to rendering controls.
     @options.engine.renderingControls.addVolume @options.name, @

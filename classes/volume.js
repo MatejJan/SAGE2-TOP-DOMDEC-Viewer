@@ -73,8 +73,8 @@
       isosurfacesGeometry.addAttribute("cornerIndex", isosurfacesCornerIndexAttribute);
       isosurfacesGeometry.drawRange.count = tetraCount * 6;
       this._updateGeometry();
-      this.options.model.add(this.wireframeMesh);
       this.options.model.add(this.isosurfacesMesh);
+      this.options.model.add(this.wireframeMesh);
       this.options.engine.renderingControls.addVolume(this.options.name, this);
     }
 

@@ -283,15 +283,28 @@
                 width 6.5em
 
   .curve-transform-control
+    position relative
     padding 0.5em
 
     .histogram-canvas
       width 10em
       height 2.5em
-      border-bottom rgba(255,255,255,0.2) solid 1px
+      border rgba(255,255,255,0.2) solid 1px
       margin-bottom 0.5em
 
+    .isovalues-slider-area
+      position absolute
+      top 1.2em
+      left 11em
+
+      .slider-control
+        padding 0
+
+        .slider
+          width 6em
+
     .curve-area
+      display inline-block
       position relative
 
       .curve-canvas
@@ -299,6 +312,7 @@
         z-index 1
         width 10em
         height 10em
+        border rgba(255,255,255,0.2) solid 1px
 
       .spectrogram-canvas
         position absolute
@@ -306,3 +320,8 @@
         top 0
         width 10em
         height 10em
+
+    .isovalues-canvas
+      width 6em
+      height 10em
+      margin-left 0.5em

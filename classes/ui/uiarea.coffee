@@ -9,6 +9,7 @@ class TopViewer.UIArea
     @$rootElement = null
 
     @_throttledMouseMoveHandler = _.throttle @_mouseMoveHandler, 100
+    @_throttledInitialize = _.throttle @initialize, 100, leading: false
 
   destroy: ->
     @$appWindow = null
@@ -19,7 +20,7 @@ class TopViewer.UIArea
     @_controls.push control
 
     # We need to reinitialize any time new controls are added after the first initialization.
-    @initialize() if @_initialized
+    @_throttledInitialize() if @_initialized
 
   # This must be called at the end of the constructor in the inherited UI area.
   initialize: ->
@@ -33,42 +34,56 @@ class TopViewer.UIArea
       # We start by creating an ordered list of all the elements, which we'll later filter to just the controls.
       sortedElements = []
 
-      addElements = ($element) =>
-        # When we have children, they should be sorted by z-index.
+      addElements = ($element, elements) =>
+        zIndexString = $element.css('z-index')
+        zIndex = if zIndexString is 'auto' then 0 else parseInt zIndexString
+
+        newElements = null
+
+        # Let's see if we create a stacking context.
+        if zIndexString isnt 'auto'
+          # Start a new array of elements.
+          newElements = []
+
+        # Add all the children, either to same context or the new one.
         children = $element.children().toArray()
 
-        if children
-          children = for child in children
-            $child = $(child)
-            zIndex = $child.css('z-index')
+        if children.length
+          addElements $(child), newElements or elements for child in children
 
-            if zIndex is 'auto'
-              zIndex = 0
+        # Create this elements entry.
+        element =
+          $element: $element
+          zIndex: zIndex
 
-            else
-              zIndex = parseInt zIndex
+        element.children = newElements if newElements?.length
 
-            zIndex: zIndex
-            element: $child
-
-          children.sort (a, b) =>
-            b.zIndex - a.zIndex
-
-          # Now the elements get added from top-one down.
-          addElements child.element for child in children
-
-        # Finally add the element itself as well.
-        sortedElements.push $element
+        # Add the element.
+        elements.push element
 
       # Recursively add all elements in the UI area.
-      addElements @$rootElement
+      addElements @$rootElement, sortedElements
+
+      # Sort all of the stacking contexts.
+      sortContext = (elements) =>
+        elements.sort (a, b) =>
+          b.zIndex - a.zIndex
+
+        # Also stack all sub-contexts.
+        sortContext element.element for element in elements when _.isArray element.element
 
       # Now filter this down to controls.
       @_sortedControls = []
 
-      for $element in sortedElements
-        control = $element.data('control')
-        @_sortedControls.push control if control
+      addControls = (elements) =>
+        for element in elements
+          if _.isArray element.children
+            addControls element.children
+
+          control = element.$element.data('control')
+          @_sortedControls.push control if control
+
+      addControls sortedElements
     ,
       0
 

@@ -20,7 +20,7 @@
     };
 
     function RenderingControls(options) {
-      var $displacementArea, $gradientArea, $gradientPreview, $lightingArea, $mainGeometryArea, $meshesArea, $meshesIsolinesArea, $meshesSurfaceArea, $meshesWireframeArea, $volumesArea, $volumesIsosurfacesArea, $volumesWireframeArea, customLight, found, gradient, gradientPreviewImage, i, j, len, len1, lightingPreset, ref, ref1, saveState, scrollOffset;
+      var $gradientArea, $gradientPreview, $lightingArea, $meshesArea, $meshesIsolinesArea, $meshesSurfaceArea, $meshesWireframeArea, $volumesArea, $volumesIsosurfacesArea, $volumesWireframeArea, customLight, found, gradient, gradientPreviewImage, i, j, len, len1, lightingPreset, ref, ref1, saveState, scrollOffset;
       this.options = options;
       RenderingControls.__super__.constructor.apply(this, arguments);
       saveState = this.options.engine.options.app.state.renderingControls;
@@ -135,7 +135,8 @@
         onChange: (function(_this) {
           return function(value) {
             gradientPreviewImage.src = value.url;
-            return saveState.gradient.name = value.name;
+            saveState.gradient.name = value.name;
+            return TopViewer.CurveTransformControl.drawSpectrogram();
           };
         })(this)
       });
@@ -273,6 +274,8 @@
           };
         })(this)
       });
+      this.$meshes = $("<ul class='meshes sub-panel'></ul>");
+      $meshesArea.append(this.$meshes);
       $volumesArea = $("<div class='volumes-area'></div>");
       new TopViewer.ToggleContainer(this, {
         $parent: this.$controls,
@@ -363,42 +366,79 @@
           };
         })(this)
       });
-      $displacementArea = $("<div class='displacement-area panel'><div class='title'>Displacement</div></div>");
-      this.$controls.append($displacementArea);
-      this.displacementDropdown = new TopViewer.DropdownControl(this, {
-        $parent: $displacementArea,
-        "class": 'displacement-selector',
-        value: null,
-        text: 'None'
+      this.$vectorsArea = $("<div class='vectors-area'></div>");
+      new TopViewer.ToggleContainer(this, {
+        $parent: this.$controls,
+        text: "Vectors",
+        "class": "panel",
+        visible: saveState.vectors.panelEnabled,
+        $contents: this.$vectorsArea,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.vectors.panelEnabled = value;
+          };
+        })(this)
       });
-      this.displacementDropdown.addValue('None', null);
-      this.displacementFactor = new TopViewer.SliderControl(this, {
-        $parent: $displacementArea,
-        "class": 'displacement-factor',
+      this.$vectorsDisplacementArea = $("<div class='vectors-displacement-area sub-panel'><div class='title'>Displacement</div></div>");
+      this.$vectorsArea.append(this.$vectorsDisplacementArea);
+      this.vectorsDisplacementVectorControl = new TopViewer.VectorControl(this, {
+        $parent: this.$vectorsDisplacementArea,
+        saveState: saveState.vectors.displacementVector
+      });
+      this.$vectorsDisplacementArea.append("<p class='label'>Amplification</p>");
+      this.vectorsDisplacementFactorControl = new TopViewer.SliderControl(this, {
+        $parent: this.$vectorsDisplacementArea,
+        "class": 'vectors-displacement-factor',
         minimumValue: 0,
         maximumValue: 100,
         power: 4,
-        value: 1,
-        decimals: -2
+        decimals: -2,
+        value: saveState.vectors.displacementFactor,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.displacementFactor = value;
+          };
+        })(this)
       });
-      $mainGeometryArea = $("<div class='main-geometry-area panel'><div class='title'>Main Geometry</div></div>");
-      this.$controls.append($mainGeometryArea);
-      this.mainGeometrySurfaceControl = new TopViewer.CheckboxControl(this, {
-        $parent: $mainGeometryArea,
-        name: 'surface',
-        value: true
+      this.$vectorsFieldArea = $("<div class='vectors-field-area sub-panel'><div class='title'>Vector field</div></div>");
+      this.$vectorsArea.append(this.$vectorsFieldArea);
+      this.vectorsFieldVectorControl = new TopViewer.VectorControl(this, {
+        $parent: this.$vectorsFieldArea,
+        saveState: saveState.vectors.fieldVector
       });
-      this.mainGeometrySurfaceWireframeControl = new TopViewer.CheckboxControl(this, {
-        $parent: $mainGeometryArea,
-        name: 'wireframe',
-        value: false
+      this.$vectorsFieldArea.append("<p class='label'>Unit length</p>");
+      this.vectorsFieldLengthControl = new TopViewer.SliderControl(this, {
+        $parent: this.$vectorsFieldArea,
+        "class": 'vectors-field-length',
+        minimumValue: 0,
+        maximumValue: 2,
+        power: 4,
+        decimals: -4,
+        value: saveState.vectors.fieldLength,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.vectors.fieldLength = value;
+          };
+        })(this)
       });
-      this.$controls.append("<hr/>");
-      this.$meshes = $("<ul class='meshes'></ul>");
-      this.$controls.append(this.$meshes);
-      this.$controls.append("<hr/>");
-      this.$vectors = $("<ul class='vectors'></ul>");
-      this.$controls.append(this.$vectors);
+      this.vectorsFieldColorsControl = new TopViewer.VertexColorsControl(this, {
+        $parent: this.$vectorsFieldArea,
+        "class": 'vectors-field-colors-selector',
+        saveState: saveState.vectors.fieldColors
+      });
+      this.$vectorsFieldArea.append("<p class='label'>Opacity</p>");
+      this.vectorsFieldOpacityControl = new TopViewer.SliderControl(this, {
+        $parent: this.$vectorsFieldArea,
+        minimumValue: 0,
+        maximumValue: 1,
+        value: saveState.vectors.fieldOpacity,
+        decimals: -2,
+        onChange: (function(_this) {
+          return function(value) {
+            return saveState.vectors.fieldOpacity = value;
+          };
+        })(this)
+      });
       this.initialize();
     }
 
@@ -459,8 +499,7 @@
 
     RenderingControls.prototype.addScalar = function(name, scalar) {
       var $contents, $scalar, states;
-      console.log("Adding scalar", scalar);
-      TopViewer.ScalarControl.addScalar(name, scalar);
+      TopViewer.ScalarControl.addResults(name, scalar);
       $scalar = $("<li class='scalar'></li>");
       this.$scalarsArea.append($scalar);
       $contents = $("<div>");
@@ -475,26 +514,14 @@
         curveTransformControl: new TopViewer.CurveTransformControl(this, {
           $parent: $contents,
           saveState: TopViewer.SaveState.findStateForName(states, name),
-          scalar: scalar
+          scalar: scalar,
+          gradientControl: this.gradientControl
         })
       };
     };
 
     RenderingControls.prototype.addVector = function(name, vector) {
-      var $contents, $vector;
-      $vector = $("<li class='vector'></li>");
-      this.$vectors.append($vector);
-      $contents = $("<div>");
-      new TopViewer.ToggleContainer(this, {
-        $parent: $vector,
-        text: name,
-        visible: false,
-        $contents: $contents
-      });
-      this.displacementDropdown.addValue(name, vector);
-      if (name.toLowerCase().indexOf('disp') > -1) {
-        return this.displacementDropdown.setValue(vector);
-      }
+      return TopViewer.VectorControl.addResults(name, vector);
     };
 
     RenderingControls.prototype.onMouseDown = function(position, button) {

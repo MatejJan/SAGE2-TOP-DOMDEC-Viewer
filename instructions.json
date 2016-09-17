@@ -22,7 +22,7 @@
     "classes/ui/dropdowncontrol.js",
     "classes/ui/vertexcolorscontrol.js",
     "classes/ui/colorcontrol.js",
-    "classes/ui/scalarcontrol.js",
+    "classes/ui/resultscontrol.js",
     "classes/ui/curvetransformcontrol.js",
     "classes/animation.js",
     "classes/concurrencymanager.js",
@@ -35,6 +35,7 @@
     "classes/model.js",
     "classes/mesh.js",
     "classes/volume.js",
+    "classes/vector.js",
     "classes/material.js",
     "classes/shaderchunks.js",
     "classes/shaders.js",
@@ -43,6 +44,7 @@
     "classes/isolinematerial.js",
     "classes/isosurfacematerial.js",
     "classes/shadowmaterial.js",
+    "classes/fieldmaterial.js",
     "classes/playbackcontrols.js",
     "classes/renderingcontrols.js",
     "classes/scene.js"
@@ -79,7 +81,7 @@
             "z": null
           }
         },
-        "bidirectional": true,
+        "bidirectional": false,
         "shadows": true,
         "ambient": 0.5
       },
@@ -167,8 +169,31 @@
       },
       "scalars": {
         "panelEnabled": true,
-        "0": {"state":{ "clip":{"min": null, "max": null}, "points":{"0":{"x": 0, "y": 0}, "1":{"x": 0.25, "y": 0.25}, "2":{"x": 0.75, "y": 0.75}, "3":{"x": 1, "y": 1}}}, "name": null},
-        "1": {"state":{ "clip":{"min": null, "max": null}, "points":{"0":{"x": 0, "y": 0}, "1":{"x": 0.25, "y": 0.25}, "2":{"x": 0.75, "y": 0.75}, "3":{"x": 1, "y": 1}}}, "name": null}
+        "0": {"state":{ "isovalues": "5", "clip":{"min": null, "max": null}, "points":{"0":{"x": 0, "y": 0}, "1":{"x": 0.25, "y": 0.25}, "2":{"x": 0.75, "y": 0.75}, "3":{"x": 1, "y": 1}}}, "name": null},
+        "1": {"state":{ "isovalues": "5", "clip":{"min": null, "max": null}, "points":{"0":{"x": 0, "y": 0}, "1":{"x": 0.25, "y": 0.25}, "2":{"x": 0.75, "y": 0.75}, "3":{"x": 1, "y": 1}}}, "name": null}
+      },
+      "vectors": {
+        "panelEnabled": true,
+        "displacementVector": {
+          "name": null
+        },
+        "displacementFactor": 1,
+        "fieldVector": {
+          "name": null
+        },
+        "fieldLength": 1,
+        "fieldColors": {
+          "type": "Color",
+          "color": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "scalar": {
+            "name": null
+          }
+        },
+        "fieldOpacity": 1
       }
     }
   },

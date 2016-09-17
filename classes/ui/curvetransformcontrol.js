@@ -14,7 +14,7 @@
       this.uiArea = uiArea;
       this.options = options;
       this.constructor._controls.push(this);
-      this.$element = $("<div class=\"curve-transform-control " + this.options["class"] + "\">\n  <canvas class='histogram-canvas' height='25' width='100'></canvas>\n  <div class='curve-area'>\n    <canvas class='curve-canvas' height='256' width='256'></canvas>\n    <canvas class='spectrogram-canvas' height='100' width='100'></canvas>\n  </div>\n</div>");
+      this.$element = $("<div class=\"curve-transform-control " + this.options["class"] + "\">\n  <canvas class='histogram-canvas'></canvas>\n  <div class='isovalues-slider-area'></div>\n  <div class='curve-area'>\n    <canvas class='curve-canvas' height='256' width='256'></canvas>\n    <canvas class='spectrogram-canvas'></canvas>\n  </div>\n  <canvas class='isovalues-canvas'></canvas>\n</div>");
       this.$histogramCanvas = this.$element.find('.histogram-canvas');
       this.histogramCanvas = this.$histogramCanvas[0];
       this.histogramCanvas.width = binsCount;
@@ -24,12 +24,29 @@
       this.spectrogramCanvas.width = binsCount;
       this.spectrogramCanvas.height = this.options.scalar.frames.length;
       this.spectrogramContext = this.spectrogramCanvas.getContext('2d');
+      this.isovaluesCanvas = this.$element.find('.isovalues-canvas')[0];
+      this.isovaluesCanvas.width = 120;
+      this.isovaluesCanvas.height = 200;
+      this.isovaluesContext = this.isovaluesCanvas.getContext('2d');
       this.colorCurve = new ColorCurve(this.$element.find('.curve-canvas')[0]);
       this.clip = {
         min: this.options.scalar.limits.minValue,
         max: this.options.scalar.limits.maxValue
       };
       this.currentClipProperty = null;
+      this.isovaluesControl = new TopViewer.SliderControl(this.uiArea, {
+        $parent: this.$element.find('.isovalues-slider-area'),
+        minimumValue: 1,
+        maximumValue: 9,
+        value: this.options.saveState.isovalues,
+        decimals: 0,
+        onChange: (function(_this) {
+          return function(value) {
+            _this.options.saveState.isovalues = value;
+            return _this.drawSpectrogram();
+          };
+        })(this)
+      });
       if (this.options.saveState) {
         points = [];
         for (i = j = 0; j <= 3; i = ++j) {
@@ -105,6 +122,7 @@
           this.curveData[i] = this.colorCurve.getY(i / 4096);
         }
         this.curveTexture.needsUpdate = true;
+        this.drawSpectrogram();
         if (this.options.saveState) {
           results = [];
           for (i = k = 0; k <= 3; i = ++k) {
@@ -162,6 +180,7 @@
         for (i = k = 0, ref1 = binsCount; 0 <= ref1 ? k <= ref1 : k >= ref1; i = 0 <= ref1 ? ++k : --k) {
           frame.bins[i] = 0;
         }
+        frame.maxBinValue = 0;
         sampleStep = Math.floor(Math.max(1, frame.scalars.length / 1000));
         ref3 = frame.scalars;
         ref2 = sampleStep;
@@ -174,6 +193,9 @@
           frame.bins[binIndex]++;
           if (frame.bins[binIndex] > this.maxBinValue) {
             this.maxBinValue = frame.bins[binIndex];
+          }
+          if (frame.bins[binIndex] > frame.maxBinValue) {
+            frame.maxBinValue = frame.bins[binIndex];
           }
         }
       }
@@ -206,7 +228,8 @@
     };
 
     CurveTransformControl.prototype.drawSpectrogram = function() {
-      var binIndex, binValue, colorValue, frame, frameIndex, imageData, j, k, len, len1, pixelIndex, ref, ref1;
+      var binIndex, binValue, color, drawIsovalue, frame, frameIndex, gradient, imageData, isosurfaceIndex, isovalue, isovalueStep, isovalues, j, k, l, len, len1, percentageIsovalue, pixelIndex, range, ref, ref1, ref2, value;
+      gradient = this.options.gradientControl.value;
       imageData = this.spectrogramContext.createImageData(this.spectrogramCanvas.width, this.spectrogramCanvas.height);
       ref = this.options.scalar.frames;
       for (frameIndex = j = 0, len = ref.length; j < len; frameIndex = ++j) {
@@ -215,14 +238,89 @@
         for (binIndex = k = 0, len1 = ref1.length; k < len1; binIndex = ++k) {
           binValue = ref1[binIndex];
           pixelIndex = (frameIndex * binsCount + binIndex) * 4;
-          colorValue = binValue / this.maxBinValue * 255;
-          imageData.data[pixelIndex] = 255;
-          imageData.data[pixelIndex + 1] = 255;
-          imageData.data[pixelIndex + 2] = 255;
-          imageData.data[pixelIndex + 3] = colorValue;
+          value = Math.min(255, binValue / frame.maxBinValue * 1000);
+          color = gradient.colorAtPercentage(this.colorCurve.getY(binIndex / binsCount));
+          imageData.data[pixelIndex] = color.r;
+          imageData.data[pixelIndex + 1] = color.g;
+          imageData.data[pixelIndex + 2] = color.b;
+          imageData.data[pixelIndex + 3] = value;
         }
       }
-      return this.spectrogramContext.putImageData(imageData, 0, 0);
+      this.spectrogramContext.putImageData(imageData, 0, 0);
+      this.isovaluesContext.fillStyle = 'black';
+      this.isovaluesContext.clearRect(0, 0, this.isovaluesCanvas.width, this.isovaluesCanvas.height);
+      range = this.clip.max - this.clip.min;
+      isovalues = this.isovaluesControl.value;
+      this.isovaluesContext.font = (35 - isovalues) + "px 'Ubuntu Condensed'";
+      this.isovaluesContext.textAlign = 'center';
+      this.isovaluesContext.textBaseline = 'middle';
+      this.isovaluesContext.strokeStyle = 'black';
+      this.isovaluesContext.lineWidth = 8;
+      this.spectrogramContext.lineWidth = 1;
+      this.spectrogramContext.strokeStyle = 'rgba(255,255,255,0.5)';
+      this.spectrogramContext.beginPath();
+      drawIsovalue = (function(_this) {
+        return function(value) {
+          var curvedValue, middle, percentageValue, text, x, y;
+          percentageValue = (value - _this.clip.min) / range;
+          curvedValue = _this.colorCurve.getX(percentageValue);
+          color = gradient.colorAtPercentage(percentageValue);
+          _this.isovaluesContext.fillStyle = "rgb(" + color.r + ", " + color.g + ", " + color.b + ")";
+          value = _this.clip.min + curvedValue * range;
+          text = _this._convertToScientificNotation(value);
+          middle = _this.isovaluesCanvas.width / 2;
+          y = (1 - curvedValue) * (_this.isovaluesCanvas.height - 10) + 5;
+          _this.isovaluesContext.strokeText(text, middle, y);
+          _this.isovaluesContext.fillText(text, middle, y);
+          x = curvedValue * _this.spectrogramCanvas.width;
+          _this.spectrogramContext.moveTo(x, 0);
+          return _this.spectrogramContext.lineTo(x, _this.spectrogramCanvas.height);
+        };
+      })(this);
+      isovalueStep = 1.0 / (isovalues + 1);
+      for (isosurfaceIndex = l = 0, ref2 = isovalues; 0 <= ref2 ? l < ref2 : l > ref2; isosurfaceIndex = 0 <= ref2 ? ++l : --l) {
+        percentageIsovalue = isovalueStep * (isosurfaceIndex + 1);
+        isovalue = this.clip.min + percentageIsovalue * range;
+        drawIsovalue(isovalue);
+      }
+      return this.spectrogramContext.stroke();
+    };
+
+    CurveTransformControl.prototype._convertToScientificNotation = function(value) {
+      var exponent;
+      exponent = 0;
+      if (Math.abs(value) > 1) {
+        while (Math.abs(value) > 100) {
+          value /= 1000;
+          exponent += 3;
+        }
+      } else {
+        while (Math.abs(value) < 0.01) {
+          value *= 1000;
+          exponent -= 3;
+        }
+      }
+      return "" + (Math.round10(value, -3)) + (exponent ? "e" + exponent : '');
+    };
+
+    CurveTransformControl.prototype._convertToPrefixNotation = function(value) {
+      var largerIndex, prefixesLarger, prefixesSmaller, smallerIndex;
+      prefixesLarger = ['', 'k', 'M', 'G', 'T', 'P', 'E'];
+      prefixesSmaller = ['', 'm', 'μ', 'n', 'p', 'f', 'a'];
+      largerIndex = 0;
+      smallerIndex = 0;
+      if (Math.abs(value) > 1) {
+        while (Math.abs(value) > 100) {
+          value /= 1000;
+          largerIndex += 1;
+        }
+      } else {
+        while (Math.abs(value) < 0.01) {
+          value *= 1000;
+          smallerIndex += 1;
+        }
+      }
+      return "" + (Math.round10(value, -3)) + prefixesLarger[largerIndex] + prefixesSmaller[smallerIndex];
     };
 
     CurveTransformControl.update = function() {
@@ -232,6 +330,17 @@
       for (j = 0, len = ref.length; j < len; j++) {
         control = ref[j];
         results.push(control.update());
+      }
+      return results;
+    };
+
+    CurveTransformControl.drawSpectrogram = function() {
+      var control, j, len, ref, results;
+      ref = this._controls;
+      results = [];
+      for (j = 0, len = ref.length; j < len; j++) {
+        control = ref[j];
+        results.push(control.drawSpectrogram());
       }
       return results;
     };

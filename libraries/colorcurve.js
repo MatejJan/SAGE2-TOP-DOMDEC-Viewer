@@ -104,7 +104,7 @@ ColorCurve.prototype.draw = function() {
 ColorCurve.prototype.drawGrid = function() {
   'use strict';
 
-  var space = this.width/4.0;
+  var space = this.width/2.0;
 
   this.ctx.beginPath();
   this.ctx.lineWidth = 1;
@@ -114,10 +114,10 @@ ColorCurve.prototype.drawGrid = function() {
   {
     this.ctx.moveTo(0, i+space); this.ctx.lineTo(this.height, i+space);
   }
-  for(var i=0;i<this.height-space;i+=space)
+  /*for(var i=0;i<this.height-space;i+=space)
   {
     this.ctx.moveTo(i+space, 0); this.ctx.lineTo(i+space, this.height);
-  }
+  }*/
   this.ctx.stroke();
 }
 
@@ -332,6 +332,24 @@ ColorCurve.prototype.getY = function(xpos) {
   return ret;
 }
 
+// Return the normalized X value for the specified Y value. Y should be passed normnalized too
+ColorCurve.prototype.getX = function(ypos) {
+  'use strict';
 
+  if (ypos < this.values[0].y) ypos = this.values[0].y;
+  if (ypos > this.values[this.values.length-1].y) ypos = this.values[this.values.length-1].y;
 
+  for(var i=0;i<this.values.length-2;i++)
+  {
+    if(ypos >= this.values[i].y && ypos < this.values[i+1].y) break;
+  }
+  var valuea = (ypos - this.values[i].y)/ (this.values[i+1].y-this.values[i].y);
+  var valueb = valuea *  (this.values[i+1].x-this.values[i].x);
 
+  var ret = this.values[i].x+valueb;
+
+  if (ret < 0.0) return 0.0;
+  if (ret > 1.0) return 1.0;
+
+  return ret;
+}

@@ -268,15 +268,28 @@
   width: 6.5em;
 }
 .top-viewer .curve-transform-control {
+  position: relative;
   padding: 0.5em;
 }
 .top-viewer .curve-transform-control .histogram-canvas {
   width: 10em;
   height: 2.5em;
-  border-bottom: rgba(255,255,255,0.2) solid 1px;
+  border: rgba(255,255,255,0.2) solid 1px;
   margin-bottom: 0.5em;
 }
+.top-viewer .curve-transform-control .isovalues-slider-area {
+  position: absolute;
+  top: 1.2em;
+  left: 11em;
+}
+.top-viewer .curve-transform-control .isovalues-slider-area .slider-control {
+  padding: 0;
+}
+.top-viewer .curve-transform-control .isovalues-slider-area .slider-control .slider {
+  width: 6em;
+}
 .top-viewer .curve-transform-control .curve-area {
+  display: inline-block;
   position: relative;
 }
 .top-viewer .curve-transform-control .curve-area .curve-canvas {
@@ -284,6 +297,7 @@
   z-index: 1;
   width: 10em;
   height: 10em;
+  border: rgba(255,255,255,0.2) solid 1px;
 }
 .top-viewer .curve-transform-control .curve-area .spectrogram-canvas {
   position: absolute;
@@ -291,4 +305,9 @@
   top: 0;
   width: 10em;
   height: 10em;
+}
+.top-viewer .curve-transform-control .isovalues-canvas {
+  width: 6em;
+  height: 10em;
+  margin-left: 0.5em;
 }

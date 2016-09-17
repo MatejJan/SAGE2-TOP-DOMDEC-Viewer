@@ -8,6 +8,9 @@
       this._hoveredStack = [];
       this.$rootElement = null;
       this._throttledMouseMoveHandler = _.throttle(this._mouseMoveHandler, 100);
+      this._throttledInitialize = _.throttle(this.initialize, 100, {
+        leading: false
+      });
     }
 
     UIArea.prototype.destroy = function() {
@@ -26,7 +29,7 @@
     UIArea.prototype.addControl = function(control) {
       this._controls.push(control);
       if (this._initialized) {
-        return this.initialize();
+        return this._throttledInitialize();
       }
     };
 
@@ -34,54 +37,66 @@
       this._initialized = true;
       return setTimeout((function(_this) {
         return function() {
-          var $element, addElements, control, i, len, results, sortedElements;
+          var addControls, addElements, sortContext, sortedElements;
           sortedElements = [];
-          addElements = function($element) {
-            var $child, child, children, i, len, zIndex;
+          addElements = function($element, elements) {
+            var child, children, element, i, len, newElements, zIndex, zIndexString;
+            zIndexString = $element.css('z-index');
+            zIndex = zIndexString === 'auto' ? 0 : parseInt(zIndexString);
+            newElements = null;
+            if (zIndexString !== 'auto') {
+              newElements = [];
+            }
             children = $element.children().toArray();
-            if (children) {
-              children = (function() {
-                var i, len, results;
-                results = [];
-                for (i = 0, len = children.length; i < len; i++) {
-                  child = children[i];
-                  $child = $(child);
-                  zIndex = $child.css('z-index');
-                  if (zIndex === 'auto') {
-                    zIndex = 0;
-                  } else {
-                    zIndex = parseInt(zIndex);
-                  }
-                  results.push({
-                    zIndex: zIndex,
-                    element: $child
-                  });
-                }
-                return results;
-              })();
-              children.sort(function(a, b) {
-                return b.zIndex - a.zIndex;
-              });
+            if (children.length) {
               for (i = 0, len = children.length; i < len; i++) {
                 child = children[i];
-                addElements(child.element);
+                addElements($(child), newElements || elements);
               }
             }
-            return sortedElements.push($element);
-          };
-          addElements(_this.$rootElement);
-          _this._sortedControls = [];
-          results = [];
-          for (i = 0, len = sortedElements.length; i < len; i++) {
-            $element = sortedElements[i];
-            control = $element.data('control');
-            if (control) {
-              results.push(_this._sortedControls.push(control));
-            } else {
-              results.push(void 0);
+            element = {
+              $element: $element,
+              zIndex: zIndex
+            };
+            if (newElements != null ? newElements.length : void 0) {
+              element.children = newElements;
             }
-          }
-          return results;
+            return elements.push(element);
+          };
+          addElements(_this.$rootElement, sortedElements);
+          sortContext = function(elements) {
+            var element, i, len, results;
+            elements.sort(function(a, b) {
+              return b.zIndex - a.zIndex;
+            });
+            results = [];
+            for (i = 0, len = elements.length; i < len; i++) {
+              element = elements[i];
+              if (_.isArray(element.element)) {
+                results.push(sortContext(element.element));
+              }
+            }
+            return results;
+          };
+          _this._sortedControls = [];
+          addControls = function(elements) {
+            var control, element, i, len, results;
+            results = [];
+            for (i = 0, len = elements.length; i < len; i++) {
+              element = elements[i];
+              if (_.isArray(element.children)) {
+                addControls(element.children);
+              }
+              control = element.$element.data('control');
+              if (control) {
+                results.push(_this._sortedControls.push(control));
+              } else {
+                results.push(void 0);
+              }
+            }
+            return results;
+          };
+          return addControls(sortedElements);
         };
       })(this), 0);
     };

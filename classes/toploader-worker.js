@@ -218,7 +218,6 @@
             time: this.currentFrameTime,
             vectors: new Float32Array(this.currentFrameNodesCount * 3)
           };
-          this.currentVector.frames.push(this.currentFrame);
           return this.currentFrameNodeIndex = 0;
         case this.constructor.modes.Vector:
           this.currentFrame.vectors[this.currentFrameNodeIndex * 3] = parseFloat(parts[0]);
@@ -226,6 +225,7 @@
           this.currentFrame.vectors[this.currentFrameNodeIndex * 3 + 2] = parseFloat(parts[2]);
           this.currentFrameNodeIndex++;
           if (this.currentFrameNodeIndex === this.currentFrameNodesCount) {
+            this.currentVector.frames.push(this.currentFrame);
             this.endVectorFrame();
             return this.currentMode = this.constructor.modes.VectorTime;
           }
@@ -242,7 +242,6 @@
             minValue: null,
             maxValue: null
           };
-          this.currentScalar.frames.push(this.currentFrame);
           return this.currentFrameNodeIndex = 0;
         case this.constructor.modes.Scalar:
           value = parseFloat(parts[0]);
@@ -255,6 +254,7 @@
           this.currentFrame.scalars[this.currentFrameNodeIndex] = value;
           this.currentFrameNodeIndex++;
           if (this.currentFrameNodeIndex === this.currentFrameNodesCount) {
+            this.currentScalar.frames.push(this.currentFrame);
             this.endScalarFrame();
             return this.currentMode = this.constructor.modes.ScalarTime;
           }

@@ -126,6 +126,9 @@
         },
         scalarsRange: {
           value: 0
+        },
+        isovalues: {
+          value: 5
         }
       });
       IsovalueMaterial.__super__.constructor.call(this, this.model, options);

@@ -25,6 +25,19 @@
       this.image.src = this.url;
     }
 
+    Gradient.prototype.colorAtPercentage = function(percentage) {
+      var index, pixelIndex;
+      pixelIndex = Math.floor(1024 * percentage);
+      pixelIndex = Math.max(0, Math.min(1023, pixelIndex));
+      index = pixelIndex * 4;
+      return {
+        r: this.data[index],
+        g: this.data[index + 1],
+        b: this.data[index + 2],
+        a: this.data[index + 3]
+      };
+    };
+
     return Gradient;
 
   })();
