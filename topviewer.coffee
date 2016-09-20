@@ -53,13 +53,27 @@ window.topviewer = SAGE2_App.extend
     unless window.isMaster
       # Sync time.
       @engine.playbackControls.setCurrentTime data.currentTime
+      if data.playing then @engine.playbackControls.play() else @engine.playbackControls.pause()
 
       # Sync camera.
-      cameraState = data.cameraState
+      cameraState = data.state.camera
       @engine.camera.position.copy cameraState.position
       @engine.camera.rotation.set cameraState.rotation._x, cameraState.rotation._y, cameraState.rotation._z, cameraState.rotation._order
       @engine.camera.scale.set cameraState.scale.x, cameraState.scale.y, cameraState.scale.z
       @engine.cameraControls.center.copy cameraState.center
+
+      # Sync rendering controls.
+      @engine.renderingControls.sync data.state.renderingControls
+
+  animationUpdate: (data) ->
+    console.log "we got animation update", data, window.isMaster
+    if window.isMaster
+      # We are receiving update from the client.
+      @engine.animation.onAnimationUpdate data if data.clientId?
+
+    else
+      # The master is sending us new max length.
+      @engine.animation.length = data.maxLength if data.maxLength?
 
   draw: (date) ->
     @needsDraw = date

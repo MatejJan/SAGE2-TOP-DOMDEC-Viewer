@@ -46,7 +46,9 @@
       this.lightingPresets = [new TopViewer.LightingSetup('Angled light', new THREE.Vector3(1, 1, 1).normalize()), new TopViewer.LightingSetup('Top light', new THREE.Vector3(0, 1, 0)), new TopViewer.LightingSetup('Front light', new THREE.Vector3(0, 0, 1)), new TopViewer.LightingSetup('Side light', new THREE.Vector3(1, 0, 0))];
       this.gradients = [new TopViewer.Gradient("Spectrum", this.options.resourcesPath + "gradients/spectrum.png"), new TopViewer.Gradient("Monochrome", this.options.resourcesPath + "gradients/monochrome.png"), new TopViewer.Gradient("Dual", this.options.resourcesPath + "gradients/dual.png"), new TopViewer.Gradient("Fire", this.options.resourcesPath + "gradients/heat.png"), new TopViewer.Gradient("Classic", this.options.resourcesPath + "gradients/xpost.png")];
       this.uiAreas = [];
-      this.animation = new TopViewer.Animation;
+      this.animation = new TopViewer.Animation({
+        engine: this
+      });
       this.playbackControls = new TopViewer.PlaybackControls({
         engine: this
       });
@@ -145,7 +147,8 @@
         if (window.isMaster) {
           return this.options.app.broadcast('sync', {
             currentTime: this.playbackControls.currentTime,
-            cameraState: this.options.app.state.camera
+            playing: this.playbackControls.playing,
+            state: this.options.app.state
           });
         }
       }

@@ -26,15 +26,28 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
     @$rootElement = @$controls
     @rootControl = new TopViewer.UIControl @, @$controls
 
+    # Preapre for sync handlers.
+    @_syncHandlers = []
+
     # Setup scrolling.
-    scrollOffset = 0
+    console.log "got soff", saveState.scrollOffset
+    scrollOffset = saveState.scrollOffset or 0
+    applyScrollOffset = => @$controls.css top: -scrollOffset
+
+    setTimeout =>
+      applyScrollOffset()
+    , 1
+
     @rootControl.scroll (delta) =>
       scrollOffset += delta
       scrollOffset = Math.max scrollOffset, 0
       scrollOffset = Math.min scrollOffset, @$controls.height() - @options.engine.$appWindow.height() * 0.8
+      saveState.scrollOffset = scrollOffset
+      applyScrollOffset()
 
-      @$controls.css
-        top: -scrollOffset
+    @_onSync (data) =>
+      scrollOffset = data.scrollOffset
+      applyScrollOffset()
 
     # Lighting
 
@@ -491,3 +504,9 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
 
     x: position.x + offset.left
     y: position.y + offset.top
+
+  sync: (data) ->
+    handler data for handler in @_syncHandlers
+
+  _onSync: (handler) ->
+    @_syncHandlers.push handler

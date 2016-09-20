@@ -146,39 +146,39 @@
     };
 
     PlaybackControls.prototype.nextFrame = function() {
-      if (!this.animation.frameTimes.length) {
+      if (!this.animation.length) {
         return;
       }
       this.currentTime++;
-      while (this.currentTime >= this.animation.frameTimes.length) {
-        this.currentTime -= this.animation.frameTimes.length;
+      while (this.currentTime >= this.animation.length) {
+        this.currentTime -= this.animation.length;
       }
       return this.onUpdateCurrentTime();
     };
 
     PlaybackControls.prototype.previousFrame = function() {
-      if (!this.animation.frameTimes.length) {
+      if (!this.animation.length) {
         return;
       }
       this.currentTime--;
       while (this.currentTime < 0) {
-        this.currentTime += this.animation.frameTimes.length;
+        this.currentTime += this.animation.length;
       }
       return this.onUpdateCurrentTime();
     };
 
     PlaybackControls.prototype.setCurrentTime = function(currentTime) {
-      this.currentTime = Math.max(0, Math.min(this.animation.frameTimes.length, currentTime));
+      this.currentTime = Math.max(0, Math.min(this.animation.length, currentTime));
       return this.onUpdateCurrentTime();
     };
 
     PlaybackControls.prototype.update = function(elapsedTime) {
-      if (!(this.playing && !this._scrubbing && this.animation.frameTimes.length)) {
+      if (!(this.playing && !this._scrubbing && this.animation.length)) {
         return;
       }
       this.currentTime += elapsedTime * this.framesPerSecondControl.value;
-      while (this.currentTime > this.animation.frameTimes.length) {
-        this.currentTime -= this.animation.frameTimes.length;
+      while (this.currentTime > this.animation.length) {
+        this.currentTime -= this.animation.length;
       }
       return this.onUpdateCurrentTime();
     };
@@ -186,7 +186,7 @@
     PlaybackControls.prototype.onUpdateCurrentTime = function() {
       var playPercentage;
       this.currentFrameIndex = Math.floor(this.currentTime);
-      playPercentage = 100.0 * this.currentTime / this.animation.frameTimes.length;
+      playPercentage = 100.0 * this.currentTime / this.animation.length;
       return this.$playhead.css({
         left: playPercentage + "%"
       });
@@ -210,8 +210,8 @@
       mouseXBrowser = this.$appWindow.offset().left + position.x;
       scrubberX = mouseXBrowser - this.$scrubber.offset().left;
       playPercentage = scrubberX / this.$scrubber.width();
-      newCurrentTime = playPercentage * this.animation.frameTimes.length;
-      newCurrentTime = Math.min(this.animation.frameTimes.length - 0.001, Math.max(0, newCurrentTime));
+      newCurrentTime = playPercentage * this.animation.length;
+      newCurrentTime = Math.min(this.animation.length - 0.001, Math.max(0, newCurrentTime));
       this.currentTime = newCurrentTime;
       return this.onUpdateCurrentTime();
     };

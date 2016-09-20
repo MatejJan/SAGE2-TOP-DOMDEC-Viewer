@@ -1,5 +1,5 @@
-binsCount = 100
-histogramHeight = 25
+binsCount = 200
+histogramHeight = 50
 
 class TopViewer.CurveTransformControl
   @_controls = []
@@ -31,8 +31,8 @@ class TopViewer.CurveTransformControl
     @spectrogramContext = @spectrogramCanvas.getContext '2d'
 
     @isovaluesCanvas = @$element.find('.isovalues-canvas')[0]
-    @isovaluesCanvas.width = 120
-    @isovaluesCanvas.height = 200
+    @isovaluesCanvas.width = 240
+    @isovaluesCanvas.height = 400
     @isovaluesContext = @isovaluesCanvas.getContext '2d'
 
     @colorCurve = new ColorCurve @$element.find('.curve-canvas')[0]
@@ -234,7 +234,7 @@ class TopViewer.CurveTransformControl
 
     isovalues = @isovaluesControl.value
 
-    @isovaluesContext.font = "#{35-isovalues}px 'Ubuntu Condensed'"
+    @isovaluesContext.font = "#{60-isovalues * 2}px 'Ubuntu Condensed'"
     @isovaluesContext.textAlign = 'center'
     @isovaluesContext.textBaseline = 'middle'
     @isovaluesContext.strokeStyle = 'black'

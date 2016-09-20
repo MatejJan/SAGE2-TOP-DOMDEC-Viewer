@@ -68,7 +68,7 @@ class TopViewer.Engine
 
     @uiAreas = []
 
-    @animation = new TopViewer.Animation
+    @animation = new TopViewer.Animation engine: @
     @playbackControls = new TopViewer.PlaybackControls engine: @
     @renderingControls = new TopViewer.RenderingControls engine: @
 
@@ -159,7 +159,8 @@ class TopViewer.Engine
       if window.isMaster
         @options.app.broadcast 'sync',
           currentTime: @playbackControls.currentTime
-          cameraState: @options.app.state.camera
+          playing: @playbackControls.playing
+          state: @options.app.state
 
   updateRotateControls: ->
     @rotateControls.update()

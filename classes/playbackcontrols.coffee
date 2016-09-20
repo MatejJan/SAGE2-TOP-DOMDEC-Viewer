@@ -147,42 +147,42 @@ class TopViewer.PlaybackControls extends TopViewer.UIArea
     if @playing then @pause() else @play()
 
   nextFrame: ->
-    return unless @animation.frameTimes.length
+    return unless @animation.length
 
     @currentTime++
-    while @currentTime >= @animation.frameTimes.length
-      @currentTime -= @animation.frameTimes.length
+    while @currentTime >= @animation.length
+      @currentTime -= @animation.length
 
     @onUpdateCurrentTime()
 
   previousFrame: ->
-    return unless @animation.frameTimes.length
+    return unless @animation.length
 
     @currentTime--
     while @currentTime < 0
-      @currentTime += @animation.frameTimes.length
+      @currentTime += @animation.length
 
     @onUpdateCurrentTime()
 
   setCurrentTime: (currentTime) ->
-    @currentTime = Math.max 0, Math.min @animation.frameTimes.length, currentTime
+    @currentTime = Math.max 0, Math.min @animation.length, currentTime
 
     @onUpdateCurrentTime()
 
   update: (elapsedTime) ->
-    return unless @playing and not @_scrubbing and @animation.frameTimes.length
+    return unless @playing and not @_scrubbing and @animation.length
 
     @currentTime += elapsedTime * @framesPerSecondControl.value
 
-    while @currentTime > @animation.frameTimes.length
-      @currentTime -= @animation.frameTimes.length
+    while @currentTime > @animation.length
+      @currentTime -= @animation.length
 
     @onUpdateCurrentTime()
 
   onUpdateCurrentTime: ->
     @currentFrameIndex = Math.floor @currentTime
 
-    playPercentage = 100.0 * @currentTime / @animation.frameTimes.length
+    playPercentage = 100.0 * @currentTime / @animation.length
     @$playhead.css
       left: "#{playPercentage}%"
 
@@ -201,10 +201,10 @@ class TopViewer.PlaybackControls extends TopViewer.UIArea
     mouseXBrowser = @$appWindow.offset().left + position.x
     scrubberX = mouseXBrowser - @$scrubber.offset().left
     playPercentage = scrubberX / @$scrubber.width()
-    newCurrentTime = playPercentage * @animation.frameTimes.length
+    newCurrentTime = playPercentage * @animation.length
 
     # Make sure we're inside the bounds of animation Length.
-    newCurrentTime = Math.min @animation.frameTimes.length - 0.001, Math.max 0, newCurrentTime
+    newCurrentTime = Math.min @animation.length - 0.001, Math.max 0, newCurrentTime
 
     @currentTime = newCurrentTime
 

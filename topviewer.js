@@ -38,11 +38,29 @@
       var cameraState;
       if (!window.isMaster) {
         this.engine.playbackControls.setCurrentTime(data.currentTime);
-        cameraState = data.cameraState;
+        if (data.playing) {
+          this.engine.playbackControls.play();
+        } else {
+          this.engine.playbackControls.pause();
+        }
+        cameraState = data.state.camera;
         this.engine.camera.position.copy(cameraState.position);
         this.engine.camera.rotation.set(cameraState.rotation._x, cameraState.rotation._y, cameraState.rotation._z, cameraState.rotation._order);
         this.engine.camera.scale.set(cameraState.scale.x, cameraState.scale.y, cameraState.scale.z);
-        return this.engine.cameraControls.center.copy(cameraState.center);
+        this.engine.cameraControls.center.copy(cameraState.center);
+        return this.engine.renderingControls.sync(data.state.renderingControls);
+      }
+    },
+    animationUpdate: function(data) {
+      console.log("we got animation update", data, window.isMaster);
+      if (window.isMaster) {
+        if (data.clientId != null) {
+          return this.engine.animation.onAnimationUpdate(data);
+        }
+      } else {
+        if (data.maxLength != null) {
+          return this.engine.animation.length = data.maxLength;
+        }
       }
     },
     draw: function(date) {

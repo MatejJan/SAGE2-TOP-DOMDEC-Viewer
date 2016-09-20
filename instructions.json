@@ -71,6 +71,7 @@
       "fps": 30
     },
     "renderingControls": {
+      "scrollOffset": 0,
       "lighting": {
         "panelEnabled": true,
         "lightingSetup": {

@@ -2,9 +2,9 @@
 (function() {
   var binsCount, histogramHeight;
 
-  binsCount = 100;
+  binsCount = 200;
 
-  histogramHeight = 25;
+  histogramHeight = 50;
 
   TopViewer.CurveTransformControl = (function() {
     CurveTransformControl._controls = [];
@@ -25,8 +25,8 @@
       this.spectrogramCanvas.height = this.options.scalar.frames.length;
       this.spectrogramContext = this.spectrogramCanvas.getContext('2d');
       this.isovaluesCanvas = this.$element.find('.isovalues-canvas')[0];
-      this.isovaluesCanvas.width = 120;
-      this.isovaluesCanvas.height = 200;
+      this.isovaluesCanvas.width = 240;
+      this.isovaluesCanvas.height = 400;
       this.isovaluesContext = this.isovaluesCanvas.getContext('2d');
       this.colorCurve = new ColorCurve(this.$element.find('.curve-canvas')[0]);
       this.clip = {
@@ -251,7 +251,7 @@
       this.isovaluesContext.clearRect(0, 0, this.isovaluesCanvas.width, this.isovaluesCanvas.height);
       range = this.clip.max - this.clip.min;
       isovalues = this.isovaluesControl.value;
-      this.isovaluesContext.font = (35 - isovalues) + "px 'Ubuntu Condensed'";
+      this.isovaluesContext.font = (60 - isovalues * 2) + "px 'Ubuntu Condensed'";
       this.isovaluesContext.textAlign = 'center';
       this.isovaluesContext.textBaseline = 'middle';
       this.isovaluesContext.strokeStyle = 'black';
