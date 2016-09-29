@@ -166,7 +166,12 @@ void main()	{
         else if (cornerIndex < 0.45) {cornerPosition = cornerPositions[1]; scalar = cornerScalars[1];}
         else {cornerPosition = cornerPositions[2]; scalar = cornerScalars[2];}
 
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(cornerPosition, 1.0);
+        vec4 worldPosition = modelMatrix * vec4(cornerPosition, 1.0);
+        gl_Position = projectionMatrix * viewMatrix * worldPosition;
+
+        // Shadowmap
+        #{THREE.ShaderChunk.shadowmap_vertex}
+
         return;
       }
     }

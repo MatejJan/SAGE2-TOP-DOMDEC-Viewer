@@ -115,8 +115,7 @@
         value: saveState.lighting.shadows,
         onChange: (function(_this) {
           return function(value) {
-            saveState.lighting.shadows = value;
-            return _this.options.engine.scene.update();
+            return saveState.lighting.shadows = value;
           };
         })(this)
       });
@@ -462,25 +461,39 @@
     }
 
     RenderingControls.prototype.addMesh = function(name, mesh) {
-      var $contents, $mesh;
+      var $contents, $mesh, saveState, states;
       $mesh = $("<li class='mesh'></li>");
       this.$meshes.append($mesh);
       $contents = $("<div>");
+      states = this.options.engine.options.app.state.renderingControls.meshes;
+      saveState = TopViewer.SaveState.findStateForName(states, name);
       mesh.renderingControls = {
-        surface: new TopViewer.CheckboxControl(this, {
+        showSurfaceControl: new TopViewer.CheckboxControl(this, {
           $parent: $contents,
           name: 'surface',
-          value: true
+          parent: this.meshesShowSurfaceControl,
+          value: saveState.surfaceEnabled,
+          onChange: function(value) {
+            return saveState.surfaceEnabled = value;
+          }
         }),
-        wireframe: new TopViewer.CheckboxControl(this, {
+        showWireframeControl: new TopViewer.CheckboxControl(this, {
           $parent: $contents,
           name: 'wireframe',
-          value: false
+          parent: this.meshesShowWireframeControl,
+          value: saveState.wireframeEnabled,
+          onChange: function(value) {
+            return saveState.wireframeEnabled = value;
+          }
         }),
-        isolines: new TopViewer.CheckboxControl(this, {
+        showIsolinesControl: new TopViewer.CheckboxControl(this, {
           $parent: $contents,
           name: 'isolines',
-          value: false
+          parent: this.meshesShowIsolinesControl,
+          value: saveState.isolinesEnabled,
+          onChange: function(value) {
+            return saveState.isolinesEnabled = value;
+          }
         })
       };
       return new TopViewer.ToggleContainer(this, {

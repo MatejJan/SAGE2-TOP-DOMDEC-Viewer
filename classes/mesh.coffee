@@ -120,9 +120,6 @@ class TopViewer.Mesh extends THREE.Mesh
     @options.model.add @wireframeMesh
     @options.model.add @isolinesMesh
 
-    # Notify the scene that there is a new mesh.
-    @options.engine.scene.addMesh @
-
     # Add the mesh to rendering controls.
     @options.engine.renderingControls.addMesh @options.name, @
 
@@ -138,7 +135,7 @@ class TopViewer.Mesh extends THREE.Mesh
 
   showFrame: () ->
     # Do we need to draw the main mesh?
-    if @options.engine.renderingControls.meshesShowSurfaceControl.value
+    if @renderingControls.showSurfaceControl.value()
       @visible = true
 
       # Determine the type of mesh surface rendering.
@@ -153,5 +150,14 @@ class TopViewer.Mesh extends THREE.Mesh
       @visible = false
       @backsideMesh.visible = false
 
-    @wireframeMesh.visible = @options.engine.renderingControls.meshesShowWireframeControl.value
-    @isolinesMesh.visible = @options.engine.renderingControls.meshesShowIsolinesControl.value
+    @wireframeMesh.visible = @renderingControls.showWireframeControl.value()
+    @isolinesMesh.visible = @renderingControls.showIsolinesControl.value()
+
+    enableShadows = @options.engine.renderingControls.shadowsControl.value()
+    
+    @castShadow = enableShadows
+    @receiveShadows = enableShadows
+    
+    @backsideMesh.castShadow = enableShadows
+    @backsideMesh.receiveShadows = enableShadows
+

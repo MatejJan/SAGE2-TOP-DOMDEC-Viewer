@@ -89,8 +89,10 @@
     };
 
     Volume.prototype.showFrame = function() {
-      this.wireframeMesh.visible = this.options.engine.renderingControls.volumesShowWireframeControl.value;
-      return this.isosurfacesMesh.visible = this.options.engine.renderingControls.volumesShowIsosurfacesControl.value;
+      this.wireframeMesh.visible = this.options.engine.renderingControls.volumesShowWireframeControl.value();
+      this.isosurfacesMesh.visible = this.options.engine.renderingControls.volumesShowIsosurfacesControl.value();
+      this.isosurfacesMesh.receiveShadows = true;
+      return this.isosurfacesMesh.castShadows = true;
     };
 
     return Volume;

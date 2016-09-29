@@ -95,7 +95,6 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
       value: saveState.lighting.shadows
       onChange: (value) =>
         saveState.lighting.shadows = value
-        @options.engine.scene.update()
 
     $lightingArea.append("<p class='label'>Ambient light</p>")
 
@@ -410,21 +409,34 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
 
     $contents = $("<div>")
 
+    # Add curve control for this scalar.
+    states = @options.engine.options.app.state.renderingControls.meshes
+    saveState = TopViewer.SaveState.findStateForName states, name
+
     mesh.renderingControls =
-      surface: new TopViewer.CheckboxControl @,
+      showSurfaceControl: new TopViewer.CheckboxControl @,
         $parent: $contents
         name: 'surface'
-        value: true
+        parent: @meshesShowSurfaceControl
+        value: saveState.surfaceEnabled
+        onChange: (value) ->
+          saveState.surfaceEnabled = value
 
-      wireframe: new TopViewer.CheckboxControl @,
+      showWireframeControl: new TopViewer.CheckboxControl @,
         $parent: $contents
         name: 'wireframe'
-        value: false
+        parent: @meshesShowWireframeControl
+        value: saveState.wireframeEnabled
+        onChange: (value) ->
+          saveState.wireframeEnabled = value
 
-      isolines: new TopViewer.CheckboxControl @,
+      showIsolinesControl: new TopViewer.CheckboxControl @,
         $parent: $contents
         name: 'isolines'
-        value: false
+        parent: @meshesShowIsolinesControl
+        value: saveState.isolinesEnabled
+        onChange: (value) ->
+          saveState.isolinesEnabled = value
 
     new TopViewer.ToggleContainer @,
       $parent: $mesh

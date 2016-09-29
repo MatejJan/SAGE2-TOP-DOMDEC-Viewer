@@ -2,7 +2,7 @@
 (function() {
   var maxStates;
 
-  maxStates = 2;
+  maxStates = 5;
 
   TopViewer.SaveState = (function() {
     function SaveState() {}

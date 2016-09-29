@@ -107,13 +107,12 @@
           console.error("UNKNOWN ELEMENT TYPE", elementsType);
           return;
       }
-      collection[elementsName] = new constructor({
+      return collection[elementsName] = new constructor({
         name: elementsName,
         elements: elements,
         model: this,
         engine: this.options.engine
       });
-      return this.options.engine.scene.update();
     };
 
     Model.prototype.addScalar = function(scalarName, scalar) {
@@ -380,7 +379,7 @@
         surfaceMaterial.material.uniforms.vertexScalarsGradientTexture.value = renderingControls.gradientControl.value.texture;
         surfaceMaterial.material.uniforms.opacity.value = surfaceMaterial.opacityControl.value;
         surfaceMaterial.material.transparent = surfaceMaterial.material.uniforms.opacity.value !== 1;
-        surfaceMaterial.material.uniforms.lightingBidirectional.value = renderingControls.bidirectionalLightControl.value ? 1 : 0;
+        surfaceMaterial.material.uniforms.lightingBidirectional.value = renderingControls.bidirectionalLightControl.value() ? 1 : 0;
       }
       for (p = 0, len4 = wireframeMaterials.length; p < len4; p++) {
         wireframeMaterial = wireframeMaterials[p];

@@ -127,29 +127,11 @@
             case 39:
               this.engine.playbackControls.nextFrame();
               break;
-            case 83:
-              this.engine.toggleSurface();
-              break;
             case 67:
               this.engine.activeControls = this.engine.cameraControls;
               break;
             case 79:
               this.engine.activeControls = this.engine.rotateControls;
-              break;
-            case 82:
-              this.engine.toggleReflections();
-              break;
-            case 65:
-              this.engine.toggleAmbientLight();
-              break;
-            case 68:
-              this.engine.toggleDirectionalLight();
-              break;
-            case 86:
-              this.engine.toggleVertexColors();
-              break;
-            case 87:
-              this.engine.toggleWireframe();
           }
           return this.refresh(date);
         }

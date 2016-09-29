@@ -49,79 +49,12 @@
       return directionalLight;
     };
 
-    Scene.prototype.showFrameSet = function(frameSet) {
-      var frame, i, j, k, l, len, len1, len2, len3, ref, ref1, ref2, wireframe;
-      if (frameSet == null) {
-        frameSet = [];
-      }
-      ref = this._currentFrameSet;
-      for (i = 0, len = ref.length; i < len; i++) {
-        frame = ref[i];
-        frame.mesh.visible = false;
-      }
-      for (j = 0, len1 = frameSet.length; j < len1; j++) {
-        frame = frameSet[j];
-        frame.mesh.visible = true;
-      }
-      wireframe = this.engine.renderingControls.wireframeControl.value;
-      if (wireframe) {
-        ref1 = this._currentFrameSet;
-        for (k = 0, len2 = ref1.length; k < len2; k++) {
-          frame = ref1[k];
-          if ((ref2 = frame.wireframeMesh) != null) {
-            ref2.visible = false;
-          }
-        }
-        for (l = 0, len3 = frameSet.length; l < len3; l++) {
-          frame = frameSet[l];
-          this.generateWireframeMesh(frame);
-          frame.wireframeMesh.visible = true;
-        }
-      }
-      this._currentFrameSet = frameSet;
-      return this.update();
-    };
-
     Scene.prototype.addModel = function(model) {
       model.matrix = this.normalizationMatrix;
       this.add(model);
-      this.update();
       this.sceneBoundingBox = this.sceneBoundingBox.union(model.boundingBox);
       this.updateScale();
       return this.updateTranslation();
-    };
-
-    Scene.prototype.addMesh = function(mesh) {
-      return this.update();
-    };
-
-    Scene.prototype.update = function() {
-      var i, len, mesh, meshName, model, ref, results;
-      ref = this.children;
-      results = [];
-      for (i = 0, len = ref.length; i < len; i++) {
-        model = ref[i];
-        if (model instanceof TopViewer.Model) {
-          results.push((function() {
-            var ref1, results1;
-            ref1 = model.meshes;
-            results1 = [];
-            for (meshName in ref1) {
-              mesh = ref1[meshName];
-              mesh.castShadow = this.engine.renderingControls.shadowsControl.value;
-              mesh.receiveShadows = this.engine.renderingControls.shadowsControl.value;
-              if (mesh.backsideMesh) {
-                mesh.backsideMesh.castShadow = this.engine.renderingControls.shadowsControl.value;
-                results1.push(mesh.backsideMesh.receiveShadows = this.engine.renderingControls.shadowsControl.value);
-              } else {
-                results1.push(void 0);
-              }
-            }
-            return results1;
-          }).call(this));
-        }
-      }
-      return results;
     };
 
     Scene.prototype.updateScale = function() {

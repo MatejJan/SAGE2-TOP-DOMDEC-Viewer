@@ -131,29 +131,11 @@ window.topviewer = SAGE2_App.extend
           when 39 # Right
             @engine.playbackControls.nextFrame()
 
-          when 83 # S
-            @engine.toggleSurface()
-
           when 67 # C
             @engine.activeControls = @engine.cameraControls
 
           when 79 # O
             @engine.activeControls = @engine.rotateControls
-
-          when 82 # R
-            @engine.toggleReflections()
-
-          when 65 # A
-            @engine.toggleAmbientLight()
-
-          when 68 # D
-            @engine.toggleDirectionalLight()
-
-          when 86 # V
-            @engine.toggleVertexColors()
-
-          when 87 # W
-            @engine.toggleWireframe()
 
         @refresh date
     else if eventType == 'widgetEvent'

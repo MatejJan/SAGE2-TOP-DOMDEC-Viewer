@@ -123,8 +123,6 @@ class TopViewer.Model extends THREE.Object3D
       model: @
       engine: @options.engine
       
-    @options.engine.scene.update()
-
   addScalar: (scalarName, scalar) ->
     # See if we already have this scalar or we're just getting new frames.
     if @scalars[scalarName]
@@ -361,7 +359,7 @@ class TopViewer.Model extends THREE.Object3D
       surfaceMaterial.material.transparent = surfaceMaterial.material.uniforms.opacity.value isnt 1
 
       # Lighting
-      surfaceMaterial.material.uniforms.lightingBidirectional.value = if renderingControls.bidirectionalLightControl.value then 1 else 0
+      surfaceMaterial.material.uniforms.lightingBidirectional.value = if renderingControls.bidirectionalLightControl.value() then 1 else 0
 
     # Extra setup for wireframe materials.
     for wireframeMaterial in wireframeMaterials

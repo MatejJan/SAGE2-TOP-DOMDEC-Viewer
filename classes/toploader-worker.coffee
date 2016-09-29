@@ -339,10 +339,12 @@ class TopParser
     buffer = new Float32Array length * 3
 
     for i in [0...length]
-      # Convert to 0-based indices.
-      buffer[i*3] = @currentNodes.nodes[i+1].x
-      buffer[i*3+1] = @currentNodes.nodes[i+1].y
-      buffer[i*3+2] = @currentNodes.nodes[i+1].z
+      # Convert to 0-based indices and skip over non-existent nodes
+      # (they simply won't be used, although they take space).
+      if @currentNodes.nodes[i+1]
+        buffer[i*3] = @currentNodes.nodes[i+1].x
+        buffer[i*3+1] = @currentNodes.nodes[i+1].y
+        buffer[i*3+2] = @currentNodes.nodes[i+1].z
 
     @currentNodes.nodes = buffer
 

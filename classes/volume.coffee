@@ -95,5 +95,9 @@ class TopViewer.Volume
     mesh.geometry.boundingSphere = @options.model.boundingSphere
 
   showFrame: () ->
-    @wireframeMesh.visible = @options.engine.renderingControls.volumesShowWireframeControl.value
-    @isosurfacesMesh.visible = @options.engine.renderingControls.volumesShowIsosurfacesControl.value
+    @wireframeMesh.visible = @options.engine.renderingControls.volumesShowWireframeControl.value()
+    @isosurfacesMesh.visible = @options.engine.renderingControls.volumesShowIsosurfacesControl.value()
+
+    @isosurfacesMesh.receiveShadows = true
+    @isosurfacesMesh.castShadows = true
+    #@isosurfacesMesh.receiveShadows = @options.engine.renderingControls.shadowsControl.value()

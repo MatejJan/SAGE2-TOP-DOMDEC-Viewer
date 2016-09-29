@@ -52,10 +52,10 @@ class TopViewer.Engine
     @activeControls = @cameraControls
 
     @lightingPresets = [
-      new TopViewer.LightingSetup 'Angled light', new THREE.Vector3(1, 1, 1).normalize()
-      new TopViewer.LightingSetup 'Top light', new THREE.Vector3 0, 1, 0
-      new TopViewer.LightingSetup 'Front light', new THREE.Vector3 0, 0, 1
-      new TopViewer.LightingSetup 'Side light', new THREE.Vector3 1, 0, 0
+      new TopViewer.LightingSetup 'Angled light', new THREE.Vector3(0.8, 1, 0.9).normalize()
+      new TopViewer.LightingSetup 'Top light', new THREE.Vector3(0.1, 1, 0.2).normalize()
+      new TopViewer.LightingSetup 'Front light', new THREE.Vector3(0.2, 0.1, 1).normalize()
+      new TopViewer.LightingSetup 'Side light', new THREE.Vector3(1, 0.1, 0.2).normalize()
     ]
 
     @gradients = [
@@ -81,32 +81,6 @@ class TopViewer.Engine
   destroy: ->
     @scene.destroy()
     @playbackControls.destroy()
-
-  toggleShadows: ->
-    @shadows = not @shadows
-    @scene.update()
-
-  toggleVertexColors: ->
-    @vertexColors = not @vertexColors
-    @scene.update()
-
-  toggleReflections: ->
-    @reflections = not @reflections
-    @scene.update()
-
-  toggleDirectionalLight: ->
-    @directionalLight = not @directionalLight
-    @scene.update()
-
-  toggleAmbientLight: ->
-    @ambientLight = not @ambientLight
-    @scene.update()
-
-  toggleSurface: ->
-    @renderingControls.surfaceControl.setValue not @renderingControls.surfaceControl.value
-
-  toggleWireframe: ->
-    @renderingControls.wireframeControl.setValue not @renderingControls.wireframeControl.value
 
   resize: (width, height) ->
     @camera.aspect = width / height

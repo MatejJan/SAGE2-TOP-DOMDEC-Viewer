@@ -279,9 +279,11 @@
       length = Math.max(0, this.currentNodes.nodes.length - 1);
       buffer = new Float32Array(length * 3);
       for (i = k = 0, ref = length; 0 <= ref ? k < ref : k > ref; i = 0 <= ref ? ++k : --k) {
-        buffer[i * 3] = this.currentNodes.nodes[i + 1].x;
-        buffer[i * 3 + 1] = this.currentNodes.nodes[i + 1].y;
-        buffer[i * 3 + 2] = this.currentNodes.nodes[i + 1].z;
+        if (this.currentNodes.nodes[i + 1]) {
+          buffer[i * 3] = this.currentNodes.nodes[i + 1].x;
+          buffer[i * 3 + 1] = this.currentNodes.nodes[i + 1].y;
+          buffer[i * 3 + 2] = this.currentNodes.nodes[i + 1].z;
+        }
       }
       this.currentNodes.nodes = buffer;
       nodesResult = {};

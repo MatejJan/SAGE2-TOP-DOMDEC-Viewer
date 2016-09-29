@@ -1,4 +1,4 @@
-maxStates = 2
+maxStates = 5
 
 class TopViewer.SaveState
   @findStateForName: (states, name) ->

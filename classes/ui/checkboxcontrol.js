@@ -5,14 +5,28 @@
       var valueControl;
       this.uiArea = uiArea;
       this.options = options;
-      this.value = this.options.value;
-      this.$element = $("<div class=\"checkbox-control " + this.options["class"] + "\">\n  <span class=\"value " + (this.value ? 'true' : '') + "\"></span> <span class=\"name\">" + this.options.name + "</span>\n</div>");
+      this._value = this.options.value;
+      if (!this.options.parent) {
+        if (this._value == null) {
+          this._value = false;
+        }
+      }
+      this.$element = $("<div class=\"checkbox-control " + this.options["class"] + "\">\n  <span class=\"value\"></span> <span class=\"name\">" + this.options.name + "</span>\n</div>");
       this.$value = this.$element.find('.value');
+      this._updateControl();
       this.options.$parent.append(this.$element);
       valueControl = new TopViewer.UIControl(this.uiArea, this.$element);
       valueControl.mousedown((function(_this) {
         return function(position) {
-          return _this.setValue(!_this.value);
+          if (_this.options.parent) {
+            if (_this._value != null) {
+              return _this.setValue(_this._value ? false : null);
+            } else {
+              return _this.setValue(true);
+            }
+          } else {
+            return _this.setValue(!_this._value);
+          }
         };
       })(this));
     }
@@ -21,15 +35,32 @@
       return this.$element.find('.name').text(name);
     };
 
+    CheckboxControl.prototype.value = function() {
+      var ref;
+      if (this._value != null) {
+        return this._value;
+      }
+      return (ref = this.options.parent) != null ? ref.value() : void 0;
+    };
+
     CheckboxControl.prototype.setValue = function(value) {
       var base;
-      this.value = value;
-      if (value) {
-        this.$value.addClass('true').removeClass('false');
+      this._value = value;
+      this._updateControl();
+      return typeof (base = this.options).onChange === "function" ? base.onChange(this._value, this) : void 0;
+    };
+
+    CheckboxControl.prototype._updateControl = function() {
+      this.$value.removeClass('true').removeClass('false').removeClass('inherit');
+      if (this._value != null) {
+        if (this._value) {
+          return this.$value.addClass('true');
+        } else {
+          return this.$value.addClass('false');
+        }
       } else {
-        this.$value.addClass('false').removeClass('true');
+        return this.$value.addClass('inherit');
       }
-      return typeof (base = this.options).onChange === "function" ? base.onChange(this.value, this) : void 0;
     };
 
     return CheckboxControl;

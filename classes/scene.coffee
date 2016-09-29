@@ -49,53 +49,13 @@ class TopViewer.Scene extends THREE.Scene
 
     directionalLight
 
-  showFrameSet: (frameSet) ->
-    #console.log "showing frame set"
-
-    frameSet ?= []
-
-    # Hide frames in the current set.
-    frame.mesh.visible = false for frame in @_currentFrameSet
-
-    # Show frames in the new set.
-    frame.mesh.visible = true for frame in frameSet
-
-    wireframe = @engine.renderingControls.wireframeControl.value
-
-    if wireframe
-      for frame in @_currentFrameSet
-        frame.wireframeMesh?.visible = false
-
-      for frame in frameSet
-        @generateWireframeMesh frame
-        frame.wireframeMesh.visible = true
-
-    #console.log "setting current frame set", frameSet
-
-    @_currentFrameSet = frameSet
-
-    @update()
-
   addModel: (model) ->
     model.matrix = @normalizationMatrix
     @add model
-    @update()
 
     @sceneBoundingBox = @sceneBoundingBox.union model.boundingBox
     @updateScale()
     @updateTranslation()
-
-  addMesh: (mesh) ->
-    @update()
-
-  update: ->
-    for model in @children when model instanceof TopViewer.Model
-      for meshName, mesh of model.meshes
-        mesh.castShadow = @engine.renderingControls.shadowsControl.value
-        mesh.receiveShadows = @engine.renderingControls.shadowsControl.value
-        if mesh.backsideMesh
-          mesh.backsideMesh.castShadow = @engine.renderingControls.shadowsControl.value
-          mesh.backsideMesh.receiveShadows = @engine.renderingControls.shadowsControl.value
 
   updateScale: ->
     # Normalize meshes by bringing the size of the bounding box down to 1.

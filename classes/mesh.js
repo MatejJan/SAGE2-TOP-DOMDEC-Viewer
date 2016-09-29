@@ -102,7 +102,6 @@
       this.options.model.add(this.backsideMesh);
       this.options.model.add(this.wireframeMesh);
       this.options.model.add(this.isolinesMesh);
-      this.options.engine.scene.addMesh(this);
       this.options.engine.renderingControls.addMesh(this.options.name, this);
     }
 
@@ -119,7 +118,8 @@
     };
 
     Mesh.prototype.showFrame = function() {
-      if (this.options.engine.renderingControls.meshesShowSurfaceControl.value) {
+      var enableShadows;
+      if (this.renderingControls.showSurfaceControl.value()) {
         this.visible = true;
         switch (this.options.engine.renderingControls.meshesSurfaceSidesControl.value) {
           case TopViewer.RenderingControls.MeshSurfaceSides.DoubleQuality:
@@ -132,8 +132,13 @@
         this.visible = false;
         this.backsideMesh.visible = false;
       }
-      this.wireframeMesh.visible = this.options.engine.renderingControls.meshesShowWireframeControl.value;
-      return this.isolinesMesh.visible = this.options.engine.renderingControls.meshesShowIsolinesControl.value;
+      this.wireframeMesh.visible = this.renderingControls.showWireframeControl.value();
+      this.isolinesMesh.visible = this.renderingControls.showIsolinesControl.value();
+      enableShadows = this.options.engine.renderingControls.shadowsControl.value();
+      this.castShadow = enableShadows;
+      this.receiveShadows = enableShadows;
+      this.backsideMesh.castShadow = enableShadows;
+      return this.backsideMesh.receiveShadows = enableShadows;
     };
 
     return Mesh;
