@@ -103,6 +103,7 @@
         $parent: $lightingArea,
         name: 'Bidirectional',
         value: saveState.lighting.bidirectional,
+        "class": 'advanced',
         onChange: (function(_this) {
           return function(value) {
             return saveState.lighting.bidirectional = value;
@@ -198,7 +199,7 @@
       });
       this.meshesSurfaceSidesControl = new TopViewer.DropdownControl(this, {
         $parent: $meshesSurfaceArea,
-        "class": 'meshes-surface-sides-selector',
+        "class": 'meshes-surface-sides-selector advanced',
         onChange: (function(_this) {
           return function(value) {
             return saveState.meshes.surfaceSides = value;
@@ -270,10 +271,12 @@
           };
         })(this)
       });
+      $meshesIsolinesArea.append("<p class='label'>Isovalues</p>");
       this.meshesIsolinesScalarControl = new TopViewer.ScalarControl(this, {
         $parent: $meshesIsolinesArea,
         saveState: saveState.meshes.isolinesScalar
       });
+      $meshesIsolinesArea.append("<p class='label'>Line coloring</p>");
       this.meshesIsolinesColorsControl = new TopViewer.VertexColorsControl(this, {
         $parent: $meshesIsolinesArea,
         "class": 'meshes-isolines-colors-selector',
@@ -349,10 +352,12 @@
           };
         })(this)
       });
+      $volumesIsosurfacesArea.append("<p class='label'>Isovalues</p>");
       this.volumesIsosurfacesScalarControl = new TopViewer.ScalarControl(this, {
         $parent: $volumesIsosurfacesArea,
         saveState: saveState.volumes.isosurfacesScalar
       });
+      $volumesIsosurfacesArea.append("<p class='label'>Surface coloring</p>");
       this.volumesIsosurfacesColorsControl = new TopViewer.VertexColorsControl(this, {
         $parent: $volumesIsosurfacesArea,
         "class": 'volumes-isosurfaces-colors-selector',
@@ -371,6 +376,8 @@
           };
         })(this)
       });
+      this.$volumes = $("<ul class='volumes sub-panel'></ul>");
+      $volumesArea.append(this.$volumes);
       this.$scalarsArea = $("<ul class='scalars-area'></ul>");
       new TopViewer.ToggleContainer(this, {
         $parent: this.$controls,
@@ -429,9 +436,9 @@
         $parent: this.$vectorsFieldArea,
         "class": 'vectors-field-length',
         minimumValue: 0,
-        maximumValue: 2,
-        power: 4,
-        decimals: -4,
+        maximumValue: 0.1,
+        power: 5,
+        decimals: -5,
         value: saveState.vectors.fieldLength,
         onChange: (function(_this) {
           return function(value) {
@@ -504,25 +511,35 @@
       });
     };
 
-    RenderingControls.prototype.addVolume = function(name, mesh) {
-      var $contents, $mesh;
-      $mesh = $("<li class='mesh'></li>");
-      this.$meshes.append($mesh);
+    RenderingControls.prototype.addVolume = function(name, volume) {
+      var $contents, $volume, saveState, states;
+      $volume = $("<li class='volume'></li>");
+      this.$volumes.append($volume);
       $contents = $("<div>");
-      mesh.renderingControls = {
-        wireframe: new TopViewer.CheckboxControl(this, {
+      states = this.options.engine.options.app.state.renderingControls.volumes;
+      saveState = TopViewer.SaveState.findStateForName(states, name);
+      volume.renderingControls = {
+        showWireframeControl: new TopViewer.CheckboxControl(this, {
           $parent: $contents,
           name: 'wireframe',
-          value: false
+          parent: this.volumesShowWireframeControl,
+          value: saveState.wireframeEnabled,
+          onChange: function(value) {
+            return saveState.wireframeEnabled = value;
+          }
         }),
-        isosurfaces: new TopViewer.CheckboxControl(this, {
+        showIsosurfacesControl: new TopViewer.CheckboxControl(this, {
           $parent: $contents,
           name: 'isosurfaces',
-          value: true
+          parent: this.volumesShowIsosurfacesControl,
+          value: saveState.isosurfacesEnabled,
+          onChange: function(value) {
+            return saveState.isosurfacesEnabled = value;
+          }
         })
       };
       return new TopViewer.ToggleContainer(this, {
-        $parent: $mesh,
+        $parent: $volume,
         text: name,
         visible: false,
         $contents: $contents

@@ -95,7 +95,7 @@
         "surfaceEnabled": true,
         "surfaceSides": "DoubleQuality",
         "surfaceColors": {
-          "type": "Color",
+          "type": "Scalar",
           "color": {
             "h": 0,
             "s": 0,
@@ -124,7 +124,7 @@
           "name": null
         },
         "isolinesColors": {
-          "type": "Color",
+          "type": "Scalar",
           "color": {
             "h": 0,
             "s": 0,
@@ -161,7 +161,7 @@
           "name": null
         },
         "isosurfacesColors": {
-          "type": "Color",
+          "type": "Scalar",
           "color": {
             "h": 0,
             "s": 0,
@@ -171,7 +171,12 @@
             "name": null
           }
         },
-        "isosurfacesOpacity": 1
+        "isosurfacesOpacity": 1,
+        "0": {"state":{ "wireframeEnabled": null, "isosurfacesEnabled": null}, "name": null},
+        "1": {"state":{ "wireframeEnabled": null, "isosurfacesEnabled": null}, "name": null},
+        "2": {"state":{ "wireframeEnabled": null, "isosurfacesEnabled": null}, "name": null},
+        "3": {"state":{ "wireframeEnabled": null, "isosurfacesEnabled": null}, "name": null},
+        "4": {"state":{ "wireframeEnabled": null, "isosurfacesEnabled": null}, "name": null}
       },
       "scalars": {
         "panelEnabled": true,
@@ -190,7 +195,7 @@
         "fieldVector": {
           "name": null
         },
-        "fieldLength": 1,
+        "fieldLength": 0.01,
         "fieldColors": {
           "type": "Color",
           "color": {

@@ -26,7 +26,7 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
     @$rootElement = @$controls
     @rootControl = new TopViewer.UIControl @, @$controls
 
-    # Preapre for sync handlers.
+    # Prepare sync handlers.
     @_syncHandlers = []
 
     # Setup scrolling.
@@ -86,6 +86,7 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
       $parent: $lightingArea
       name: 'Bidirectional'
       value: saveState.lighting.bidirectional
+      class: 'advanced'
       onChange: (value) =>
         saveState.lighting.bidirectional = value
 
@@ -165,7 +166,7 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
 
     @meshesSurfaceSidesControl = new TopViewer.DropdownControl @,
       $parent: $meshesSurfaceArea
-      class: 'meshes-surface-sides-selector'
+      class: 'meshes-surface-sides-selector advanced'
       onChange: (value) =>
         saveState.meshes.surfaceSides = value
 
@@ -230,9 +231,13 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
       onChange: (value) =>
         saveState.meshes.isolinesEnabled = value
 
+    $meshesIsolinesArea.append("<p class='label'>Isovalues</p>")
+
     @meshesIsolinesScalarControl = new TopViewer.ScalarControl @,
       $parent: $meshesIsolinesArea
       saveState: saveState.meshes.isolinesScalar
+
+    $meshesIsolinesArea.append("<p class='label'>Line coloring</p>")
 
     @meshesIsolinesColorsControl = new TopViewer.VertexColorsControl @,
       $parent: $meshesIsolinesArea
@@ -305,9 +310,13 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
       onChange: (value) =>
         saveState.volumes.isosurfacesEnabled = value
 
+    $volumesIsosurfacesArea.append("<p class='label'>Isovalues</p>")
+
     @volumesIsosurfacesScalarControl = new TopViewer.ScalarControl @,
       $parent: $volumesIsosurfacesArea
       saveState: saveState.volumes.isosurfacesScalar
+
+    $volumesIsosurfacesArea.append("<p class='label'>Surface coloring</p>")
 
     @volumesIsosurfacesColorsControl = new TopViewer.VertexColorsControl @,
       $parent: $volumesIsosurfacesArea
@@ -323,6 +332,11 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
       decimals: -2
       onChange: (value) =>
         saveState.volumes.isosurfacesOpacity = value
+
+    # Individual volumes
+
+    @$volumes = $("<ul class='volumes sub-panel'></ul>")
+    $volumesArea.append(@$volumes)
 
     # Scalars
     
@@ -379,9 +393,9 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
       $parent: @$vectorsFieldArea
       class: 'vectors-field-length'
       minimumValue: 0
-      maximumValue: 2
-      power: 4
-      decimals: -4
+      maximumValue: 0.1
+      power: 5
+      decimals: -5
       value: saveState.vectors.fieldLength
       onChange: (value) =>
         saveState.vectors.fieldLength = value
@@ -409,7 +423,6 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
 
     $contents = $("<div>")
 
-    # Add curve control for this scalar.
     states = @options.engine.options.app.state.renderingControls.meshes
     saveState = TopViewer.SaveState.findStateForName states, name
 
@@ -444,25 +457,34 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
       visible: false
       $contents: $contents
 
-  addVolume: (name, mesh) ->
-    $mesh = $("<li class='mesh'></li>")
-    @$meshes.append($mesh)
+  addVolume: (name, volume) ->
+    $volume = $("<li class='volume'></li>")
+    @$volumes.append($volume)
 
     $contents = $("<div>")
 
-    mesh.renderingControls =
-      wireframe: new TopViewer.CheckboxControl @,
+    states = @options.engine.options.app.state.renderingControls.volumes
+    saveState = TopViewer.SaveState.findStateForName states, name
+
+    volume.renderingControls =
+      showWireframeControl: new TopViewer.CheckboxControl @,
         $parent: $contents
         name: 'wireframe'
-        value: false
+        parent: @volumesShowWireframeControl
+        value: saveState.wireframeEnabled
+        onChange: (value) ->
+          saveState.wireframeEnabled = value
 
-      isosurfaces: new TopViewer.CheckboxControl @,
+      showIsosurfacesControl: new TopViewer.CheckboxControl @,
         $parent: $contents
         name: 'isosurfaces'
-        value: true
+        parent: @volumesShowIsosurfacesControl
+        value: saveState.isosurfacesEnabled
+        onChange: (value) ->
+          saveState.isosurfacesEnabled = value
 
     new TopViewer.ToggleContainer @,
-      $parent: $mesh
+      $parent: $volume
       text: name
       visible: false
       $contents: $contents

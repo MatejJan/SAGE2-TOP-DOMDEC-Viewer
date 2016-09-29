@@ -7,6 +7,9 @@
   transition: all 0.2s;
   background: rgba(47,48,55,0.9);
 }
+.top-viewer .rendering-controls .advanced {
+  display: none;
+}
 .top-viewer .rendering-controls.hover,
 .top-viewer .rendering-controls.scrubbing {
   opacity: 1;

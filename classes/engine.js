@@ -9,7 +9,7 @@
         engine: this,
         resourcesPath: this.options.resourcesPath
       });
-      this.camera = new THREE.PerspectiveCamera(45, this.options.width / this.options.height, 0.01, 20);
+      this.camera = new THREE.PerspectiveCamera(45, this.options.width / this.options.height, 0.001, 20);
       cameraState = this.options.app.state.camera;
       this.camera.position.copy(cameraState.position);
       this.camera.rotation.set(cameraState.rotation._x, cameraState.rotation._y, cameraState.rotation._z, cameraState.rotation._order);
@@ -30,7 +30,7 @@
       this._proxyCamera.rotation.set(objectState.rotation._x, objectState.rotation._y, objectState.rotation._z, objectState.rotation._order);
       this._proxyCamera.scale.set(objectState.scale.x, objectState.scale.y, objectState.scale.z);
       this.cameraControls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-      this.cameraControls.minDistance = 0.05;
+      this.cameraControls.minDistance = 0.01;
       this.cameraControls.maxDistance = 10;
       this.cameraControls.zoomSpeed = 0.5;
       this.cameraControls.rotateSpeed = 2;

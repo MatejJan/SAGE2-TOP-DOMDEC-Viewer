@@ -31,13 +31,9 @@
       uiControl = new TopViewer.UIControl(this.uiArea, this.$element);
       uiControl.globalMouseup((function(_this) {
         return function(position) {
-          var $pointers, element, parentOrigin;
-          parentOrigin = _this.uiArea.$appWindow.offset();
-          $pointers = $('.pointerItem');
-          $pointers.hide();
-          element = document.elementFromPoint(parentOrigin.left + position.x, parentOrigin.top + position.y);
-          $pointers.show();
-          if (_this.$element.has(element).length) {
+          var clickedControl;
+          clickedControl = _this.uiArea.hoveredControl;
+          if (_this.$element.has(clickedControl != null ? clickedControl.$element : void 0).length) {
             return;
           }
           return _this.dialogControl.toggleControl.setValue(false);

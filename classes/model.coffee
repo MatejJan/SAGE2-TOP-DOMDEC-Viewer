@@ -446,6 +446,9 @@ class TopViewer.Model extends THREE.Object3D
         object.showFrame()
 
   _setupVertexScalars: (material, selectedScalar, frame, nextFrame) ->
+    material.uniforms.vertexScalarsTexture.value = @constructor.noScalarsTexture
+    material.uniforms.vertexScalarsTextureNext.value = @constructor.noScalarsTexture
+
     for scalar in frame.scalars
       scalarData = @scalars[scalar.scalarName]
       if scalarData is selectedScalar

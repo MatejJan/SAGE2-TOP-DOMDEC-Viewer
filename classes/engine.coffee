@@ -7,7 +7,7 @@ class TopViewer.Engine
       engine: @
       resourcesPath: @options.resourcesPath
 
-    @camera = new THREE.PerspectiveCamera(45, @options.width / @options.height, 0.01, 20)
+    @camera = new THREE.PerspectiveCamera(45, @options.width / @options.height, 0.001, 20)
 
     cameraState = @options.app.state.camera
     @camera.position.copy cameraState.position
@@ -35,7 +35,7 @@ class TopViewer.Engine
     @_proxyCamera.scale.set objectState.scale.x, objectState.scale.y, objectState.scale.z
 
     @cameraControls = new THREE.OrbitControls @camera, @renderer.domElement
-    @cameraControls.minDistance = 0.05
+    @cameraControls.minDistance = 0.01
     @cameraControls.maxDistance = 10
     @cameraControls.zoomSpeed = 0.5
     @cameraControls.rotateSpeed = 2

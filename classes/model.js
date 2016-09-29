@@ -471,6 +471,8 @@
 
     Model.prototype._setupVertexScalars = function(material, selectedScalar, frame, nextFrame) {
       var k, l, len, len1, ref, ref1, results, scalar, scalarData;
+      material.uniforms.vertexScalarsTexture.value = this.constructor.noScalarsTexture;
+      material.uniforms.vertexScalarsTextureNext.value = this.constructor.noScalarsTexture;
       ref = frame.scalars;
       for (k = 0, len = ref.length; k < len; k++) {
         scalar = ref[k];
