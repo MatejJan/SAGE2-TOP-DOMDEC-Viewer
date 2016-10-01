@@ -25,11 +25,7 @@
         framesCount: this.frameTimes.length
       };
       console.log("added frames", animationUpdateData);
-      if (window.isMaster) {
-        return this.onAnimationUpdate(animationUpdateData);
-      } else {
-        return this.options.engine.options.app.broadcast('animationUpdate', animationUpdateData);
-      }
+      return this.options.engine.options.app.broadcast('animationUpdate', animationUpdateData);
     };
 
     Animation.prototype.onAnimationUpdate = function(data) {
@@ -41,11 +37,12 @@
         framesCount = ref[clientId];
         maxLength = Math.min(maxLength, framesCount);
       }
-      this.length = maxLength;
       console.log("figured out new length", maxLength);
-      return this.options.engine.options.app.broadcast('animationUpdate', {
-        maxLength: maxLength
-      });
+      if (window.isMaster) {
+        return this.options.engine.options.app.broadcast('animationUpdate', {
+          maxLength: maxLength
+        });
+      }
     };
 
     return Animation;

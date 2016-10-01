@@ -23,12 +23,8 @@ class TopViewer.Animation
 
     console.log "added frames", animationUpdateData
 
-    if window.isMaster
-      @onAnimationUpdate animationUpdateData
-
-    else
-      # Communicate to master how many frames we have available.
-      @options.engine.options.app.broadcast 'animationUpdate', animationUpdateData
+    # Communicate how many frames we have available.
+    @options.engine.options.app.broadcast 'animationUpdate', animationUpdateData
 
   onAnimationUpdate: (data) ->
     @clientMaxLengths[data.clientId] = data.framesCount
@@ -40,9 +36,9 @@ class TopViewer.Animation
     for clientId, framesCount of @clientMaxLengths
       maxLength = Math.min maxLength, framesCount
 
-    @length = maxLength
-
     console.log "figured out new length", maxLength
 
-    @options.engine.options.app.broadcast 'animationUpdate',
-      maxLength: maxLength
+    # The master's maxLength calculation is the one that should be applied across the system.
+    if window.isMaster
+      @options.engine.options.app.broadcast 'animationUpdate',
+        maxLength: maxLength

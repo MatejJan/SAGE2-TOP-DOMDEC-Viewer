@@ -50,14 +50,11 @@
     },
     animationUpdate: function(data) {
       console.log("we got animation update", data, window.isMaster);
-      if (window.isMaster) {
-        if (data.clientId != null) {
-          return this.engine.animation.onAnimationUpdate(data);
-        }
-      } else {
-        if (data.maxLength != null) {
-          return this.engine.animation.length = data.maxLength;
-        }
+      if (data.clientId != null) {
+        this.engine.animation.onAnimationUpdate(data);
+      }
+      if (data.maxLength != null) {
+        return this.engine.animation.length = data.maxLength;
       }
     },
     resizeApp: function(resizeData) {
