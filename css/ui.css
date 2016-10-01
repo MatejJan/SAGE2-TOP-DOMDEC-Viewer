@@ -3,6 +3,7 @@
   cursor: default;
   font-family: "Ubuntu Condensed", sans-serif;
   color: rgba(200,200,225,0.5);
+  background: #444550;
 }
 .top-viewer p {
   font-family: "Ubuntu Condensed", sans-serif;
@@ -89,7 +90,6 @@
   width: 10em;
   height: 1.5em;
   opacity: 1;
-  transition: all 0.2s;
 }
 .top-viewer .slider-control .slider .track {
   position: relative;
@@ -115,7 +115,6 @@
   transform: translate(-50%, -55%) scale(0.7);
   border-radius: 100%;
   background: rgba(255,255,255,0.5);
-  transition: all 0.2s;
 }
 .top-viewer .slider-control .slider.hover .track .thumb::before {
   transform: translate(-50%, -55%);

@@ -1,15 +1,13 @@
 'use strict'
 
-window.topviewer = SAGE2_App.extend
+window.topviewer = SAGE2_WebGLApp.extend
   init: (data) ->
     console.log "Top viewer started with data", data
 
-    @SAGE2Init 'div', data
+    @WebGLAppInit 'canvas', data
     @resizeEvents = 'continuous'
 
     targetFile = data.state.file
-
-    @lastDrawTime = data.date.getTime() / 1000
 
     $element = $(@element)
     $element.addClass('top-viewer')
@@ -25,8 +23,6 @@ window.topviewer = SAGE2_App.extend
 
     @engine = new TopViewer.Engine
       app: @
-      width: @width
-      height: @height
       $appWindow: $element
       resourcesPath: @resrcPath
 
@@ -34,20 +30,19 @@ window.topviewer = SAGE2_App.extend
       targetFile: targetFile
       engine: @engine
 
-    @needsResize = data.date
-
-    # Start the draw loop.
-    @_shouldQuit = false
-    @drawLoop()
-
     # Be prepared to receive the file list.
     @storedFileListEventHandler = (fileListData) =>
       @fileManager.initializeFiles fileListData
 
     addStoredFileListEventHandler @storedFileListEventHandler
 
-  load: (date) ->
-    #your load code here- update app based on this.state
+    this.resizeCanvas()
+
+    # Start the draw loop.
+    @_shouldQuit = false
+    @lastDrawTime = data.date.getTime() / 1000
+    this.refresh data.date
+    @drawLoop()
 
   sync: (data) ->
     unless window.isMaster
@@ -62,9 +57,6 @@ window.topviewer = SAGE2_App.extend
       @engine.camera.scale.set cameraState.scale.x, cameraState.scale.y, cameraState.scale.z
       @engine.cameraControls.center.copy cameraState.center
 
-      # Sync rendering controls.
-      @engine.renderingControls.sync data.state.renderingControls
-
   animationUpdate: (data) ->
     console.log "we got animation update", data, window.isMaster
     if window.isMaster
@@ -75,32 +67,38 @@ window.topviewer = SAGE2_App.extend
       # The master is sending us new max length.
       @engine.animation.length = data.maxLength if data.maxLength?
 
+  resizeApp: (resizeData) ->
+    @engine.resize resizeData
+
+    $(@element).css
+      fontSize: @sage2_height * 0.015
+      
+  startMove: (date) ->
+    @moving = true
+
+  move: (date) ->
+    @resizeCanvas date
+    @refresh date
+
+    @moving = false
+
   draw: (date) ->
     @needsDraw = date
-
-  resize: (date) ->
-    @needsResize = date
 
   drawLoop: ->
     requestAnimationFrame =>
       @drawLoop() unless @_shouldQuit
 
-    if (@needsResize)
-      @width = @element.clientWidth
-      @height = @element.clientHeight
-
-      @engine.resize @width, @height
-
-      $(@element).css
-        fontSize: @height * 0.015
-
-      @refresh @needsResize
-      @needsResize = false
-
     if (@needsDraw)
+      # Do continuous resizes of underlying canvas when moving (since new crop sizes need to be applied).
+      if @moving
+        @resizeCanvas date
+        @refresh date
+
       date = @needsDraw
       time = date.getTime() / 1000
       elapsedTime = time - @lastDrawTime
+
       @engine.draw elapsedTime
       @needsDraw = false
       @lastDrawTime = time
@@ -168,11 +166,6 @@ window.topviewer = SAGE2_App.extend
           return
 
       @refresh date
-
-  move: (date) ->
-    # this.sage2_width, this.sage2_height give width and height of app in global wall coordinates
-    # date: when it happened
-    @refresh date
 
   quit: ->
     console.log "Destroying topViewer"

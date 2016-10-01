@@ -20,7 +20,7 @@
     };
 
     function RenderingControls(options) {
-      var $gradientArea, $gradientPreview, $lightingArea, $meshesArea, $meshesIsolinesArea, $meshesSurfaceArea, $meshesWireframeArea, $volumesArea, $volumesIsosurfacesArea, $volumesWireframeArea, applyScrollOffset, customLight, found, gradient, gradientPreviewImage, i, j, len, len1, lightingPreset, ref, ref1, saveState, scrollOffset;
+      var $gradientArea, $gradientPreview, $lightingArea, $meshesArea, $meshesIsolinesArea, $meshesSurfaceArea, $meshesWireframeArea, $volumesArea, $volumesIsosurfacesArea, $volumesWireframeArea, customLight, found, gradient, gradientPreviewImage, i, j, len, len1, lightingPreset, ref, ref1, saveState, scrollOffset;
       this.options = options;
       RenderingControls.__super__.constructor.apply(this, arguments);
       saveState = this.options.engine.options.app.state.renderingControls;
@@ -30,34 +30,15 @@
       this.$appWindow.append(this.$controls);
       this.$rootElement = this.$controls;
       this.rootControl = new TopViewer.UIControl(this, this.$controls);
-      this._syncHandlers = [];
-      console.log("got soff", saveState.scrollOffset);
-      scrollOffset = saveState.scrollOffset || 0;
-      applyScrollOffset = (function(_this) {
-        return function() {
-          return _this.$controls.css({
-            top: -scrollOffset
-          });
-        };
-      })(this);
-      setTimeout((function(_this) {
-        return function() {
-          return applyScrollOffset();
-        };
-      })(this), 1);
+      scrollOffset = 0;
       this.rootControl.scroll((function(_this) {
         return function(delta) {
           scrollOffset += delta;
           scrollOffset = Math.max(scrollOffset, 0);
           scrollOffset = Math.min(scrollOffset, _this.$controls.height() - _this.options.engine.$appWindow.height() * 0.8);
-          saveState.scrollOffset = scrollOffset;
-          return applyScrollOffset();
-        };
-      })(this));
-      this._onSync((function(_this) {
-        return function(data) {
-          scrollOffset = data.scrollOffset;
-          return applyScrollOffset();
+          return _this.$controls.css({
+            top: -scrollOffset
+          });
         };
       })(this));
       $lightingArea = $("<div class='lighting-area'></div>");
@@ -595,21 +576,6 @@
         x: position.x + offset.left,
         y: position.y + offset.top
       };
-    };
-
-    RenderingControls.prototype.sync = function(data) {
-      var handler, i, len, ref, results;
-      ref = this._syncHandlers;
-      results = [];
-      for (i = 0, len = ref.length; i < len; i++) {
-        handler = ref[i];
-        results.push(handler(data));
-      }
-      return results;
-    };
-
-    RenderingControls.prototype._onSync = function(handler) {
-      return this._syncHandlers.push(handler);
     };
 
     return RenderingControls;

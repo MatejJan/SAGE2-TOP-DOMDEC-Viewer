@@ -7,7 +7,7 @@ class TopViewer.Engine
       engine: @
       resourcesPath: @options.resourcesPath
 
-    @camera = new THREE.PerspectiveCamera(45, @options.width / @options.height, 0.001, 20)
+    @camera = new THREE.PerspectiveCamera(45, @options.app.sage2_width / @options.app.sage2_height, 0.001, 20)
 
     cameraState = @options.app.state.camera
     @camera.position.copy cameraState.position
@@ -16,6 +16,7 @@ class TopViewer.Engine
 
     @renderer = new THREE.WebGLRenderer
       antialias: true
+      canvas: @options.app.canvas
 
     @renderer.setSize window.innerWidth, window.innerHeight
     @renderer.setClearColor 0x444550
@@ -34,7 +35,7 @@ class TopViewer.Engine
     @_proxyCamera.rotation.set objectState.rotation._x, objectState.rotation._y, objectState.rotation._z, objectState.rotation._order
     @_proxyCamera.scale.set objectState.scale.x, objectState.scale.y, objectState.scale.z
 
-    @cameraControls = new THREE.OrbitControls @camera, @renderer.domElement
+    @cameraControls = new THREE.OrbitControls @camera, @options.app.element
     @cameraControls.minDistance = 0.01
     @cameraControls.maxDistance = 10
     @cameraControls.zoomSpeed = 0.5
@@ -42,7 +43,7 @@ class TopViewer.Engine
     @cameraControls.autoRotate = false
     @cameraControls.center.copy cameraState.center
 
-    @rotateControls = new THREE.OrbitControls @_proxyCamera, @renderer.domElement
+    @rotateControls = new THREE.OrbitControls @_proxyCamera, @options.app.element
     @rotateControls.minDistance = 0.01
     @rotateControls.maxDistance = 10
     @rotateControls.rotateSpeed = 1
@@ -82,11 +83,12 @@ class TopViewer.Engine
     @scene.destroy()
     @playbackControls.destroy()
 
-  resize: (width, height) ->
-    @camera.aspect = width / height
-    @camera.updateProjectionMatrix()
-    @renderer.setSize width, height
-    @renderer.setViewport 0, 0, @renderer.context.drawingBufferWidth, @renderer.context.drawingBufferHeight
+  resize: (resizeData) ->
+    @renderer.setSize @options.app.canvas.width, @options.app.canvas.height
+
+    @camera.setViewOffset @options.app.sage2_width, @options.app.sage2_height,
+      resizeData.leftViewOffset, resizeData.topViewOffset,
+      resizeData.localWidth, resizeData.localHeight
 
   draw: (elapsedTime) ->
     @uiControlsActive = false

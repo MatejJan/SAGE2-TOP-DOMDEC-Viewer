@@ -9,13 +9,14 @@
         engine: this,
         resourcesPath: this.options.resourcesPath
       });
-      this.camera = new THREE.PerspectiveCamera(45, this.options.width / this.options.height, 0.001, 20);
+      this.camera = new THREE.PerspectiveCamera(45, this.options.app.sage2_width / this.options.app.sage2_height, 0.001, 20);
       cameraState = this.options.app.state.camera;
       this.camera.position.copy(cameraState.position);
       this.camera.rotation.set(cameraState.rotation._x, cameraState.rotation._y, cameraState.rotation._z, cameraState.rotation._order);
       this.camera.scale.set(cameraState.scale.x, cameraState.scale.y, cameraState.scale.z);
       this.renderer = new THREE.WebGLRenderer({
-        antialias: true
+        antialias: true,
+        canvas: this.options.app.canvas
       });
       this.renderer.setSize(window.innerWidth, window.innerHeight);
       this.renderer.setClearColor(0x444550);
@@ -29,14 +30,14 @@
       this._proxyCamera.position.copy(objectState.position);
       this._proxyCamera.rotation.set(objectState.rotation._x, objectState.rotation._y, objectState.rotation._z, objectState.rotation._order);
       this._proxyCamera.scale.set(objectState.scale.x, objectState.scale.y, objectState.scale.z);
-      this.cameraControls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+      this.cameraControls = new THREE.OrbitControls(this.camera, this.options.app.element);
       this.cameraControls.minDistance = 0.01;
       this.cameraControls.maxDistance = 10;
       this.cameraControls.zoomSpeed = 0.5;
       this.cameraControls.rotateSpeed = 2;
       this.cameraControls.autoRotate = false;
       this.cameraControls.center.copy(cameraState.center);
-      this.rotateControls = new THREE.OrbitControls(this._proxyCamera, this.renderer.domElement);
+      this.rotateControls = new THREE.OrbitControls(this._proxyCamera, this.options.app.element);
       this.rotateControls.minDistance = 0.01;
       this.rotateControls.maxDistance = 10;
       this.rotateControls.rotateSpeed = 1;
@@ -66,11 +67,9 @@
       return this.playbackControls.destroy();
     };
 
-    Engine.prototype.resize = function(width, height) {
-      this.camera.aspect = width / height;
-      this.camera.updateProjectionMatrix();
-      this.renderer.setSize(width, height);
-      return this.renderer.setViewport(0, 0, this.renderer.context.drawingBufferWidth, this.renderer.context.drawingBufferHeight);
+    Engine.prototype.resize = function(resizeData) {
+      this.renderer.setSize(this.options.app.canvas.width, this.options.app.canvas.height);
+      return this.camera.setViewOffset(this.options.app.sage2_width, this.options.app.sage2_height, resizeData.leftViewOffset, resizeData.topViewOffset, resizeData.localWidth, resizeData.localHeight);
     };
 
     Engine.prototype.draw = function(elapsedTime) {
