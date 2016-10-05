@@ -43,6 +43,10 @@ window.topviewer = SAGE2_WebGLApp.extend
     @lastDrawTime = data.date.getTime() / 1000
     this.refresh data.date
     @drawLoop()
+    
+    @_appPosition =
+      x: @sage2_x
+      y: @sage2_y
 
   sync: (data) ->
     unless window.isMaster
@@ -72,15 +76,6 @@ window.topviewer = SAGE2_WebGLApp.extend
 
     $(@element).css
       fontSize: @sage2_height * 0.015
-      
-  startMove: (date) ->
-    @moving = true
-
-  move: (date) ->
-    @resizeCanvas date
-    @refresh date
-
-    @moving = false
 
   draw: (date) ->
     @needsDraw = date
@@ -90,10 +85,15 @@ window.topviewer = SAGE2_WebGLApp.extend
       @drawLoop() unless @_shouldQuit
 
     if (@needsDraw)
-      # Do continuous resizes of underlying canvas when moving (since new crop sizes need to be applied).
-      if @moving
+      # If the app has moved, resize the underlying canvas since new crop sizes need to be applied.
+      if @sage2_x isnt @_appPosition.x or @sage2_y isnt @_appPosition.y
         @resizeCanvas date
         @refresh date
+
+        # Save the new position for further comparison.
+        @_appPosition =
+          x: @sage2_x
+          y: @sage2_y
 
       date = @needsDraw
       time = date.getTime() / 1000

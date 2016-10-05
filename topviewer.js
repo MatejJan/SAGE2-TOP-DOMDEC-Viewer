@@ -30,7 +30,11 @@
       this._shouldQuit = false;
       this.lastDrawTime = data.date.getTime() / 1000;
       this.refresh(data.date);
-      return this.drawLoop();
+      this.drawLoop();
+      return this._appPosition = {
+        x: this.sage2_x,
+        y: this.sage2_y
+      };
     },
     sync: function(data) {
       var cameraState;
@@ -65,14 +69,6 @@
         fontSize: this.sage2_height * 0.015
       });
     },
-    startMove: function(date) {
-      return this.moving = true;
-    },
-    move: function(date) {
-      this.resizeCanvas(date);
-      this.refresh(date);
-      return this.moving = false;
-    },
     draw: function(date) {
       return this.needsDraw = date;
     },
@@ -86,9 +82,13 @@
         };
       })(this));
       if (this.needsDraw) {
-        if (this.moving) {
+        if (this.sage2_x !== this._appPosition.x || this.sage2_y !== this._appPosition.y) {
           this.resizeCanvas(date);
           this.refresh(date);
+          this._appPosition = {
+            x: this.sage2_x,
+            y: this.sage2_y
+          };
         }
         date = this.needsDraw;
         time = date.getTime() / 1000;
