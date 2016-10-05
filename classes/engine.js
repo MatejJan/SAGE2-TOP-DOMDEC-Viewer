@@ -69,6 +69,7 @@
 
     Engine.prototype.resize = function(resizeData) {
       this.renderer.setSize(this.options.app.canvas.width, this.options.app.canvas.height);
+      this.renderer.setViewport(0, 0, this.renderer.context.drawingBufferWidth, this.renderer.context.drawingBufferHeight);
       return this.camera.setViewOffset(this.options.app.sage2_width, this.options.app.sage2_height, resizeData.leftViewOffset, resizeData.topViewOffset, resizeData.localWidth, resizeData.localHeight);
     };
 
