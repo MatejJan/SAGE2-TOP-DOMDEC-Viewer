@@ -72,6 +72,28 @@
       return typeof (base = this.options).onChange === "function" ? base.onChange(this.value, this) : void 0;
     };
 
+    DropdownControl.prototype.getValueItem = function(valueOrText) {
+      var value;
+      value = _.find(this.values, function(value) {
+        return value.value === valueOrText || value.text === valueOrText;
+      });
+      if (!value) {
+        return false;
+      }
+      return value.$item;
+    };
+
+    DropdownControl.prototype.reset = function() {
+      var i, len, ref, value;
+      ref = this.values;
+      for (i = 0, len = ref.length; i < len; i++) {
+        value = ref[i];
+        value.control.destroy();
+        value.$item.remove();
+      }
+      return this.values = [];
+    };
+
     return DropdownControl;
 
   })();

@@ -21,8 +21,6 @@ class TopViewer.Animation
       clientId: window.clientID
       framesCount: @frameTimes.length
 
-    console.log "added frames", animationUpdateData
-
     # Communicate how many frames we have available.
     @options.engine.options.app.broadcast 'animationUpdate', animationUpdateData
 
@@ -35,8 +33,6 @@ class TopViewer.Animation
     # of all clients (the length of the one who loaded the least)
     for clientId, framesCount of @clientMaxLengths
       maxLength = Math.min maxLength, framesCount
-
-    console.log "figured out new length", maxLength
 
     # The master's maxLength calculation is the one that should be applied across the system.
     if window.isMaster

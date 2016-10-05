@@ -17,6 +17,11 @@
       this.$element.data("control", this);
     }
 
+    UIControl.prototype.destroy = function() {
+      this.uiArea.removeControl(this);
+      return this.$element.data("control", null);
+    };
+
     UIControl.prototype.mousedown = function(handler) {
       return this._mouseDownHandlers.push(handler);
     };

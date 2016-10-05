@@ -119,6 +119,13 @@
 
     Mesh.prototype.showFrame = function() {
       var enableShadows;
+      if (!this.renderingControls) {
+        this.visible = false;
+        this.backsideMesh.visible = false;
+        this.wireframeMesh.visible = false;
+        this.isolinesMesh.visible = false;
+        return;
+      }
       if (this.renderingControls.showSurfaceControl.value()) {
         this.visible = true;
         switch (this.options.engine.renderingControls.meshesSurfaceSidesControl.value) {

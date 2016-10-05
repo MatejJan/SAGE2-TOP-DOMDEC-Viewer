@@ -49,13 +49,15 @@
       }
     },
     animationUpdate: function(data) {
-      console.log("we got animation update", data, window.isMaster);
       if (data.clientId != null) {
         this.engine.animation.onAnimationUpdate(data);
       }
       if (data.maxLength != null) {
         return this.engine.animation.length = data.maxLength;
       }
+    },
+    renderingControlsUpdateClientObjects: function(data) {
+      return this.engine.renderingControls.updateClientObjects(data);
     },
     resizeApp: function(resizeData) {
       this.engine.resize(resizeData);

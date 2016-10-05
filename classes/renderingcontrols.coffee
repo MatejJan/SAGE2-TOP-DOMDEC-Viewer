@@ -11,8 +11,69 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
     Color: 'Color'
     Scalar: 'Scalar'
 
+  # Synchronized adding of objects.
+  @DisplayMethodNameForCollection:
+    meshes: '_displayMesh'
+    volumes: '_displayVolume'
+    scalars: '_displayScalar'
+    vectors: '_displayVector'
+
+  # Called when we need to update the list of loaded object.
+  updateClientObjects: (data) ->
+    if data.clientId?
+      # Only a single client is updating us with their new loaded objects.
+      @clientsLoadedObjects[data.clientId] = data.loadedObjects
+
+      # Master should propagate this new updated list to everyone else.
+      @options.engine.options.app.broadcast 'renderingControlsUpdateClientObjects', @clientsLoadedObjects if window.isMaster
+
+    else
+      # The master has sent us an update of all clients.
+      @clientsLoadedObjects = data
+
+      # Update UI with objects that are loaded on all clients.
+      for collectionName, objects of @loadedObjects
+        for objectName, object of objects
+          # See if all clients have this object loaded.
+          display = true
+          for clientId, clientLoadedObjects of @clientsLoadedObjects
+            display = false unless clientLoadedObjects[collectionName][objectName]
+
+          # Display (or hide) this object.
+          displayMethodName = @constructor.DisplayMethodNameForCollection[collectionName]
+          @[displayMethodName] objectName, display
+
+  _broadcastObjectsUpdate: ->
+    # Inform everyone with our updated loaded objects.
+    @options.engine.options.app.broadcast 'renderingControlsUpdateClientObjects',
+      clientId: window.clientID
+      loadedObjects: @clientsLoadedObjects[window.clientID]
+
   constructor: (@options) ->
     super
+
+    # Prepare support for scalar and vector controls.
+    @scalarControls = []
+    @vectorControls = []
+
+    # In loadedObjects we're storing actual objects that we have loaded on this display client.
+    @loadedObjects =
+      meshes: {}
+      volumes: {}
+      scalars: {}
+      vectors: {}
+
+    # In clientsLoadedObjects we're storing just the names of the objects that each display client
+    # has loaded. We use this information to know when all the clients have loaded a certain object.
+    @clientsLoadedObjects = {}
+    @clientsLoadedObjects[window.clientID] =
+      meshes: {}
+      volumes: {}
+      scalars: {}
+      vectors: {}
+
+    # To begin the syncing process, we let the others know we're a new display client.
+    @_broadcastObjectsUpdate()
 
     saveState = @options.engine.options.app.state.renderingControls
     @$appWindow = @options.engine.$appWindow
@@ -27,14 +88,17 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
     @rootControl = new TopViewer.UIControl @, @$controls
 
     # Setup scrolling.
-    scrollOffset = 0
+    scrollOffset = saveState.scrollOffset
+    applyScrollOffset = => @$controls.css top: -scrollOffset
+    setTimeout (=> applyScrollOffset()), 1
+
     @rootControl.scroll (delta) =>
       scrollOffset += delta
       scrollOffset = Math.max scrollOffset, 0
       scrollOffset = Math.min scrollOffset, @$controls.height() - @options.engine.$appWindow.height() * 0.8
+      saveState.scrollOffset = scrollOffset
 
-      @$controls.css
-        top: -scrollOffset
+      applyScrollOffset()
 
     # Lighting
 
@@ -355,6 +419,7 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
     @vectorsDisplacementVectorControl = new TopViewer.VectorControl @,
       $parent: @$vectorsDisplacementArea
       saveState: saveState.vectors.displacementVector
+      autoloadNameRegex: /disp/i
 
     @$vectorsDisplacementArea.append("<p class='label'>Amplification</p>")
     @vectorsDisplacementFactorControl = new TopViewer.SliderControl @,
@@ -405,8 +470,11 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
     @initialize()
 
   addMesh: (name, mesh) ->
-    $mesh = $("<li class='mesh'></li>")
-    @$meshes.append($mesh)
+    $mesh = $("<li class='mesh'></li>").hide()
+    @loadedObjects.meshes[name] =
+      $element: $mesh
+
+    @_addObject name, @loadedObjects.meshes, @$meshes
 
     $contents = $("<div>")
 
@@ -444,9 +512,19 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
       visible: false
       $contents: $contents
 
+    @clientsLoadedObjects[window.clientID].meshes[name] = true
+
+    @_broadcastObjectsUpdate()
+
+  _displayMesh: (name, visible) ->
+    @loadedObjects.meshes[name].$element.toggle visible
+
   addVolume: (name, volume) ->
-    $volume = $("<li class='volume'></li>")
-    @$volumes.append($volume)
+    $volume = $("<li class='volume'></li>").hide()
+    @loadedObjects.volumes[name] =
+      $element: $volume
+
+    @_addObject name, @loadedObjects.volumes, @$volumes
 
     $contents = $("<div>")
 
@@ -476,12 +554,23 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
       visible: false
       $contents: $contents
 
-  addScalar: (name, scalar) ->
-    # Update scalar dropdowns.
-    TopViewer.ScalarControl.addResults name, scalar
+    @clientsLoadedObjects[window.clientID].volumes[name] = true
 
-    $scalar = $("<li class='scalar'></li>")
-    @$scalarsArea.append($scalar)
+    @_broadcastObjectsUpdate()
+
+  _displayVolume: (name, visible) ->
+    @loadedObjects.volumes[name].$element.toggle visible
+
+  addScalar: (name, scalar) ->
+    $scalar = $("<li class='scalar'></li>").hide()
+    @loadedObjects.scalars[name] =
+      $element: $scalar
+      result: scalar
+
+    # Update scalar dropdowns.
+    control.updateResults() for control in @scalarControls
+
+    @_addObject name, @loadedObjects.scalars, @$scalarsArea
 
     $contents = $("<div>")
 
@@ -501,9 +590,45 @@ class TopViewer.RenderingControls extends TopViewer.UIArea
         scalar: scalar
         gradientControl: @gradientControl
 
+    @clientsLoadedObjects[window.clientID].scalars[name] = true
+
+    @_broadcastObjectsUpdate()
+
+  _displayScalar: (name, visible) ->
+    @loadedObjects.scalars[name].$element.toggle visible
+    control.displayResult name, visible for control in @scalarControls
+
   addVector: (name, vector) ->
+    @loadedObjects.vectors[name] =
+      result: vector
+
     # Update vector dropdowns.
-    TopViewer.VectorControl.addResults name, vector
+    control.updateResults() for control in @vectorControls
+
+    @clientsLoadedObjects[window.clientID].vectors[name] = true
+
+    @_broadcastObjectsUpdate()
+
+  _displayVector: (name, visible) ->
+    control.displayResult name, visible for control in @vectorControls
+
+  _addObject: (name, objects, $targetArea) ->
+    # Get object names in alphabet order.
+    names = _.keys(objects).sort()
+
+    # See at which index we're positioned.
+    index = _.indexOf names, name
+
+    # Insert the object.
+    $element = objects[name].$element
+
+    if index > 0
+      # Insert the elements after the previous one.
+      $element.insertAfter objects[names[index-1]].$element
+
+    else
+      # We're at the start so prepend to the area.
+      $targetArea.prepend $element
 
   onMouseDown: (position, button) ->
     super

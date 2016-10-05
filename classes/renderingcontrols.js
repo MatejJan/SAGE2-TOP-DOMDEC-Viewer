@@ -19,10 +19,76 @@
       Scalar: 'Scalar'
     };
 
+    RenderingControls.DisplayMethodNameForCollection = {
+      meshes: '_displayMesh',
+      volumes: '_displayVolume',
+      scalars: '_displayScalar',
+      vectors: '_displayVector'
+    };
+
+    RenderingControls.prototype.updateClientObjects = function(data) {
+      var clientId, clientLoadedObjects, collectionName, display, displayMethodName, object, objectName, objects, ref, results;
+      if (data.clientId != null) {
+        this.clientsLoadedObjects[data.clientId] = data.loadedObjects;
+        if (window.isMaster) {
+          return this.options.engine.options.app.broadcast('renderingControlsUpdateClientObjects', this.clientsLoadedObjects);
+        }
+      } else {
+        this.clientsLoadedObjects = data;
+        ref = this.loadedObjects;
+        results = [];
+        for (collectionName in ref) {
+          objects = ref[collectionName];
+          results.push((function() {
+            var ref1, results1;
+            results1 = [];
+            for (objectName in objects) {
+              object = objects[objectName];
+              display = true;
+              ref1 = this.clientsLoadedObjects;
+              for (clientId in ref1) {
+                clientLoadedObjects = ref1[clientId];
+                if (!clientLoadedObjects[collectionName][objectName]) {
+                  display = false;
+                }
+              }
+              displayMethodName = this.constructor.DisplayMethodNameForCollection[collectionName];
+              results1.push(this[displayMethodName](objectName, display));
+            }
+            return results1;
+          }).call(this));
+        }
+        return results;
+      }
+    };
+
+    RenderingControls.prototype._broadcastObjectsUpdate = function() {
+      return this.options.engine.options.app.broadcast('renderingControlsUpdateClientObjects', {
+        clientId: window.clientID,
+        loadedObjects: this.clientsLoadedObjects[window.clientID]
+      });
+    };
+
     function RenderingControls(options) {
-      var $gradientArea, $gradientPreview, $lightingArea, $meshesArea, $meshesIsolinesArea, $meshesSurfaceArea, $meshesWireframeArea, $volumesArea, $volumesIsosurfacesArea, $volumesWireframeArea, customLight, found, gradient, gradientPreviewImage, i, j, len, len1, lightingPreset, ref, ref1, saveState, scrollOffset;
+      var $gradientArea, $gradientPreview, $lightingArea, $meshesArea, $meshesIsolinesArea, $meshesSurfaceArea, $meshesWireframeArea, $volumesArea, $volumesIsosurfacesArea, $volumesWireframeArea, applyScrollOffset, customLight, found, gradient, gradientPreviewImage, i, j, len, len1, lightingPreset, ref, ref1, saveState, scrollOffset;
       this.options = options;
       RenderingControls.__super__.constructor.apply(this, arguments);
+      this.scalarControls = [];
+      this.vectorControls = [];
+      this.loadedObjects = {
+        meshes: {},
+        volumes: {},
+        scalars: {},
+        vectors: {}
+      };
+      this.clientsLoadedObjects = {};
+      this.clientsLoadedObjects[window.clientID] = {
+        meshes: {},
+        volumes: {},
+        scalars: {},
+        vectors: {}
+      };
+      this._broadcastObjectsUpdate();
       saveState = this.options.engine.options.app.state.renderingControls;
       this.$appWindow = this.options.engine.$appWindow;
       this.scene = this.options.engine.scene;
@@ -30,15 +96,26 @@
       this.$appWindow.append(this.$controls);
       this.$rootElement = this.$controls;
       this.rootControl = new TopViewer.UIControl(this, this.$controls);
-      scrollOffset = 0;
+      scrollOffset = saveState.scrollOffset;
+      applyScrollOffset = (function(_this) {
+        return function() {
+          return _this.$controls.css({
+            top: -scrollOffset
+          });
+        };
+      })(this);
+      setTimeout(((function(_this) {
+        return function() {
+          return applyScrollOffset();
+        };
+      })(this)), 1);
       this.rootControl.scroll((function(_this) {
         return function(delta) {
           scrollOffset += delta;
           scrollOffset = Math.max(scrollOffset, 0);
           scrollOffset = Math.min(scrollOffset, _this.$controls.height() - _this.options.engine.$appWindow.height() * 0.8);
-          return _this.$controls.css({
-            top: -scrollOffset
-          });
+          saveState.scrollOffset = scrollOffset;
+          return applyScrollOffset();
         };
       })(this));
       $lightingArea = $("<div class='lighting-area'></div>");
@@ -389,7 +466,8 @@
       this.$vectorsArea.append(this.$vectorsDisplacementArea);
       this.vectorsDisplacementVectorControl = new TopViewer.VectorControl(this, {
         $parent: this.$vectorsDisplacementArea,
-        saveState: saveState.vectors.displacementVector
+        saveState: saveState.vectors.displacementVector,
+        autoloadNameRegex: /disp/i
       });
       this.$vectorsDisplacementArea.append("<p class='label'>Amplification</p>");
       this.vectorsDisplacementFactorControl = new TopViewer.SliderControl(this, {
@@ -450,8 +528,11 @@
 
     RenderingControls.prototype.addMesh = function(name, mesh) {
       var $contents, $mesh, saveState, states;
-      $mesh = $("<li class='mesh'></li>");
-      this.$meshes.append($mesh);
+      $mesh = $("<li class='mesh'></li>").hide();
+      this.loadedObjects.meshes[name] = {
+        $element: $mesh
+      };
+      this._addObject(name, this.loadedObjects.meshes, this.$meshes);
       $contents = $("<div>");
       states = this.options.engine.options.app.state.renderingControls.meshes;
       saveState = TopViewer.SaveState.findStateForName(states, name);
@@ -484,18 +565,27 @@
           }
         })
       };
-      return new TopViewer.ToggleContainer(this, {
+      new TopViewer.ToggleContainer(this, {
         $parent: $mesh,
         text: name,
         visible: false,
         $contents: $contents
       });
+      this.clientsLoadedObjects[window.clientID].meshes[name] = true;
+      return this._broadcastObjectsUpdate();
+    };
+
+    RenderingControls.prototype._displayMesh = function(name, visible) {
+      return this.loadedObjects.meshes[name].$element.toggle(visible);
     };
 
     RenderingControls.prototype.addVolume = function(name, volume) {
       var $contents, $volume, saveState, states;
-      $volume = $("<li class='volume'></li>");
-      this.$volumes.append($volume);
+      $volume = $("<li class='volume'></li>").hide();
+      this.loadedObjects.volumes[name] = {
+        $element: $volume
+      };
+      this._addObject(name, this.loadedObjects.volumes, this.$volumes);
       $contents = $("<div>");
       states = this.options.engine.options.app.state.renderingControls.volumes;
       saveState = TopViewer.SaveState.findStateForName(states, name);
@@ -519,19 +609,33 @@
           }
         })
       };
-      return new TopViewer.ToggleContainer(this, {
+      new TopViewer.ToggleContainer(this, {
         $parent: $volume,
         text: name,
         visible: false,
         $contents: $contents
       });
+      this.clientsLoadedObjects[window.clientID].volumes[name] = true;
+      return this._broadcastObjectsUpdate();
+    };
+
+    RenderingControls.prototype._displayVolume = function(name, visible) {
+      return this.loadedObjects.volumes[name].$element.toggle(visible);
     };
 
     RenderingControls.prototype.addScalar = function(name, scalar) {
-      var $contents, $scalar, states;
-      TopViewer.ScalarControl.addResults(name, scalar);
-      $scalar = $("<li class='scalar'></li>");
-      this.$scalarsArea.append($scalar);
+      var $contents, $scalar, control, i, len, ref, states;
+      $scalar = $("<li class='scalar'></li>").hide();
+      this.loadedObjects.scalars[name] = {
+        $element: $scalar,
+        result: scalar
+      };
+      ref = this.scalarControls;
+      for (i = 0, len = ref.length; i < len; i++) {
+        control = ref[i];
+        control.updateResults();
+      }
+      this._addObject(name, this.loadedObjects.scalars, this.$scalarsArea);
       $contents = $("<div>");
       new TopViewer.ToggleContainer(this, {
         $parent: $scalar,
@@ -540,7 +644,7 @@
         $contents: $contents
       });
       states = this.options.engine.options.app.state.renderingControls.scalars;
-      return scalar.renderingControls = {
+      scalar.renderingControls = {
         curveTransformControl: new TopViewer.CurveTransformControl(this, {
           $parent: $contents,
           saveState: TopViewer.SaveState.findStateForName(states, name),
@@ -548,10 +652,57 @@
           gradientControl: this.gradientControl
         })
       };
+      this.clientsLoadedObjects[window.clientID].scalars[name] = true;
+      return this._broadcastObjectsUpdate();
+    };
+
+    RenderingControls.prototype._displayScalar = function(name, visible) {
+      var control, i, len, ref, results;
+      this.loadedObjects.scalars[name].$element.toggle(visible);
+      ref = this.scalarControls;
+      results = [];
+      for (i = 0, len = ref.length; i < len; i++) {
+        control = ref[i];
+        results.push(control.displayResult(name, visible));
+      }
+      return results;
     };
 
     RenderingControls.prototype.addVector = function(name, vector) {
-      return TopViewer.VectorControl.addResults(name, vector);
+      var control, i, len, ref;
+      this.loadedObjects.vectors[name] = {
+        result: vector
+      };
+      ref = this.vectorControls;
+      for (i = 0, len = ref.length; i < len; i++) {
+        control = ref[i];
+        control.updateResults();
+      }
+      this.clientsLoadedObjects[window.clientID].vectors[name] = true;
+      return this._broadcastObjectsUpdate();
+    };
+
+    RenderingControls.prototype._displayVector = function(name, visible) {
+      var control, i, len, ref, results;
+      ref = this.vectorControls;
+      results = [];
+      for (i = 0, len = ref.length; i < len; i++) {
+        control = ref[i];
+        results.push(control.displayResult(name, visible));
+      }
+      return results;
+    };
+
+    RenderingControls.prototype._addObject = function(name, objects, $targetArea) {
+      var $element, index, names;
+      names = _.keys(objects).sort();
+      index = _.indexOf(names, name);
+      $element = objects[name].$element;
+      if (index > 0) {
+        return $element.insertAfter(objects[names[index - 1]].$element);
+      } else {
+        return $targetArea.prepend($element);
+      }
     };
 
     RenderingControls.prototype.onMouseDown = function(position, button) {

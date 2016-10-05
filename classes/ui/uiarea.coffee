@@ -12,12 +12,24 @@ class TopViewer.UIArea
     @_throttledInitialize = _.throttle @initialize, 100, leading: false
 
   destroy: ->
-    @$appWindow = null
+    # Set destroying to true to prevent controls being removed while we're iterating over them.
+    @_destroying = true
+
     control.destroy?() for control in @_controls
-    @_controls = null
+
+    @_controls = []
 
   addControl: (control) ->
     @_controls.push control
+
+    # We need to reinitialize any time new controls are added after the first initialization.
+    @_throttledInitialize() if @_initialized
+
+  removeControl: (control) ->
+    return if @_destroying
+
+    index = _.indexOf @_controls, control
+    @_controls.splice index, 1
 
     # We need to reinitialize any time new controls are added after the first initialization.
     @_throttledInitialize() if @_initialized

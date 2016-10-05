@@ -5,10 +5,9 @@
 
   TopViewer.ResultsControl = (function() {
     function ResultsControl(uiArea, options) {
-      var i, len, ref, results;
       this.uiArea = uiArea;
       this.options = options;
-      this.constructor._resultsControls.push(this);
+      this.uiArea[this.constructor.controlsCollectionName].push(this);
       this.$element = $("<div class='results-control " + this.options["class"] + "'></div>");
       this.options.$parent.append(this.$element);
       this.resultsSelectionControl = new TopViewer.DropdownControl(this.uiArea, {
@@ -23,37 +22,39 @@
           };
         })(this)
       });
-      this.resultsSelectionControl.addValue('None', null);
-      ref = this.constructor._addedResults;
-      for (i = 0, len = ref.length; i < len; i++) {
-        results = ref[i];
-        this.resultsSelectionControl.addValue(results.name, results.results);
-      }
-      if (this.constructor.autoloadFirst && this.constructor._addedResults.length && !this.resultsSelectionControl.dropdownControl.value) {
-        this.resultsSelectionControl.setValue(this.constructor._addedResults[0]);
-      }
+      this.updateResults();
     }
 
-    ResultsControl.addResults = function(name, results) {
-      var control, i, len, ref;
-      ref = this._resultsControls;
-      for (i = 0, len = ref.length; i < len; i++) {
-        control = ref[i];
-        control.addResults(name, results);
+    ResultsControl.prototype.updateResults = function() {
+      var name, ref, result, results;
+      this.resultsSelectionControl.reset();
+      this.resultsSelectionControl.addValue('None', null);
+      ref = this.loadedResults();
+      results = [];
+      for (name in ref) {
+        result = ref[name];
+        this.resultsSelectionControl.addValue(name, result.result);
+        this.resultsSelectionControl.getValueItem(name).hide();
+        if (name === this.resultsSelectionControl.dropdownControl.options.text) {
+          results.push(this.resultsSelectionControl.setValue(result.result));
+        } else {
+          results.push(void 0);
+        }
       }
-      return this._addedResults.push({
-        name: name,
-        results: results
-      });
+      return results;
     };
 
-    ResultsControl.prototype.addResults = function(name, results) {
-      this.resultsSelectionControl.addValue(name, results);
-      if (name === this.resultsSelectionControl.dropdownControl.options.text) {
-        this.resultsSelectionControl.setValue(results);
-      }
-      if (this.constructor.autoloadFirst && !this.resultsSelectionControl.dropdownControl.value) {
-        return this.resultsSelectionControl.setValue(results);
+    ResultsControl.prototype.displayResult = function(name, visible) {
+      var autoload;
+      this.resultsSelectionControl.getValueItem(name).toggle(visible);
+      if (visible && this.resultsSelectionControl.options.text === 'None') {
+        autoload = this.constructor.autoloadFirst;
+        if ((this.options.autoloadNameRegex != null) && name.match(this.options.autoloadNameRegex)) {
+          autoload = true;
+        }
+        if (autoload) {
+          return this.resultsSelectionControl.setValue(name);
+        }
       }
     };
 
@@ -68,11 +69,13 @@
       return ScalarControl.__super__.constructor.apply(this, arguments);
     }
 
-    ScalarControl._resultsControls = [];
-
-    ScalarControl._addedResults = [];
+    ScalarControl.controlsCollectionName = 'scalarControls';
 
     ScalarControl.autoloadFirst = true;
+
+    ScalarControl.prototype.loadedResults = function() {
+      return this.uiArea.loadedObjects.scalars;
+    };
 
     return ScalarControl;
 
@@ -85,9 +88,11 @@
       return VectorControl.__super__.constructor.apply(this, arguments);
     }
 
-    VectorControl._resultsControls = [];
+    VectorControl.controlsCollectionName = 'vectorControls';
 
-    VectorControl._addedResults = [];
+    VectorControl.prototype.loadedResults = function() {
+      return this.uiArea.loadedObjects.vectors;
+    };
 
     return VectorControl;
 

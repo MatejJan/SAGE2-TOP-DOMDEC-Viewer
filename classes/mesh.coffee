@@ -134,6 +134,14 @@ class TopViewer.Mesh extends THREE.Mesh
     mesh.geometry.boundingSphere = @options.model.boundingSphere
 
   showFrame: () ->
+    # We can only draw the mesh when it's been added and we have the rendering controls.
+    unless @renderingControls
+      @visible = false
+      @backsideMesh.visible = false
+      @wireframeMesh.visible = false
+      @isolinesMesh.visible = false
+      return
+
     # Do we need to draw the main mesh?
     if @renderingControls.showSurfaceControl.value()
       @visible = true

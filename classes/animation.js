@@ -24,7 +24,6 @@
         clientId: window.clientID,
         framesCount: this.frameTimes.length
       };
-      console.log("added frames", animationUpdateData);
       return this.options.engine.options.app.broadcast('animationUpdate', animationUpdateData);
     };
 
@@ -37,7 +36,6 @@
         framesCount = ref[clientId];
         maxLength = Math.min(maxLength, framesCount);
       }
-      console.log("figured out new length", maxLength);
       if (window.isMaster) {
         return this.options.engine.options.app.broadcast('animationUpdate', {
           maxLength: maxLength

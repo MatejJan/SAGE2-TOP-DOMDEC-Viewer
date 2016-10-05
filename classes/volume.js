@@ -52,6 +52,7 @@
       wireframeGeometry.drawRange.count = linesCount * 2;
       isosurfacesGeometry = new THREE.BufferGeometry();
       this.isosurfacesMesh = new THREE.Mesh(isosurfacesGeometry, this.options.model.isosurfaceMaterial);
+      this.isosurfacesMesh.receiveShadows = true;
       tetraCount = this.options.elements.length / 4;
       for (i = n = 0; n <= 3; i = ++n) {
         isosurfacesIndexArray = new Float32Array(tetraCount * 12);
@@ -89,10 +90,13 @@
     };
 
     Volume.prototype.showFrame = function() {
-      this.wireframeMesh.visible = this.options.engine.renderingControls.volumesShowWireframeControl.value();
-      this.isosurfacesMesh.visible = this.options.engine.renderingControls.volumesShowIsosurfacesControl.value();
-      this.isosurfacesMesh.receiveShadows = true;
-      return this.isosurfacesMesh.castShadows = true;
+      if (!this.renderingControls) {
+        this.wireframeMesh.visible = false;
+        this.isosurfacesMesh.visible = false;
+        return;
+      }
+      this.wireframeMesh.visible = this.renderingControls.showWireframeControl.value();
+      return this.isosurfacesMesh.visible = this.renderingControls.showIsosurfacesControl.value();
     };
 
     return Volume;

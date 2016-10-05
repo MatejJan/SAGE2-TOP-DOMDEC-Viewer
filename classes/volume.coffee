@@ -49,6 +49,8 @@ class TopViewer.Volume
     # Create the isosurfaces mesh.
     isosurfacesGeometry = new THREE.BufferGeometry()
     @isosurfacesMesh = new THREE.Mesh isosurfacesGeometry, @options.model.isosurfaceMaterial
+    @isosurfacesMesh.receiveShadows = true
+
     tetraCount = @options.elements.length / 4
 
     # Each isosurface vertex needs access to all four tetra vertices.
@@ -95,9 +97,11 @@ class TopViewer.Volume
     mesh.geometry.boundingSphere = @options.model.boundingSphere
 
   showFrame: () ->
-    @wireframeMesh.visible = @options.engine.renderingControls.volumesShowWireframeControl.value()
-    @isosurfacesMesh.visible = @options.engine.renderingControls.volumesShowIsosurfacesControl.value()
+    # We can only draw the mesh when it's been added and we have the rendering controls.
+    unless @renderingControls
+      @wireframeMesh.visible = false
+      @isosurfacesMesh.visible = false
+      return
 
-    @isosurfacesMesh.receiveShadows = true
-    @isosurfacesMesh.castShadows = true
-    #@isosurfacesMesh.receiveShadows = @options.engine.renderingControls.shadowsControl.value()
+    @wireframeMesh.visible = @renderingControls.showWireframeControl.value()
+    @isosurfacesMesh.visible = @renderingControls.showIsosurfacesControl.value()

@@ -58,13 +58,14 @@ window.topviewer = SAGE2_WebGLApp.extend
       @engine.cameraControls.center.copy cameraState.center
 
   animationUpdate: (data) ->
-    console.log "we got animation update", data, window.isMaster
-
     # We are receiving updated frame length from one of the display clients.
     @engine.animation.onAnimationUpdate data if data.clientId?
 
     # The master is sending us new max length.
     @engine.animation.length = data.maxLength if data.maxLength?
+
+  renderingControlsUpdateClientObjects: (data) ->
+    @engine.renderingControls.updateClientObjects data
 
   resizeApp: (resizeData) ->
     @engine.resize resizeData

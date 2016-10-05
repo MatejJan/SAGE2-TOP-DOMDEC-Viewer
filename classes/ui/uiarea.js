@@ -15,7 +15,7 @@
 
     UIArea.prototype.destroy = function() {
       var control, i, len, ref;
-      this.$appWindow = null;
+      this._destroying = true;
       ref = this._controls;
       for (i = 0, len = ref.length; i < len; i++) {
         control = ref[i];
@@ -23,11 +23,23 @@
           control.destroy();
         }
       }
-      return this._controls = null;
+      return this._controls = [];
     };
 
     UIArea.prototype.addControl = function(control) {
       this._controls.push(control);
+      if (this._initialized) {
+        return this._throttledInitialize();
+      }
+    };
+
+    UIArea.prototype.removeControl = function(control) {
+      var index;
+      if (this._destroying) {
+        return;
+      }
+      index = _.indexOf(this._controls, control);
+      this._controls.splice(index, 1);
       if (this._initialized) {
         return this._throttledInitialize();
       }

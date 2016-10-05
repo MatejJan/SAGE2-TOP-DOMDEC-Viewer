@@ -68,3 +68,18 @@ class TopViewer.DropdownControl
     @dropdownControl.setText text
 
     @options.onChange? @value, @
+
+  getValueItem: (valueOrText) ->
+    value = _.find @values, (value) ->
+      value.value is valueOrText or value.text is valueOrText
+
+    return false unless value
+
+    value.$item
+
+  reset: ->
+    for value in @values
+      value.control.destroy()
+      value.$item.remove()
+
+    @values = []

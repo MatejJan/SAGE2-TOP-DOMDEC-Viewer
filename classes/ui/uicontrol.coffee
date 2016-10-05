@@ -15,6 +15,10 @@ class TopViewer.UIControl
 
     @$element.data("control", @)
 
+  destroy: ->
+    @uiArea.removeControl @
+    @$element.data("control", null)
+
   mousedown: (handler) ->
     @_mouseDownHandlers.push handler
 
