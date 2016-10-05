@@ -22,9 +22,16 @@ class TopViewer.ResultsControl
   updateResults: ->
     @resultsSelectionControl.reset()
 
+    # First add the null value.
     @resultsSelectionControl.addValue 'None', null
 
-    for name, result of @loadedResults()
+    # Now add all the loaded results in alphabetical oder.
+    loadedResults = @loadedResults()
+    resultNames = _.keys(loadedResults).sort()
+
+    for name in resultNames
+      result = loadedResults[name]
+
       # Add the value to the dropdowns and hide it by default.
       @resultsSelectionControl.addValue name, result.result
       @resultsSelectionControl.getValueItem(name).hide()

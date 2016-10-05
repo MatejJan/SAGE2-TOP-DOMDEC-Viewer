@@ -26,13 +26,15 @@
     }
 
     ResultsControl.prototype.updateResults = function() {
-      var name, ref, result, results;
+      var i, len, loadedResults, name, result, resultNames, results;
       this.resultsSelectionControl.reset();
       this.resultsSelectionControl.addValue('None', null);
-      ref = this.loadedResults();
+      loadedResults = this.loadedResults();
+      resultNames = _.keys(loadedResults).sort();
       results = [];
-      for (name in ref) {
-        result = ref[name];
+      for (i = 0, len = resultNames.length; i < len; i++) {
+        name = resultNames[i];
+        result = loadedResults[name];
         this.resultsSelectionControl.addValue(name, result.result);
         this.resultsSelectionControl.getValueItem(name).hide();
         if (name === this.resultsSelectionControl.dropdownControl.options.text) {
